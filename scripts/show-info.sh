@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# desc: Display details for a specific show
+# usage: show-info.sh <show-id-or-partial>
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+INDEX="${REPO_ROOT}/org/.state/shows.json"
+VENUES="${REPO_ROOT}/org/.state/venues.json"
+SHOWS_DIR="${REPO_ROOT}/org/touring/shows"
+
+if [ ! -f "$INDEX" ]; then
+  echo "Index not found. Run: ./dirtclaw build:index" >&2
+  exit 1
+fi
+
+if [ $# -lt 1 ]; then
+  echo "Usage: show-info.sh <show-id-or-partial>" >&2
+  exit 1
+fi
+
+query="$1"
+show_id=$(jq -r "keys[] | select(contains(\"${query}\"))" "$INDEX" | head -1)
+
+if [ -z "$show_id" ]; then
+  echo "No show found matching: ${query}" >&2
+  exit 1
+fi
+
+# Show data from index
+echo "=== ${show_id} ==="
+jq --arg id "$show_id" '.[$id]' "$INDEX"
+
+# Venue data
+venue=$(jq -r --arg id "$show_id" '.[$id].venue' "$INDEX")
+echo ""
+echo "=== Venue: ${venue} ==="
+jq --arg v "$venue" '.[$v]' "$VENUES"
+
+# Files present
+echo ""
+echo "=== Files ==="
+show_dir="${SHOWS_DIR}/${show_id}"
+for f in show.json contract-summary.md tech-pack.md advancing/thread.md advancing/confirmed.md; do
+  if [ -f "${show_dir}/${f}" ]; then
+    echo "  [x] ${f}"
+  else
+    echo "  [ ] ${f}"
+  fi
+done
+
+# Contract PDFs
+contract_count=$(find "${show_dir}/contract" -name "*.pdf" 2>/dev/null | wc -l | tr -d ' ')
+echo "  [x] contract/ (${contract_count} PDF)" 2>/dev/null || echo "  [ ] contract/"

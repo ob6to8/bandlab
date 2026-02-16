@@ -1,0 +1,8 @@
+# Band-specific data (lives in your private repo)
+org/
+
+# Imported spreadsheets — may contain PII
+assets/
+
+# Generated artifacts
+dashboard.html

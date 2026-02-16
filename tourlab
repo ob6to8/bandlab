@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+# tourlab — interactive command runner for the band management system
+# Run with no args for interactive menu, or pass a command directly:
+#   ./tourlab show:list
+#   ./tourlab advance:contacts 0304
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
+SCRIPTS_DIR="${REPO_ROOT}/scripts"
+
+# ── Command registry ─────────────────────────────────────────────────
+# Each entry: "namespace:command|script_name|description"
+# Descriptions are read from the "# desc:" comment in each script.
+
+list_commands() {
+  for script in "${SCRIPTS_DIR}"/*.sh; do
+    [ -f "$script" ] || continue
+    name=$(basename "$script" .sh)
+    # Convert filename to namespace:command (e.g., advance-contacts → advance:contacts)
+    cmd="${name/-/:}"
+    desc=$(grep '^# desc:' "$script" | head -1 | sed 's/^# desc: *//')
+    printf "  %-24s %s\n" "$cmd" "$desc"
+  done
+}
+
+run_command() {
+  local cmd="$1"
+  shift
+  # Convert namespace:command back to filename (e.g., advance:contacts → advance-contacts)
+  local script_name
+  script_name="${cmd/:/-}"
+  local script_path="${SCRIPTS_DIR}/${script_name}.sh"
+
+  if [ ! -f "$script_path" ]; then
+    echo "Unknown command: ${cmd}" >&2
+    echo "Run ./tourlab with no args to see available commands." >&2
+    exit 1
+  fi
+
+  exec bash "$script_path" "$@"
+}
+
+# ── Direct invocation ────────────────────────────────────────────────
+
+if [ $# -gt 0 ]; then
+  run_command "$@"
+  exit
+fi
+
+# ── Interactive menu ─────────────────────────────────────────────────
+
+echo ""
+echo "  tourlab — band management CLI"
+echo "  ─────────────────────────────────"
+echo ""
+echo "  Available commands:"
+echo ""
+list_commands
+echo ""
+
+# Build menu options array
+commands=()
+while IFS= read -r script; do
+  [ -f "$script" ] || continue
+  name=$(basename "$script" .sh)
+  cmd="${name/-/:}"
+  desc=$(grep '^# desc:' "$script" | head -1 | sed 's/^# desc: *//')
+  commands+=("${cmd} — ${desc}")
+done < <(find "${SCRIPTS_DIR}" -name "*.sh" -type f | sort)
+commands+=("quit — Exit")
+
+PS3=$'\n  Select a command: '
+select choice in "${commands[@]}"; do
+  if [ -z "$choice" ]; then
+    echo "  Invalid selection." >&2
+    continue
+  fi
+
+  cmd=$(echo "$choice" | cut -d' ' -f1)
+
+  if [ "$cmd" = "quit" ]; then
+    break
+  fi
+
+  echo ""
+
+  # Check if the command needs arguments
+  script_name="${cmd/:/-}"
+  script_path="${SCRIPTS_DIR}/${script_name}.sh"
+  if grep -q 'usage:' "$script_path" 2>/dev/null; then
+    usage=$(grep '^# usage:' "$script_path" | head -1 | sed 's/^# usage: *//')
+    read -rp "  Args (${usage}): " args
+    # Word-split args intentionally
+    # shellcheck disable=SC2086
+    bash "$script_path" $args
+  else
+    bash "$script_path"
+  fi
+
+  echo ""
+done
