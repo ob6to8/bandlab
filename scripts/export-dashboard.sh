@@ -2,7 +2,7 @@
 # desc: Generate a static HTML dashboard from show/todo/venue data
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+REPO_ROOT="$(git rev-parse --show-toplevel)"
 STATE="${REPO_ROOT}/org/.state"
 SHOWS_DIR="${REPO_ROOT}/org/touring/shows"
 RUNS_DIR="${REPO_ROOT}/org/touring/runs"

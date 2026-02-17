@@ -3,7 +3,7 @@
 # usage: show-info.sh <show-id-or-partial>
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+REPO_ROOT="$(git rev-parse --show-toplevel)"
 INDEX="${REPO_ROOT}/org/.state/shows.json"
 VENUES="${REPO_ROOT}/org/.state/venues.json"
 SHOWS_DIR="${REPO_ROOT}/org/touring/shows"

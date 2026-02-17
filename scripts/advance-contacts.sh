@@ -4,7 +4,7 @@
 # example: advance-contacts.sh 0304  (matches s-2026-0304-charleston)
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+REPO_ROOT="$(git rev-parse --show-toplevel)"
 INDEX="${REPO_ROOT}/org/.state/shows.json"
 PEOPLE="${REPO_ROOT}/org/.state/people.json"
 

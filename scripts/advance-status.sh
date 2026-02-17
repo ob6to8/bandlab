@@ -2,7 +2,7 @@
 # desc: Show advancing status across all shows
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+REPO_ROOT="$(git rev-parse --show-toplevel)"
 INDEX="${REPO_ROOT}/org/.state/shows.json"
 PEOPLE="${REPO_ROOT}/org/.state/people.json"
 SHOWS_DIR="${REPO_ROOT}/org/touring/shows"

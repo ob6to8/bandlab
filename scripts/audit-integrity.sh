@@ -2,7 +2,7 @@
 # desc: Verify referential integrity across all state and data files
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+REPO_ROOT="$(git rev-parse --show-toplevel)"
 STATE="${REPO_ROOT}/org/.state"
 SHOWS_DIR="${REPO_ROOT}/org/touring/shows"
 CALENDAR="${REPO_ROOT}/org/calendar"
