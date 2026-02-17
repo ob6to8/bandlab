@@ -6,11 +6,17 @@ bandlab provides the schemas, scripts, workflows, and agent specification for ma
 
 ## How it works
 
+Your band's data lives in a private repo. bandlab is added as a git submodule, providing the framework — schemas, CLI tools, workflow docs, and the AI agent specification. You keep your shows, contacts, and finances private while benefiting from a shared, evolving toolset.
+
 The directory tree is the data store. Every file is human-readable markdown or structured JSON. An AI agent (Claude Code or similar) maintains situational awareness and synthesizes knowledge into briefings, audits, and task tracking.
+
+### What's in bandlab
 
 - **`CLAUDE.md`** — Full system specification: schemas, directory structure, agent operations
 - **`scripts/`** — Shell scripts (bash + jq) for querying and managing data
 - **`ops/`** — Workflow documentation: advancing, conventions, architecture, glossary
+- **`setup.sh`** — Scaffolds the `org/` directory tree for a new band
+- **`band.example.json`** — Example config to copy into your private repo
 
 ## Quickstart
 
@@ -33,36 +39,31 @@ git submodule add https://github.com/ob6to8/bandlab.git bandlab
 bash bandlab/setup.sh
 ```
 
-This creates the full `org/` directory tree: calendar files, empty state JSON, an example show, and all domain directories.
+This creates the full `org/` directory tree: calendar files for the current year, empty state JSON registries, an example show directory, and all domain directories.
 
-### 4. Set up your CLI entry point
+### 4. Set up your CLI
 
-Create a `my-band` script (or whatever you want to call it) in your repo root:
+Symlink bandlab's CLI into your repo root:
 
 ```bash
-#!/usr/bin/env bash
-set -euo pipefail
-REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
-SCRIPTS_DIR="${REPO_ROOT}/bandlab/scripts"
-# Delegate to bandlab's runner
-exec bash "${REPO_ROOT}/bandlab/bandlab" "$@"
+ln -s bandlab/bandlab my-band
 ```
 
-Or just symlink: `ln -s bandlab/bandlab my-band`
+Now you can run `./my-band show:list`, `./my-band audit:integrity`, etc.
 
 ### 5. Configure your band
 
-Copy and edit the example config:
+Copy the example config into your repo:
 
 ```bash
 cp bandlab/band.example.json band.json
 ```
 
-Edit `band.json` with your band's name, members, crew config, and hospitality preferences.
+Edit `band.json` with your band name, members, crew configurations, and hospitality preferences. This file is documentation for you and the agent — it's not consumed by scripts.
 
 ### 6. Set up your CLAUDE.md
 
-Create a `CLAUDE.md` in your repo root that references the bandlab spec:
+Create a `CLAUDE.md` in your repo root that references bandlab's spec and adds your band-specific details:
 
 ```markdown
 ## Base Framework
@@ -70,14 +71,17 @@ See bandlab/CLAUDE.md for schemas, directory structure, and agent operations.
 
 ## Band-Specific Configuration
 - Band name: My Band
-- Members: ...
+- Members: Alice (advancing), Bob (settlement)
 - Crew config: see ops/crew-config.md
 - Contract format: see ops/contract-format.md
+- Hospitality: [your preferences]
 ```
+
+The `ops/` files referenced above live in your private repo, not in bandlab. They contain band-specific details like crew assignments by geography and your booking agent's contract format.
 
 ## Available commands
 
-Run `./bandlab` with no args for an interactive menu, or pass a command directly:
+Run `./my-band` with no args for an interactive menu, or pass a command directly:
 
 | Command | Description |
 |---|---|
