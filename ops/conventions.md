@@ -26,7 +26,7 @@ A todo that accumulates artifacts (emails, documents, confirmations) becomes a f
 
 Within a show directory:
 - **Single-asset items** are files: `tech-pack.md`, `show.json`
-- **Multi-asset workflows** are directories: `contract/` (PDF + summary + correspondence), `advancing/` (email PDFs + thread log + confirmed details), `settlement/` (settlement sheet + receipts)
+- **Multi-asset workflows** are directories: `source/` (primary source documents — contracts, email exports, etc. + summary), `advancing/` (thread log + confirmed details), `settlement/` (settlement sheet + receipts)
 
 **Scoped todos live in their scope's directory:**
 - **Show-level**: `touring/shows/s-YYYY-MMDD-city/` — show-specific workflows and assets

@@ -40,7 +40,7 @@ jq --arg v "$venue" '.[$v]' "$VENUES"
 echo ""
 echo "=== Files ==="
 show_dir="${SHOWS_DIR}/${show_id}"
-for f in show.json contract-summary.md tech-pack.md advancing/thread.md advancing/confirmed.md; do
+for f in show.json source/summary.md tech-pack.md advancing/thread.md advancing/confirmed.md; do
   if [ -f "${show_dir}/${f}" ]; then
     echo "  [x] ${f}"
   else
@@ -48,6 +48,6 @@ for f in show.json contract-summary.md tech-pack.md advancing/thread.md advancin
   fi
 done
 
-# Contract PDFs
-contract_count=$(find "${show_dir}/contract" -name "*.pdf" 2>/dev/null | wc -l | tr -d ' ')
-echo "  [x] contract/ (${contract_count} PDF)" 2>/dev/null || echo "  [ ] contract/"
+# Source PDFs
+source_count=$(find "${show_dir}/source" -name "*.pdf" 2>/dev/null | wc -l | tr -d ' ')
+echo "  [x] source/ (${source_count} PDF)" 2>/dev/null || echo "  [ ] source/"

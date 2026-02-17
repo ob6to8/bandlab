@@ -113,7 +113,7 @@ mkdir -p "${ORG}/briefings"
 # ── Example show ─────────────────────────────────────────────────────
 example_id="s-${year}-0101-example-city"
 example_dir="${ORG}/touring/shows/${example_id}"
-mkdir -p "${example_dir}/contract"
+mkdir -p "${example_dir}/source"
 mkdir -p "${example_dir}/advancing"
 mkdir -p "${example_dir}/settlement/receipts"
 
@@ -160,7 +160,7 @@ cat > "${example_dir}/tech-pack.md" << 'TECHEOF'
 - (List backline needs here)
 TECHEOF
 
-cat > "${example_dir}/contract/summary.md" << CONTRACTEOF
+cat > "${example_dir}/source/summary.md" << CONTRACTEOF
 ---
 source: contract
 extracted_date: ${year}-01-01

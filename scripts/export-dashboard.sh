@@ -45,10 +45,10 @@ while IFS= read -r show_id; do
   [ -f "${dir}/advancing/thread.md" ] && has_thread=true
   [ -f "${dir}/advancing/confirmed.md" ] && has_confirmed=true
   [ -f "${dir}/tech-pack.md" ] && has_tech_pack=true
-  [ -f "${dir}/contract/summary.md" ] && has_contract_summary=true
+  [ -f "${dir}/source/summary.md" ] && has_contract_summary=true
 
-  # Check for any PDF in contract/
-  if compgen -G "${dir}/contract/"*.pdf > /dev/null 2>&1; then
+  # Check for any PDF in source/
+  if compgen -G "${dir}/source/"*.pdf > /dev/null 2>&1; then
     has_contract_pdf=true
   fi
 
@@ -706,8 +706,8 @@ function openDetail(showId) {
   html += `<div class="detail-section">
     <h3>Files</h3>
     <ul class="file-check">
-      <li class="${fs.contract_pdf ? 'exists' : 'missing'}">${fs.contract_pdf ? '✓' : '✗'} contract/*.pdf</li>
-      <li class="${fs.contract_summary ? 'exists' : 'missing'}">${fs.contract_summary ? '✓' : '✗'} contract/summary.md</li>
+      <li class="${fs.contract_pdf ? 'exists' : 'missing'}">${fs.contract_pdf ? '✓' : '✗'} source/*.pdf</li>
+      <li class="${fs.contract_summary ? 'exists' : 'missing'}">${fs.contract_summary ? '✓' : '✗'} source/summary.md</li>
       <li class="${fs.thread_md ? 'exists' : 'missing'}">${fs.thread_md ? '✓' : '✗'} advancing/thread.md</li>
       <li class="${fs.confirmed_md ? 'exists' : 'missing'}">${fs.confirmed_md ? '✓' : '✗'} advancing/confirmed.md</li>
       <li class="${fs.tech_pack ? 'exists' : 'missing'}">${fs.tech_pack ? '✓' : '✗'} tech-pack.md</li>

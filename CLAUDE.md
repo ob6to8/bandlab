@@ -111,6 +111,7 @@ The canonical registry of every person in the system. Band members, crew, manage
     },
     "advancing_priority": null,
     "date_added": null,
+    "sources": [],
     "notes": ""
   }
 }
@@ -120,6 +121,7 @@ The canonical registry of every person in the system. Band members, crew, manage
 - `org`: Prefixed key linking to the organization this person belongs to. `"venue:venue-key"` references `venues.json`, `"vendor:vendor-key"` references `vendors.json`. Null if the person isn't linked to a registered org. Cross-venue contacts (e.g. a show advance who handles multiple venues) have `org: null`.
 - `advancing_priority`: Integer 1-4 ranking for advancing outreach order. 1 = Show Advance, 2 = Venue Contact, 3 = Production, 4 = Promoter. Null for non-advancing contacts. See `ops/advancing.md` for details.
 - `date_added`: ISO date string (YYYY-MM-DD) when this person was added to the registry. Null for legacy entries.
+- `sources`: Array of provenance references. Paths are relative to `org/` (e.g. `"touring/shows/s-2026-0304-charleston/source/DIRTWIRE_CharlestonPourHouse_DealMemo.pdf"`). Special values: `"manual"` (band/crew entered by hand), `"legacy"` (pre-provenance data), `"legacy:routing-csv"` (from routing spreadsheet import), `"legacy:contracts"` (from contract extraction, cross-venue).
 
 Initialize with an empty object `{}`.
 
@@ -135,12 +137,14 @@ Master list of venues. Accumulates institutional knowledge over time.
     "state": "",
     "capacity": null,
     "contacts": {},
+    "sources": [],
     "notes": ""
   }
 }
 ```
 
 - `contacts`: Object mapping role to person key, e.g. `{"talent_buyer": "jane-doe", "production": "john-smith"}`.
+- `sources`: Array of provenance references. Same format as people.json sources. Paths relative to `org/`.
 - `notes`: Institutional knowledge — load-in details, green room info, quirks, history.
 
 Initialize with an empty object `{}`.
@@ -266,11 +270,10 @@ Each show is a directory containing:
 s-YYYY-MMDD-city/
 ├── show.json              # Working metadata — the agent's current understanding
 ├── tech-pack.md           # Stage plot, input list, backline requirements
-├── contract/              # Contract workflow cycle
-│   ├── *.pdf              # Original contract (when available)
+├── source/                # Primary source documents (contracts, emails, etc.)
+│   ├── *.pdf              # Original contract, email exports, etc.
 │   └── summary.md         # Agent-extracted key terms (requires human approval)
 ├── advancing/             # Advancing workflow cycle
-│   ├── *.pdf              # Email thread exports
 │   ├── thread.md          # Running log of advancing communications
 │   └── confirmed.md       # Final confirmed details (structured frontmatter)
 └── settlement/            # Post-show financials (empty until show happens)
@@ -304,7 +307,7 @@ s-YYYY-MMDD-city/
 }
 ```
 
-**contract/summary.md frontmatter:**
+**source/summary.md frontmatter:**
 ```yaml
 ---
 source: contract
@@ -347,7 +350,7 @@ wifi: ""
 ```
 
 **The audit trust hierarchy:**
-1. `contract/summary.md` (approved) — highest trust, human-verified legal terms
+1. `source/summary.md` (approved) — highest trust, human-verified legal terms
 2. `confirmed.md` — high trust, reflects advancing agreements
 3. `show.json` — working copy, agent-maintained, mutable
 
@@ -466,7 +469,7 @@ The agent generates daily briefings by scanning the full directory tree. A brief
 
 The audit scans all show directories and compares structured data across:
 - `show.json` (working data)
-- `contract/summary.md` (legal terms, if approved)
+- `source/summary.md` (legal terms, if approved)
 - `confirmed.md` (advancing confirmations)
 - Calendar file for that date
 
@@ -475,7 +478,7 @@ Flags: field mismatches, unapproved contract summaries, missing files (show conf
 ### Contract Extraction
 
 When a contract PDF is added to a show directory:
-1. Agent reads the PDF and extracts key terms into `contract/summary.md`
+1. Agent reads the PDF and extracts key terms into `source/summary.md`
 2. Sets `status: pending-review`
 3. Documents confidence and ambiguities in the Agent Notes section
 4. Adds a todo for human review
