@@ -6,3 +6,6 @@ assets/
 
 # Generated artifacts
 dashboard.html
+
+# Claude Code local settings
+.claude/
