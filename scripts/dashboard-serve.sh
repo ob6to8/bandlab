@@ -99,6 +99,10 @@ for dirpath, _, filenames in os.walk(cal_dir):
             continue
         date_str = dm.group(1)
 
+        # Extract touring type (show, travel, etc.)
+        tm = re.search(r'^\s+type:\s*(\S+)', fm, re.MULTILINE)
+        touring_type = tm.group(1) if tm and tm.group(1) != 'null' else None
+
         # Check if schedule has entries (not just '[]')
         sm = re.search(r'^schedule:\s*\[\]', fm, re.MULTILINE)
         if sm:
@@ -120,7 +124,8 @@ for dirpath, _, filenames in os.walk(cal_dir):
             items.append({'time': time_val, 'item': item_val, 'who': who})
 
         if items:
-            schedules[date_str] = items
+            day_type = touring_type or 'off'
+            schedules[date_str] = {'type': day_type, 'items': items}
 
 json.dump(schedules, sys.stdout, separators=(',', ':'))
 " "$CAL_DIR")
