@@ -55,10 +55,10 @@ The touring party varies by geography and show type. Define your crew configurat
 
 ```bash
 # Ranked contacts for a specific show
-./tourlab advance:contacts s-2026-0315-denver
+./bandlab advance:contacts s-2026-0315-denver
 
 # Which shows still need advancing
-./tourlab advance:status
+./bandlab advance:status
 
 # All advancing contacts, sorted by priority
 jq -r '[to_entries[] | select(.value.role == "advancing")] | sort_by(.value.advancing_priority) | .[] | [.value.advancing_priority, .value.name, .value.org, .value.contact.email] | @tsv' org/.state/people.json

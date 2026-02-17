@@ -3,8 +3,8 @@
 ## Quick Start (for new agent contexts)
 
 1. Read the relevant `ops/` doc for your task — `advancing.md`, `conventions.md`, `architecture.md`
-2. CLI tools: run `./tourlab` for an interactive menu, or `./tourlab show:list` directly
-3. The `.state/shows.json` index aggregates all show.json data — rebuild with `./tourlab build:index`
+2. CLI tools: run `./bandlab` for an interactive menu, or `./bandlab show:list` directly
+3. The `.state/shows.json` index aggregates all show.json data — rebuild with `./bandlab build:index`
 
 ## What This Is
 
@@ -35,7 +35,7 @@ org/
 │   ├── people.json
 │   ├── venues.json
 │   ├── vendors.json
-│   ├── shows.json               # Generated index — run ./tourlab build:index
+│   ├── shows.json               # Generated index — run ./bandlab build:index
 │   └── last-sync.json
 │
 ├── calendar/                    # One markdown file per day, all year

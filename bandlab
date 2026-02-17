@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# tourlab — interactive command runner for the band management system
+# bandlab — interactive command runner for the band management system
 # Run with no args for interactive menu, or pass a command directly:
-#   ./tourlab show:list
-#   ./tourlab advance:contacts 0304
+#   ./bandlab show:list
+#   ./bandlab advance:contacts 0304
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
@@ -33,7 +33,7 @@ run_command() {
 
   if [ ! -f "$script_path" ]; then
     echo "Unknown command: ${cmd}" >&2
-    echo "Run ./tourlab with no args to see available commands." >&2
+    echo "Run ./bandlab with no args to see available commands." >&2
     exit 1
   fi
 
@@ -50,7 +50,7 @@ fi
 # ── Interactive menu ─────────────────────────────────────────────────
 
 echo ""
-echo "  tourlab — band management CLI"
+echo "  bandlab — band management CLI"
 echo "  ─────────────────────────────────"
 echo ""
 echo "  Available commands:"

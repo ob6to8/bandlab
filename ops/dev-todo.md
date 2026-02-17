@@ -6,7 +6,7 @@ Development tasks for the tooling and infrastructure. These are NOT band operati
 
 - [ ] **gum** — Charm.sh TUI components. `gum choose` would replace bash `select` with arrow-key navigation and fuzzy search. Evaluate whether the dependency is worth the UX improvement.
 - [ ] **fzf** — Fuzzy finder. Alternative to gum for interactive selection. More widely installed. Could pipe command list into fzf.
-- [ ] **justfile** — Modern command runner. `just --list` auto-documents all commands. Could replace the `tourlab` entry script entirely. Evaluate syntax and whether it fits the workflow model.
+- [ ] **justfile** — Modern command runner. `just --list` auto-documents all commands. Could replace the `bandlab` entry script entirely. Evaluate syntax and whether it fits the workflow model.
 
 ## Index Generation
 

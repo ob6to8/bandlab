@@ -1,8 +1,8 @@
-# tourlab
+# bandlab
 
 A file-based band management framework powered by AI agents. No database, no web app — just files, JSON, and shell scripts.
 
-tourlab provides the schemas, scripts, workflows, and agent specification for managing a touring band's operations: shows, advancing, merch, releases, socials, licensing, and more.
+bandlab provides the schemas, scripts, workflows, and agent specification for managing a touring band's operations: shows, advancing, merch, releases, socials, licensing, and more.
 
 ## How it works
 
@@ -21,16 +21,16 @@ mkdir my-band && cd my-band
 git init
 ```
 
-### 2. Add tourlab as a submodule
+### 2. Add bandlab as a submodule
 
 ```bash
-git submodule add https://github.com/ob6to8/tourlab.git tourlab
+git submodule add https://github.com/ob6to8/bandlab.git bandlab
 ```
 
 ### 3. Scaffold the org directory
 
 ```bash
-bash tourlab/setup.sh
+bash bandlab/setup.sh
 ```
 
 This creates the full `org/` directory tree: calendar files, empty state JSON, an example show, and all domain directories.
@@ -43,30 +43,30 @@ Create a `my-band` script (or whatever you want to call it) in your repo root:
 #!/usr/bin/env bash
 set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "$0")" && pwd)"
-SCRIPTS_DIR="${REPO_ROOT}/tourlab/scripts"
-# Delegate to tourlab's runner
-exec bash "${REPO_ROOT}/tourlab/tourlab" "$@"
+SCRIPTS_DIR="${REPO_ROOT}/bandlab/scripts"
+# Delegate to bandlab's runner
+exec bash "${REPO_ROOT}/bandlab/bandlab" "$@"
 ```
 
-Or just symlink: `ln -s tourlab/tourlab my-band`
+Or just symlink: `ln -s bandlab/bandlab my-band`
 
 ### 5. Configure your band
 
 Copy and edit the example config:
 
 ```bash
-cp tourlab/band.example.json band.json
+cp bandlab/band.example.json band.json
 ```
 
 Edit `band.json` with your band's name, members, crew config, and hospitality preferences.
 
 ### 6. Set up your CLAUDE.md
 
-Create a `CLAUDE.md` in your repo root that references the tourlab spec:
+Create a `CLAUDE.md` in your repo root that references the bandlab spec:
 
 ```markdown
 ## Base Framework
-See tourlab/CLAUDE.md for schemas, directory structure, and agent operations.
+See bandlab/CLAUDE.md for schemas, directory structure, and agent operations.
 
 ## Band-Specific Configuration
 - Band name: My Band
@@ -77,7 +77,7 @@ See tourlab/CLAUDE.md for schemas, directory structure, and agent operations.
 
 ## Available commands
 
-Run `./tourlab` with no args for an interactive menu, or pass a command directly:
+Run `./bandlab` with no args for an interactive menu, or pass a command directly:
 
 | Command | Description |
 |---|---|

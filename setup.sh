@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 # setup.sh — Scaffold the org/ directory tree for a new band repo.
-# Run from the repo root: bash tourlab/setup.sh
+# Run from the repo root: bash bandlab/setup.sh
 # Creates calendar files, empty state JSON, example show, and all domain directories.
 set -euo pipefail
 
-# Determine the repo root (parent of the tourlab directory this script lives in)
+# Determine the repo root (parent of the bandlab directory this script lives in)
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
@@ -222,4 +222,4 @@ echo ""
 echo "Next steps:"
 echo "  1. Delete the example show directory when you're ready"
 echo "  2. Add your venues, people, and shows"
-echo "  3. Run ./tourlab build:index to generate the shows index"
+echo "  3. Run ./bandlab build:index to generate the shows index"
