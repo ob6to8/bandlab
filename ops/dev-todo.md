@@ -1,6 +1,6 @@
 # Dev Todo
 
-Development tasks for the tooling and infrastructure. These are NOT band operational todos (those go in `.state/todos.json`).
+Development tasks for the tooling and infrastructure. These are NOT band operational todos (those go in `org/todos.json`).
 
 ## Tooling Exploration
 
@@ -10,8 +10,8 @@ Development tasks for the tooling and infrastructure. These are NOT band operati
 
 ## Index Generation
 
-- [ ] Auto-rebuild `.state/shows.json` when show.json files change. Options: git hook, fswatch, or just document "run build:index after edits".
-- [ ] Consider whether `.state/shows.json` should be git-tracked or .gitignored (generated artifact vs portable state).
+- [ ] Auto-rebuild `org/.state/shows.json` when show.json files change. Options: git hook, fswatch, or just document "run build:index after edits".
+- [ ] Consider whether `org/.state/shows.json` should be git-tracked or .gitignored (generated artifact vs portable state).
 
 ## Future Scripts
 

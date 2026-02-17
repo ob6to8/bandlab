@@ -17,12 +17,14 @@ fi
 
 echo "Scaffolding org/ directory tree..."
 
-# ── State files ──────────────────────────────────────────────────────
+# ── Data registries ──────────────────────────────────────────────────
+echo '{}' > "${ORG}/people.json"
+echo '{}' > "${ORG}/venues.json"
+echo '{}' > "${ORG}/vendors.json"
+echo '[]' > "${ORG}/todos.json"
+
+# ── Derived/generated state ─────────────────────────────────────────
 mkdir -p "${ORG}/.state"
-echo '{}' > "${ORG}/.state/people.json"
-echo '{}' > "${ORG}/.state/venues.json"
-echo '{}' > "${ORG}/.state/vendors.json"
-echo '[]' > "${ORG}/.state/todos.json"
 echo '{}' > "${ORG}/.state/shows.json"
 cat > "${ORG}/.state/last-sync.json" << 'EOF'
 {
@@ -214,7 +216,8 @@ touch "${example_dir}/settlement/settlement.md"
 cal_count=$(find "${ORG}/calendar" -name "*.md" | wc -l | tr -d ' ')
 echo ""
 echo "Done! Created:"
-echo "  - org/.state/ with empty JSON registries"
+echo "  - org/ with empty JSON registries (people, venues, vendors, todos)"
+echo "  - org/.state/ with derived state (shows index, sync timestamps)"
 echo "  - org/calendar/ with ${cal_count} day files for ${year}"
 echo "  - org/touring/shows/${example_id}/ (example show)"
 echo "  - All domain directories (merch, releases, socials, licensing, distro, strategy, comms, briefings)"

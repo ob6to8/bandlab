@@ -4,7 +4,7 @@ set -euo pipefail
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 INDEX="${REPO_ROOT}/org/.state/shows.json"
-PEOPLE="${REPO_ROOT}/org/.state/people.json"
+PEOPLE="${REPO_ROOT}/org/people.json"
 SHOWS_DIR="${REPO_ROOT}/org/touring/shows"
 
 if [ ! -f "$INDEX" ]; then

@@ -3,18 +3,22 @@
 set -euo pipefail
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
-STATE="${REPO_ROOT}/org/.state"
+ORG="${REPO_ROOT}/org"
 SHOWS_DIR="${REPO_ROOT}/org/touring/shows"
 RUNS_DIR="${REPO_ROOT}/org/touring/runs"
 OUTPUT="${REPO_ROOT}/dashboard.html"
 
 # ── Preflight checks ───────────────────────────────────────────────
-for f in shows.json people.json venues.json todos.json; do
-  if [ ! -f "${STATE}/${f}" ]; then
-    echo "Missing ${STATE}/${f} — run ./dirtclaw build:index first" >&2
+for f in people.json venues.json todos.json; do
+  if [ ! -f "${ORG}/${f}" ]; then
+    echo "Missing ${ORG}/${f}" >&2
     exit 1
   fi
 done
+if [ ! -f "${ORG}/.state/shows.json" ]; then
+  echo "Missing ${ORG}/.state/shows.json — run ./dirtclaw build:index first" >&2
+  exit 1
+fi
 
 echo "Building dashboard data..."
 
@@ -66,15 +70,15 @@ while IFS= read -r show_id; do
     --argjson csum "$has_contract_summary" \
     --argjson tech "$has_tech_pack" \
     '. + {($id): {"thread_md": $thread, "confirmed_md": $confirmed, "contract_pdf": $cpdf, "contract_summary": $csum, "tech_pack": $tech}}')
-done < <(jq -r 'keys[]' "${STATE}/shows.json")
+done < <(jq -r 'keys[]' "${ORG}/.state/shows.json")
 
 # ── Build the combined data blob ────────────────────────────────────
 # This JSON object gets embedded in the HTML as `const DATA = ...`
 DATA=$(jq -n \
-  --slurpfile shows "${STATE}/shows.json" \
-  --slurpfile people "${STATE}/people.json" \
-  --slurpfile venues "${STATE}/venues.json" \
-  --slurpfile todos "${STATE}/todos.json" \
+  --slurpfile shows "${ORG}/.state/shows.json" \
+  --slurpfile people "${ORG}/people.json" \
+  --slurpfile venues "${ORG}/venues.json" \
+  --slurpfile todos "${ORG}/todos.json" \
   --argjson run_names "$run_names" \
   --argjson adv_status "$adv_status" \
   --argjson file_status "$file_status" \

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# desc: Rebuild .state/shows.json index from show.json files
+# desc: Rebuild org/.state/shows.json index from show.json files
 # Merges all individual show.json files into one jq-queryable index.
 # Run this after editing any show.json file.
 set -euo pipefail

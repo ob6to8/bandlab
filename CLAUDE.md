@@ -4,7 +4,7 @@
 
 1. Read the relevant `ops/` doc for your task — `advancing.md`, `conventions.md`, `architecture.md`
 2. CLI tools: run `./bandlab` for an interactive menu, or `./bandlab show:list` directly
-3. The `.state/shows.json` index aggregates all show.json data — rebuild with `./bandlab build:index`
+3. The `.state/shows.json` index aggregates all show.json data — rebuild with `./bandlab build:index`. Canonical registries (people, venues, vendors, todos) live directly in `org/`.
 
 ## What This Is
 
@@ -30,11 +30,11 @@ Generate the following directory tree. Create all files with the frontmatter and
 
 ```
 org/
-├── .state/                      # Agent working memory — structured JSON
-│   ├── todos.json
-│   ├── people.json
-│   ├── venues.json
-│   ├── vendors.json
+├── people.json                  # Canonical person registry
+├── venues.json                  # Canonical venue registry
+├── vendors.json                 # Canonical vendor registry
+├── todos.json                   # Canonical task list
+├── .state/                      # Derived/generated state
 │   ├── shows.json               # Generated index — run ./bandlab build:index
 │   └── last-sync.json
 │
@@ -94,7 +94,9 @@ org/
 
 ## Schema Definitions
 
-### .state/people.json
+### people.json
+
+Path: `org/people.json`
 
 The canonical registry of every person in the system. Band members, crew, managers, external contacts (promoters, talent buyers, vendor reps, label contacts, etc).
 
@@ -125,7 +127,9 @@ The canonical registry of every person in the system. Band members, crew, manage
 
 Initialize with an empty object `{}`.
 
-### .state/venues.json
+### venues.json
+
+Path: `org/venues.json`
 
 Master list of venues. Accumulates institutional knowledge over time.
 
@@ -149,7 +153,9 @@ Master list of venues. Accumulates institutional knowledge over time.
 
 Initialize with an empty object `{}`.
 
-### .state/vendors.json
+### vendors.json
+
+Path: `org/vendors.json`
 
 Merch printers, distributors, PR firms, designers, etc.
 
@@ -166,7 +172,9 @@ Merch printers, distributors, PR firms, designers, etc.
 
 Initialize with an empty object `{}`.
 
-### .state/todos.json
+### todos.json
+
+Path: `org/todos.json`
 
 Canonical task list. The agent reads and writes this. Syncs to external surfaces (spreadsheet, Slack) for human consumption.
 
@@ -203,6 +211,8 @@ Canonical task list. The agent reads and writes this. Syncs to external surfaces
 Initialize with an empty array `[]`.
 
 ### .state/last-sync.json
+
+Path: `org/.state/last-sync.json`
 
 Timestamps for automated sync operations. Not relevant for the Claude Code prototype but the schema should exist.
 
@@ -492,17 +502,17 @@ When a contract PDF is added to a show directory:
 Querying todos from the terminal (note: `del(.history)` strips the history array from output to keep queries lightweight):
 ```bash
 # All open todos (without history)
-jq '[.[] | select(.status == "open") | del(.history)]' .state/todos.json
+jq '[.[] | select(.status == "open") | del(.history)]' org/todos.json
 
 # A specific person's open todos
-jq '[.[] | select((.owners | index("alice")) and .status == "open") | del(.history)]' .state/todos.json
+jq '[.[] | select((.owners | index("alice")) and .status == "open") | del(.history)]' org/todos.json
 
 # Touring domain
-jq '[.[] | select(.domain == "touring" and .status != "done") | del(.history)]' .state/todos.json
+jq '[.[] | select(.domain == "touring" and .status != "done") | del(.history)]' org/todos.json
 
 # Full history for a specific todo
-jq '.[] | select(.id == "t001") | .history' .state/todos.json
+jq '.[] | select(.id == "t001") | .history' org/todos.json
 
 # All todos for a specific show
-jq '[.[] | select(.show == "s-2026-0315-denver") | del(.history)]' .state/todos.json
+jq '[.[] | select(.show == "s-2026-0315-denver") | del(.history)]' org/todos.json
 ```

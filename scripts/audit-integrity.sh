@@ -3,13 +3,13 @@
 set -euo pipefail
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
-STATE="${REPO_ROOT}/org/.state"
+ORG="${REPO_ROOT}/org"
 SHOWS_DIR="${REPO_ROOT}/org/touring/shows"
 CALENDAR="${REPO_ROOT}/org/calendar"
 
-INDEX="${STATE}/shows.json"
-PEOPLE="${STATE}/people.json"
-VENUES="${STATE}/venues.json"
+INDEX="${ORG}/.state/shows.json"
+PEOPLE="${ORG}/people.json"
+VENUES="${ORG}/venues.json"
 errors=0
 warnings=0
 checks=0
@@ -153,7 +153,7 @@ echo ""
 
 # ── People with org refs ─────────────────────────────────────────────
 
-VENDORS="${STATE}/vendors.json"
+VENDORS="${ORG}/vendors.json"
 
 echo "=== People → Org References ==="
 
@@ -186,8 +186,6 @@ done < <(jq -r 'to_entries[] | select(.value.org != null) | [.key, .value.org] |
 echo ""
 
 # ── Source Provenance ─────────────────────────────────────────────────
-
-ORG="${REPO_ROOT}/org"
 
 echo "=== Source Provenance ==="
 

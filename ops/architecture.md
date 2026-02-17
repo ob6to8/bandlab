@@ -19,7 +19,7 @@ Level 1 — ops/*.md (read the relevant doc for your task)
 │    ops/          — band-specific (crew config, contract format, etc.)
 │
 Level 2 — Data files (read on demand)
-   .state/*.json registries, show.json files, calendar files, contracts
+   org/*.json registries, .state/ derived indexes, show.json files, calendar files, contracts
 ```
 
 When consumed as a submodule, the private repo's CLAUDE.md provides band-specific context and references `bandlab/CLAUDE.md` for the base spec. The private repo's `ops/` supplements `bandlab/ops/` with band-specific details.
@@ -40,7 +40,7 @@ The CLI tools in `scripts/` are written in bash + jq. The reasons:
 
 Show metadata lives in individual `show.json` files (one per show directory). Scripts can query any show directly with jq. For cross-show queries (e.g. "all shows with guarantee > 10000"), the index aggregates all show data into one file:
 
-- `scripts/build-index.sh` merges all `show.json` files into `.state/shows.json`
+- `scripts/build-index.sh` merges all `show.json` files into `org/.state/shows.json`
 - The merge is a trivial `jq` operation — no parsing, no transformation
 - The index is regenerated when show data changes (run `./bandlab build:index`)
 - Individual `show.json` files are the source of truth
@@ -66,6 +66,6 @@ Move to Elixir when the system needs to be a **running service**, not just a CLI
 - **File watching.** Auto-rebuild indexes when files change, trigger workflows on new contracts.
 - **Concurrent operations.** The BEAM VM excels at many lightweight processes doing I/O.
 
-The file-based data model maps cleanly to Elixir's process model. Each show could be a GenServer. The `.state/` files could be backed by ETS tables. The markdown files stay as-is.
+The file-based data model maps cleanly to Elixir's process model. Each show could be a GenServer. The JSON registries could be backed by ETS tables. The markdown files stay as-is.
 
 This is a phase 2+ consideration. The shell foundation must work first.

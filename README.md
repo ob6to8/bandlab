@@ -87,7 +87,7 @@ Run `./my-band` with no args for an interactive menu, or pass a command directly
 |---|---|
 | `show:list` | List all shows with date, venue, guarantee, and status |
 | `show:info <id>` | Display details for a specific show |
-| `build:index` | Rebuild .state/shows.json index from show.json files |
+| `build:index` | Rebuild org/.state/shows.json index from show.json files |
 | `advance:contacts <id>` | Show ranked advancing contacts for a specific show |
 | `advance:status` | Show advancing status across all shows |
 | `audit:integrity` | Verify referential integrity across all state and data files |

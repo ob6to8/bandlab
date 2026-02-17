@@ -3,19 +3,23 @@
 set -euo pipefail
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
-STATE="${REPO_ROOT}/org/.state"
+ORG="${REPO_ROOT}/org"
 SHOWS_DIR="${REPO_ROOT}/org/touring/shows"
 RUNS_DIR="${REPO_ROOT}/org/touring/runs"
-META_OUT="${STATE}/dashboard-meta.json"
+META_OUT="${ORG}/.state/dashboard-meta.json"
 PORT=8026
 
 # ── Preflight checks ───────────────────────────────────────────────
-for f in shows.json people.json venues.json todos.json; do
-  if [ ! -f "${STATE}/${f}" ]; then
-    echo "Missing ${STATE}/${f} — run ./dirtclaw build:index first" >&2
+for f in people.json venues.json todos.json; do
+  if [ ! -f "${ORG}/${f}" ]; then
+    echo "Missing ${ORG}/${f}" >&2
     exit 1
   fi
 done
+if [ ! -f "${ORG}/.state/shows.json" ]; then
+  echo "Missing ${ORG}/.state/shows.json — run ./dirtclaw build:index first" >&2
+  exit 1
+fi
 
 echo "Building dashboard metadata..."
 
@@ -66,7 +70,7 @@ while IFS= read -r show_id; do
     --argjson csum "$has_contract_summary" \
     --argjson tech "$has_tech_pack" \
     '. + {($id): {"thread_md": $thread, "confirmed_md": $confirmed, "contract_pdf": $cpdf, "contract_summary": $csum, "tech_pack": $tech}}')
-done < <(jq -r 'keys[]' "${STATE}/shows.json")
+done < <(jq -r 'keys[]' "${ORG}/.state/shows.json")
 
 # ── Extract schedules from calendar files ─────────────────────────────
 # Reads YAML frontmatter from calendar .md files, extracts non-empty schedule arrays.
@@ -155,6 +159,6 @@ echo ""
 # Open browser after a short delay (server needs to be up first)
 (sleep 1 && open "http://localhost:${PORT}/dashboard/") &
 
-# Start HTTP server from repo root (serves org/.state/ and dashboard/)
+# Start HTTP server from repo root (serves org/ and dashboard/)
 cd "$REPO_ROOT"
 python3 -m http.server "$PORT"
