@@ -67,6 +67,21 @@ If it's just status tracking with no accumulated content, it stays in `todos.jso
 
 **promoter:** Person key of the primary promoter/purchaser contact, or `null` if not in the registry.
 
+## Source Provenance
+
+Every data record tracks where it came from via a `sources` array.
+
+**Where source files live:** Each show directory has a `source/` subdirectory holding primary source documents — contract PDFs, email exports, and any other original artifacts. Derived files (thread summaries, confirmed details) stay in their workflow directories (`advancing/`, `settlement/`).
+
+**The `sources` field** on `people.json` and `venues.json` entries is an array of provenance references:
+
+- **File paths** (relative to `org/`): `"touring/shows/s-2026-0304-charleston/source/DIRTWIRE_CharlestonPourHouse_DealMemo.pdf"`
+- **Special values**: `"manual"` (entered by hand), `"legacy"` (pre-provenance data), `"legacy:routing-csv"` (from routing spreadsheet import), `"legacy:contracts"` (from contract extraction, cross-venue)
+
+File-path sources must resolve to actual files on disk. The audit checks this.
+
+Shows implicitly reference their own `source/` directory — no `sources` field needed on `show.json`.
+
 ## Contract Sources
 
 Document your contract format in `ops/contract-format.md` in your private repo. Key sections typically include compensation, ages, merchandise terms, venue/production contacts, and special provisions.

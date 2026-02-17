@@ -185,6 +185,82 @@ while IFS=$'\t' read -r person_key org_ref; do
 done < <(jq -r 'to_entries[] | select(.value.org != null) | [.key, .value.org] | @tsv' "$PEOPLE")
 echo ""
 
+# ── Source Provenance ─────────────────────────────────────────────────
+
+ORG="${REPO_ROOT}/org"
+
+echo "=== Source Provenance ==="
+
+# Check people.json: every entry should have a sources array
+people_with=0
+people_without=0
+while read -r person_key; do
+  has_sources=$(jq -r --arg k "$person_key" '.[$k] | has("sources")' "$PEOPLE")
+  if [ "$has_sources" = "true" ]; then
+    people_with=$((people_with + 1))
+  else
+    people_without=$((people_without + 1))
+    fail "${person_key}: missing sources field in people.json"
+  fi
+done < <(jq -r 'keys[]' "$PEOPLE")
+
+if [ "$people_without" -eq 0 ]; then
+  pass "people.json: all ${people_with} entries have sources"
+fi
+
+# Check venues.json: every entry should have a sources array
+venues_with=0
+venues_without=0
+while read -r venue_key; do
+  has_sources=$(jq -r --arg k "$venue_key" '.[$k] | has("sources")' "$VENUES")
+  if [ "$has_sources" = "true" ]; then
+    venues_with=$((venues_with + 1))
+  else
+    venues_without=$((venues_without + 1))
+    fail "${venue_key}: missing sources field in venues.json"
+  fi
+done < <(jq -r 'keys[]' "$VENUES")
+
+if [ "$venues_without" -eq 0 ]; then
+  pass "venues.json: all ${venues_with} entries have sources"
+fi
+
+# Check that file-path sources resolve to real files
+# Special values (manual, legacy, legacy:*) are valid without file checks
+bad_paths=0
+good_paths=0
+while IFS=$'\t' read -r entry_key source_path; do
+  # Skip special values
+  case "$source_path" in
+    manual|legacy|legacy:*) continue ;;
+  esac
+
+  if [ -f "${ORG}/${source_path}" ]; then
+    good_paths=$((good_paths + 1))
+  else
+    bad_paths=$((bad_paths + 1))
+    fail "${entry_key}: source file not found: ${source_path}"
+  fi
+done < <(jq -r 'to_entries[] | .key as $k | .value.sources // [] | .[] | [$k, .] | @tsv' "$PEOPLE")
+
+while IFS=$'\t' read -r entry_key source_path; do
+  case "$source_path" in
+    manual|legacy|legacy:*) continue ;;
+  esac
+
+  if [ -f "${ORG}/${source_path}" ]; then
+    good_paths=$((good_paths + 1))
+  else
+    bad_paths=$((bad_paths + 1))
+    fail "${entry_key}: source file not found: ${source_path}"
+  fi
+done < <(jq -r 'to_entries[] | .key as $k | .value.sources // [] | .[] | [$k, .] | @tsv' "$VENUES")
+
+if [ "$bad_paths" -eq 0 ] && [ "$good_paths" -gt 0 ]; then
+  pass "all ${good_paths} file-path sources resolve"
+fi
+echo ""
+
 # ── Summary ───────────────────────────────────────────────────────────
 
 echo "=== Summary ==="
