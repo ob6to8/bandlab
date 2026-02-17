@@ -37,9 +37,9 @@ Within a show directory:
 If it's just status tracking with no accumulated content, it stays in `todos.json`. If it starts accumulating files (email chains, quotes, docs), it becomes a file or directory at the appropriate scope.
 
 **Tours, runs, and one-offs:**
-- A **tour** is the top-level grouping. It references all its shows — both run shows and one-offs.
-- A **run** is a consecutive sequence of shows within a tour (typically a weekly leg).
-- A **one-off** is a show that belongs to a tour but not to any run (e.g. a standalone festival). One-offs don't need their own directory type — they're just shows with `run: null` in show.json. The tour references them alongside the runs.
+- A **tour** is the top-level grouping. It references runs and one-offs by key.
+- A **run** is a multi-show consecutive sequence bounded by travel (`touring/runs/run-key/run.json`).
+- A **one-off** is a single-show logistics block bounded by travel (`touring/one-offs/one-off-key/one-off.json`). Same schema as run.json. Every show has exactly one non-null block reference: `run` or `one_off`.
 - Show directories hold all show content regardless of whether the show is in a run or a one-off.
 
 **Rule of thumb:** if you'd attach files to it, it's a directory. If you'd just check a box, it's a JSON entry.

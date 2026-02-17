@@ -49,7 +49,8 @@ org/
 │
 ├── touring/
 │   ├── tours/                   # Top-level tour groupings
-│   ├── runs/                    # Consecutive show sequences within a tour
+│   ├── runs/                    # Multi-show consecutive sequences (bounded by travel)
+│   ├── one-offs/                # Single-show logistics blocks (bounded by travel)
 │   ├── shows/                   # One directory per show
 │   ├── budgets/                 # Tour/run level budgets
 │   └── contacts.md              # Quick reference for touring contacts
@@ -301,6 +302,7 @@ s-YYYY-MMDD-city/
   "date": "YYYY-MM-DD",
   "venue": "venue-key",
   "run": "run-key or null",
+  "one_off": "one-off-key or null",
   "status": "potential|offered|confirmed|advanced|settled|cancelled",
   "guarantee": null,
   "door_split": null,
@@ -377,7 +379,7 @@ When generating show directories for the initial scaffold, create one example sh
 
 Path: `touring/runs/run-key/run.json`
 
-Runs are directories that hold `run.json` plus scoped todos (e.g. vehicle rental, lodging block).
+Runs are multi-show consecutive sequences bounded by travel. Each directory holds `run.json` plus scoped todos (e.g. vehicle rental, lodging block).
 
 ```json
 {
@@ -389,6 +391,25 @@ Runs are directories that hold `run.json` plus scoped todos (e.g. vehicle rental
   "notes": ""
 }
 ```
+
+### One-off Directories
+
+Path: `touring/one-offs/one-off-key/one-off.json`
+
+One-offs are single-show (or multi-set festival) logistics blocks bounded by travel. The date range spans from first arrival to last departure. Schema is identical to run.json.
+
+```json
+{
+  "id": "one-off-key",
+  "tour": "tour-key or null",
+  "dates": ["YYYY-MM-DD", "YYYY-MM-DD"],
+  "shows": ["show-key"],
+  "status": "routing|confirmed|in-progress|complete",
+  "notes": ""
+}
+```
+
+Every show has exactly one non-null logistics block reference: either `run` (multi-show) or `one_off` (single-show). Query both to find all logistics blocks.
 
 ### Tour Directories
 
@@ -402,7 +423,7 @@ Tours are directories that hold `tour.json` plus tour-scoped todos (e.g. crew tr
   "status": "planning|routing|confirmed|in-progress|complete",
   "dates": ["YYYY-MM-DD", "YYYY-MM-DD"],
   "runs": ["run-key", "..."],
-  "one_offs": ["show-key", "..."],
+  "one_offs": ["one-off-key", "..."],
   "shows": ["show-key", "..."],
   "notes": ""
 }

@@ -6,6 +6,7 @@ REPO_ROOT="$(git rev-parse --show-toplevel)"
 ORG="${REPO_ROOT}/org"
 SHOWS_DIR="${REPO_ROOT}/org/touring/shows"
 RUNS_DIR="${REPO_ROOT}/org/touring/runs"
+ONEOFFS_DIR="${REPO_ROOT}/org/touring/one-offs"
 META_OUT="${ORG}/.state/dashboard-meta.json"
 PORT=8026
 
@@ -23,8 +24,8 @@ fi
 
 echo "Building dashboard metadata..."
 
-# ── Build run name lookup ───────────────────────────────────────────
-# Maps run keys to short display names (strip "spring-2026-" prefix)
+# ── Build run/one-off name lookup ──────────────────────────────────
+# Maps run and one-off keys to short display names
 run_names="{}"
 for run_json in "${RUNS_DIR}"/*/run.json; do
   [ -f "$run_json" ] || continue
@@ -32,6 +33,13 @@ for run_json in "${RUNS_DIR}"/*/run.json; do
   # Strip tour prefix to get short name, e.g. "spring-2026-southeast" -> "southeast"
   short="${run_id##*-2026-}"
   run_names=$(echo "$run_names" | jq --arg k "$run_id" --arg v "$short" '. + {($k): $v}')
+done
+for oneoff_json in "${ONEOFFS_DIR}"/*/one-off.json; do
+  [ -f "$oneoff_json" ] || continue
+  oneoff_id=$(jq -r '.id' "$oneoff_json")
+  # Strip year suffix for short name, e.g. "envision-2026" -> "envision"
+  short="${oneoff_id%-2026}"
+  run_names=$(echo "$run_names" | jq --arg k "$oneoff_id" --arg v "$short" '. + {($k): $v}')
 done
 
 # ── Check advancing status and file existence for each show ─────────
