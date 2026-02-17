@@ -245,7 +245,10 @@ touring:
 schedule:
   - time: "HH:MM"
     item: "Load-in"
+    who: ["person-key"]
 ```
+
+`who` is an array of person keys from `people.json` indicating who is involved in this schedule item (e.g. who is on a flight, who is performing).
 
 When a travel day:
 ```yaml
