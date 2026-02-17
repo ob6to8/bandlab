@@ -35,7 +35,8 @@ while IFS=$'\t' read -r show_id date venue; do
     to_entries
     | map(select(
         .value.role == "advancing"
-        and (.value.org == $org_ref or .value.org == null)
+        and .value.org != null
+        and (.value.org | index($org_ref))
       ))
     | sort_by(.value.advancing_priority)
     | first

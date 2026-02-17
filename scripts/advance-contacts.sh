@@ -43,7 +43,8 @@ jq -r --arg venue "$venue" '
   to_entries
   | map(select(
       .value.role == "advancing"
-      and (.value.org == $org_ref or .value.org == null)
+      and .value.org != null
+      and (.value.org | index($org_ref))
     ))
   | sort_by(.value.advancing_priority)
   | .[]

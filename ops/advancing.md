@@ -31,7 +31,7 @@ Advancing contacts have `role: "advancing"` in `people.json`. Confirmation state
 | Field | Purpose |
 |---|---|
 | `role` | `"advancing"` for all advancing contacts |
-| `org` | Prefixed org reference: `"venue:venue-key"` or null for cross-venue contacts |
+| `org` | Array of prefixed org references: `["venue:venue-key"]`, or null for non-venue people (band, crew, agents). Multi-venue contacts get multiple entries. |
 | `advancing_priority` | 1-4 ranking (see table above) |
 | `date_added` | When this contact was added to the registry |
 | `notes` | Includes "Unconfirmed advancing contact." until confirmed; also contains contract title |
@@ -61,5 +61,5 @@ The touring party varies by geography and show type. Define your crew configurat
 ./bandlab advance:status
 
 # All advancing contacts, sorted by priority
-jq -r '[to_entries[] | select(.value.role == "advancing")] | sort_by(.value.advancing_priority) | .[] | [.value.advancing_priority, .value.name, .value.org, .value.contact.email] | @tsv' org/people.json
+jq -r '[to_entries[] | select(.value.role == "advancing")] | sort_by(.value.advancing_priority) | .[] | [.value.advancing_priority, .value.name, (.value.org // ["null"] | join(",")), .value.contact.email] | @tsv' org/people.json
 ```

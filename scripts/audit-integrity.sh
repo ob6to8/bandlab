@@ -182,7 +182,7 @@ while IFS=$'\t' read -r person_key org_ref; do
   else
     fail "${person_key} → ${org_ref} UNKNOWN org prefix (expected venue:, vendor:, or management:)"
   fi
-done < <(jq -r 'to_entries[] | select(.value.org != null) | [.key, .value.org] | @tsv' "$PEOPLE")
+done < <(jq -r 'to_entries[] | select(.value.org != null) | .key as $k | .value.org[] | [$k, .] | @tsv' "$PEOPLE")
 echo ""
 
 # ── Source Provenance ─────────────────────────────────────────────────
