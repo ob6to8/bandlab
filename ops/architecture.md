@@ -10,14 +10,19 @@ A new agent context orients itself through progressive disclosure:
 
 ```
 Level 0 — CLAUDE.md + MEMORY.md (auto-loaded every session)
+│  Band-specific CLAUDE.md references bandlab/CLAUDE.md for base spec
 │  Schema definitions, directory structure, current state, key patterns
 │
 Level 1 — ops/*.md (read the relevant doc for your task)
-│  Workflow procedures, conventions, architectural decisions
+│  Two locations when used as a submodule:
+│    bandlab/ops/  — generic workflows (advancing, conventions, architecture, glossary)
+│    ops/          — band-specific (crew config, contract format, etc.)
 │
 Level 2 — Data files (read on demand)
    .state/*.json registries, show.json files, calendar files, contracts
 ```
+
+When consumed as a submodule, the private repo's CLAUDE.md provides band-specific context and references `bandlab/CLAUDE.md` for the base spec. The private repo's `ops/` supplements `bandlab/ops/` with band-specific details.
 
 A new context's first reads: CLAUDE.md + MEMORY.md (automatic) → relevant ops/ doc. Total orientation cost: ~5K tokens.
 
