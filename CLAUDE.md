@@ -4,7 +4,7 @@
 
 1. Read the relevant `ops/` doc for your task — `advancing.md`, `conventions.md`, `architecture.md`
 2. CLI tools: run `./bandlab` for an interactive menu, or `./bandlab show:list` directly
-3. The `.state/shows.json` index aggregates all show.json data — rebuild with `./bandlab build:index`. Canonical registries (people, venues, vendors, todos) live directly in `org/`.
+3. The `touring/.state/shows.json` index aggregates all show.json data — rebuild with `./bandlab build:index`. Canonical registries (people, venues, vendors, todos) live in `org/`.
 
 ## What This Is
 
@@ -14,7 +14,7 @@ There is no database. The directory tree IS the data store. Every file is human-
 
 ## Why It's Designed This Way
 
-**Files over databases.** The system is designed for a small org (a band and its team), not enterprise scale. The data volume is small — hundreds of shows, not millions of rows. Files are portable, diffable with git, readable without tooling, and editable by humans or agents equally. A database may replace `.state/` in the future when concurrent automated writes become a problem (Slack bot + cron + manual sessions writing simultaneously), but the markdown content files should remain as-is permanently.
+**Files over databases.** The system is designed for a small org (a band and its team), not enterprise scale. The data volume is small — hundreds of shows, not millions of rows. Files are portable, diffable with git, readable without tooling, and editable by humans or agents equally. A database may replace `touring/.state/` in the future when concurrent automated writes become a problem (Slack bot + cron + manual sessions writing simultaneously), but the markdown content files should remain as-is permanently.
 
 **Entities are files, the calendar is the schedule, linking them is planning.** Shows, posts, and releases exist as standalone entities with their own metadata and content. They have no date until they're scheduled. Scheduling means linking the entity to a calendar date. This mirrors how bands actually work — you draft an announcement before you know when it's going out, you have a show offer before it's routed into a run.
 
@@ -31,29 +31,27 @@ Generate the following directory tree. Create all files with the frontmatter and
 ```
 org/
 ├── people.json                  # Canonical person registry
-├── venues.json                  # Canonical venue registry
 ├── vendors.json                 # Canonical vendor registry
 ├── todos.json                   # Canonical task list
-├── .state/                      # Derived/generated state
-│   ├── shows.json               # Generated index — run ./bandlab build:index
-│   └── last-sync.json
-│
-├── calendar/                    # One markdown file per day, all year
-│   ├── YYYY-01/
-│   │   ├── 01.md
-│   │   ├── 02.md
-│   │   └── ... (through 31.md)
-│   ├── YYYY-02/
-│   │   └── ... (through 28.md)
-│   └── ... (through YYYY-12/)
 │
 ├── touring/
+│   ├── shows/                   # One directory per show (s-YYYY-MMDD-city/)
 │   ├── tours/                   # Top-level tour groupings
 │   ├── runs/                    # Multi-show consecutive sequences (bounded by travel)
 │   ├── one-offs/                # Single-show logistics blocks (bounded by travel)
-│   ├── shows/                   # One directory per show
+│   ├── advancing/               # Band-level advancing resources
+│   │   └── source/
+│   │       └── riders/          # Club + festival rider files
 │   ├── budgets/                 # Tour/run level budgets
-│   └── contacts.md              # Quick reference for touring contacts
+│   ├── venues.json              # Canonical venue registry
+│   ├── calendar/                # One markdown file per day, all year
+│   │   ├── YYYY-01/
+│   │   │   ├── 01.md ... 31.md
+│   │   └── ... (through YYYY-12/)
+│   ├── contacts.md              # Quick reference for touring contacts
+│   └── .state/                  # Derived/generated state
+│       ├── shows.json           # Generated index — run ./bandlab build:index
+│       └── last-sync.json
 │
 ├── merch/
 │   ├── inventory.md
@@ -74,21 +72,10 @@ org/
 │   ├── catalog.md
 │   └── contacts.md
 │
-├── distro/
-│   ├── accounts.md
-│   ├── splits.md
-│   └── reporting.md
-│
-├── strategy/
-│   ├── overview.md
-│   ├── goals.md
-│   └── decisions/
-│
-├── comms/
-│   ├── slack/
-│   └── email/
-│
-└── briefings/
+└── distro/
+    ├── accounts.md
+    ├── splits.md
+    └── reporting.md
 ```
 
 ---
@@ -130,7 +117,7 @@ Initialize with an empty object `{}`.
 
 ### venues.json
 
-Path: `org/venues.json`
+Path: `org/touring/venues.json`
 
 Master list of venues. Accumulates institutional knowledge over time.
 
@@ -213,7 +200,7 @@ Initialize with an empty array `[]`.
 
 ### .state/last-sync.json
 
-Path: `org/.state/last-sync.json`
+Path: `org/touring/.state/last-sync.json`
 
 Timestamps for automated sync operations. Not relevant for the Claude Code prototype but the schema should exist.
 
@@ -229,7 +216,7 @@ Timestamps for automated sync operations. Not relevant for the Claude Code proto
 
 ### Calendar Files
 
-Path: `calendar/YYYY-MM/DD.md`
+Path: `touring/calendar/YYYY-MM/DD.md`
 
 Every day of the year gets a file. The frontmatter provides structured data for each domain. The body is freeform notes.
 
@@ -484,20 +471,6 @@ When deliverable dates are set, the corresponding calendar dates should referenc
 ---
 
 ## Agent Operations
-
-### Briefings
-
-Path: `briefings/YYYY-MM-DD.md`
-
-The agent generates daily briefings by scanning the full directory tree. A briefing should include:
-
-- **Today's schedule** — pulled from calendar file
-- **Upcoming dates** — next 7-14 days
-- **Open todos by domain** — from todos.json
-- **Audit flags** — mismatches between primary sources and working data
-- **Pending reviews** — contract summaries awaiting human approval
-- **Unlinked entities** — posts or releases in draft status with no scheduled date
-- **Items needing attention** — shows without contracts, runs with gaps, upcoming deadlines
 
 ### Audit
 

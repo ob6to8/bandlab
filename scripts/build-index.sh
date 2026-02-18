@@ -6,7 +6,7 @@ set -euo pipefail
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 SHOWS_DIR="${REPO_ROOT}/org/touring/shows"
-OUTPUT="${REPO_ROOT}/org/.state/shows.json"
+OUTPUT="${REPO_ROOT}/org/touring/.state/shows.json"
 
 # Merge all show.json files into a single object keyed by show ID.
 # jq reads each file, wraps it as {id: data}, then merges all into one object.

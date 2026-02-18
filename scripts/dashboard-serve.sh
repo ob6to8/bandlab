@@ -7,7 +7,7 @@ ORG="${REPO_ROOT}/org"
 SHOWS_DIR="${REPO_ROOT}/org/touring/shows"
 RUNS_DIR="${REPO_ROOT}/org/touring/runs"
 ONEOFFS_DIR="${REPO_ROOT}/org/touring/one-offs"
-META_OUT="${ORG}/.state/dashboard-meta.json"
+META_OUT="${ORG}/touring/.state/dashboard-meta.json"
 PORT=8026
 
 # ── Preflight checks ───────────────────────────────────────────────
@@ -17,8 +17,8 @@ for f in people.json venues.json todos.json; do
     exit 1
   fi
 done
-if [ ! -f "${ORG}/.state/shows.json" ]; then
-  echo "Missing ${ORG}/.state/shows.json — run ./dirtclaw build:index first" >&2
+if [ ! -f "${ORG}/touring/.state/shows.json" ]; then
+  echo "Missing ${ORG}/touring/.state/shows.json — run ./dirtclaw build:index first" >&2
   exit 1
 fi
 
@@ -78,13 +78,13 @@ while IFS= read -r show_id; do
     --argjson csum "$has_contract_summary" \
     --argjson tech "$has_tech_pack" \
     '. + {($id): {"thread_md": $thread, "confirmed_md": $confirmed, "contract_pdf": $cpdf, "contract_summary": $csum, "tech_pack": $tech}}')
-done < <(jq -r 'keys[]' "${ORG}/.state/shows.json")
+done < <(jq -r 'keys[]' "${ORG}/touring/.state/shows.json")
 
 # ── Extract schedules from calendar files ─────────────────────────────
 # Reads YAML frontmatter from calendar .md files, extracts non-empty schedule arrays.
 # Uses Python (already required for the HTTP server) with a simple regex parser
 # since our YAML is controlled and simple — no PyYAML dependency needed.
-CAL_DIR="${REPO_ROOT}/org/calendar"
+CAL_DIR="${REPO_ROOT}/org/touring/calendar"
 schedules=$(python3 -c "
 import os, re, json, sys
 

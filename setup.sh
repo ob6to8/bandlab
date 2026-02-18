@@ -19,14 +19,14 @@ echo "Scaffolding org/ directory tree..."
 
 # ── Data registries ──────────────────────────────────────────────────
 echo '{}' > "${ORG}/people.json"
-echo '{}' > "${ORG}/venues.json"
+echo '{}' > "${ORG}/touring/venues.json"
 echo '{}' > "${ORG}/vendors.json"
 echo '[]' > "${ORG}/todos.json"
 
 # ── Derived/generated state ─────────────────────────────────────────
-mkdir -p "${ORG}/.state"
-echo '{}' > "${ORG}/.state/shows.json"
-cat > "${ORG}/.state/last-sync.json" << 'EOF'
+mkdir -p "${ORG}/touring/.state"
+echo '{}' > "${ORG}/touring/.state/shows.json"
+cat > "${ORG}/touring/.state/last-sync.json" << 'EOF'
 {
   "slack": null,
   "gmail": null,
@@ -40,7 +40,7 @@ year=$(date +%Y)
 echo "Generating calendar for ${year}..."
 
 for month in $(seq -w 1 12); do
-  month_dir="${ORG}/calendar/${year}-${month}"
+  month_dir="${ORG}/touring/calendar/${year}-${month}"
   mkdir -p "${month_dir}"
 
   # Determine days in this month
@@ -103,14 +103,6 @@ touch "${ORG}/distro/accounts.md"
 touch "${ORG}/distro/splits.md"
 touch "${ORG}/distro/reporting.md"
 
-mkdir -p "${ORG}/strategy/decisions"
-touch "${ORG}/strategy/overview.md"
-touch "${ORG}/strategy/goals.md"
-
-mkdir -p "${ORG}/comms/slack"
-mkdir -p "${ORG}/comms/email"
-
-mkdir -p "${ORG}/briefings"
 
 # ── Example show ─────────────────────────────────────────────────────
 example_id="s-${year}-0101-example-city"
@@ -213,14 +205,14 @@ CONFEOF
 touch "${example_dir}/settlement/settlement.md"
 
 # ── Summary ──────────────────────────────────────────────────────────
-cal_count=$(find "${ORG}/calendar" -name "*.md" | wc -l | tr -d ' ')
+cal_count=$(find "${ORG}/touring/calendar" -name "*.md" | wc -l | tr -d ' ')
 echo ""
 echo "Done! Created:"
 echo "  - org/ with empty JSON registries (people, venues, vendors, todos)"
-echo "  - org/.state/ with derived state (shows index, sync timestamps)"
-echo "  - org/calendar/ with ${cal_count} day files for ${year}"
+echo "  - org/touring/.state/ with derived state (shows index, sync timestamps)"
+echo "  - org/touring/calendar/ with ${cal_count} day files for ${year}"
 echo "  - org/touring/shows/${example_id}/ (example show)"
-echo "  - All domain directories (merch, releases, socials, licensing, distro, strategy, comms, briefings)"
+echo "  - All domain directories (merch, releases, socials, licensing, distro)"
 echo ""
 echo "Next steps:"
 echo "  1. Delete the example show directory when you're ready"

@@ -15,8 +15,8 @@ for f in people.json venues.json todos.json; do
     exit 1
   fi
 done
-if [ ! -f "${ORG}/.state/shows.json" ]; then
-  echo "Missing ${ORG}/.state/shows.json — run ./dirtclaw build:index first" >&2
+if [ ! -f "${ORG}/touring/.state/shows.json" ]; then
+  echo "Missing ${ORG}/touring/.state/shows.json — run ./dirtclaw build:index first" >&2
   exit 1
 fi
 
@@ -70,14 +70,14 @@ while IFS= read -r show_id; do
     --argjson csum "$has_contract_summary" \
     --argjson tech "$has_tech_pack" \
     '. + {($id): {"thread_md": $thread, "confirmed_md": $confirmed, "contract_pdf": $cpdf, "contract_summary": $csum, "tech_pack": $tech}}')
-done < <(jq -r 'keys[]' "${ORG}/.state/shows.json")
+done < <(jq -r 'keys[]' "${ORG}/touring/.state/shows.json")
 
 # ── Build the combined data blob ────────────────────────────────────
 # This JSON object gets embedded in the HTML as `const DATA = ...`
 DATA=$(jq -n \
-  --slurpfile shows "${ORG}/.state/shows.json" \
+  --slurpfile shows "${ORG}/touring/.state/shows.json" \
   --slurpfile people "${ORG}/people.json" \
-  --slurpfile venues "${ORG}/venues.json" \
+  --slurpfile venues "${ORG}/touring/venues.json" \
   --slurpfile todos "${ORG}/todos.json" \
   --argjson run_names "$run_names" \
   --argjson adv_status "$adv_status" \

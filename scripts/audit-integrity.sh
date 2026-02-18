@@ -5,11 +5,11 @@ set -euo pipefail
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 ORG="${REPO_ROOT}/org"
 SHOWS_DIR="${REPO_ROOT}/org/touring/shows"
-CALENDAR="${REPO_ROOT}/org/calendar"
+CALENDAR="${REPO_ROOT}/org/touring/calendar"
 
-INDEX="${ORG}/.state/shows.json"
+INDEX="${ORG}/touring/.state/shows.json"
 PEOPLE="${ORG}/people.json"
-VENUES="${ORG}/venues.json"
+VENUES="${ORG}/touring/venues.json"
 errors=0
 warnings=0
 checks=0

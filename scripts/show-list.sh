@@ -3,7 +3,7 @@
 set -euo pipefail
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
-INDEX="${REPO_ROOT}/org/.state/shows.json"
+INDEX="${REPO_ROOT}/org/touring/.state/shows.json"
 
 if [ ! -f "$INDEX" ]; then
   echo "Index not found. Run: ./dirtclaw build:index" >&2
