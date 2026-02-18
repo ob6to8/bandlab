@@ -10,7 +10,7 @@ Development tasks for the tooling and infrastructure. These are NOT band operati
 
 ## Index Generation
 
-- [ ] Auto-rebuild `org/.state/shows.json` when show.json files change. Options: git hook, fswatch, or just document "run build:index after edits".
+- [ ] Auto-rebuild `org/.state/shows.json` when show.json files change. Options: git hook, fswatch, or just document "run build-index after edits".
 - [ ] Consider whether `org/.state/shows.json` should be git-tracked or .gitignored (generated artifact vs portable state).
 
 ## Future Scripts

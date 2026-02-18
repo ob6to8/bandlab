@@ -49,7 +49,7 @@ Symlink bandlab's CLI into your repo root:
 ln -s bandlab/bandlab my-band
 ```
 
-Now you can run `./my-band show:list`, `./my-band audit:integrity`, etc.
+Now you can run `./my-band shows`, `./my-band audit`, etc.
 
 ### 5. Configure your band
 
@@ -85,13 +85,18 @@ Run `./my-band` with no args for an interactive menu, or pass a command directly
 
 | Command | Description |
 |---|---|
-| `show:list` | List all shows with date, venue, guarantee, and status |
-| `show:info <id>` | Display details for a specific show |
-| `build:index` | Rebuild org/.state/shows.json index from show.json files |
-| `advance:contacts <id>` | Show ranked advancing contacts for a specific show |
-| `advance:status` | Show advancing status across all shows |
-| `audit:integrity` | Verify referential integrity across all state and data files |
-| `export:dashboard` | Generate a static HTML dashboard from show/todo/venue data |
+| `shows` | List all shows with date, venue, guarantee, and status |
+| `show <id>` | Display details for a specific show |
+| `build-index` | Rebuild org/.state/shows.json index from show.json files |
+| `advance-contacts <id>` | Show ranked advancing contacts for a specific show |
+| `advance-status` | Show advancing status across all shows |
+| `advance` | Show next advancing actions needed across shows |
+| `audit` | Verify referential integrity across all state and data files |
+| `dashboard-export` | Generate a static HTML dashboard from show/todo/venue data |
+| `dashboard` | Launch live dashboard (builds meta, starts local server) |
+| `runs` | List runs and one-offs with dates, shows, and status |
+| `todos [filter...]` | List todos with optional filters |
+| `help` | List all available commands and skills |
 
 ## Requirements
 

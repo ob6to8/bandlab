@@ -42,7 +42,7 @@ Show metadata lives in individual `show.json` files (one per show directory). Sc
 
 - `scripts/build-index.sh` merges all `show.json` files into `org/.state/shows.json`
 - The merge is a trivial `jq` operation — no parsing, no transformation
-- The index is regenerated when show data changes (run `./bandlab build:index`)
+- The index is regenerated when show data changes (run `./bandlab build-index`)
 - Individual `show.json` files are the source of truth
 
 Since both the source files and the index are JSON, there is no format translation and no drift risk. Scripts can read individual show files or the aggregate index depending on the use case.
