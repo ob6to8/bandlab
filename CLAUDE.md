@@ -3,8 +3,8 @@
 ## Quick Start (for new agent contexts)
 
 1. Read the relevant `ops/` doc for your task — `advancing.md`, `conventions.md`, `architecture.md`
-2. CLI tools: run `./bandlab` for an interactive menu, or `./bandlab show:list` directly
-3. The `touring/.state/shows.json` index aggregates all show.json data — rebuild with `./bandlab build:index`. Canonical registries (people, venues, vendors, todos) live in `org/`.
+2. CLI tools: run `./bandlab` for an interactive menu, or `./bandlab shows` directly
+3. The `touring/.state/shows.json` index aggregates all show.json data — rebuild with `./bandlab build-index`. Canonical registries (people, venues, vendors, todos) live in `org/`.
 
 ## What This Is
 
@@ -50,7 +50,7 @@ org/
 │   │   └── ... (through YYYY-12/)
 │   ├── contacts.md              # Quick reference for touring contacts
 │   └── .state/                  # Derived/generated state
-│       ├── shows.json           # Generated index — run ./bandlab build:index
+│       ├── shows.json           # Generated index — run ./bandlab build-index
 │       └── last-sync.json
 │
 ├── merch/

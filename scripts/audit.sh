@@ -62,7 +62,7 @@ for show_dir in "${SHOWS_DIR}"/s-*/; do
   if [ "$in_index" = "true" ]; then
     pass "${show_id}: dir + show.json + in index"
   else
-    fail "${show_id}: has show.json but NOT in index (run build:index)"
+    fail "${show_id}: has show.json but NOT in index (run build-index)"
   fi
 done
 

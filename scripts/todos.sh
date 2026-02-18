@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # desc: List todos with optional filters
-# usage: todo-list.sh [filter...]
+# usage: todos.sh [filter...]
 set -euo pipefail
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"

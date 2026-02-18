@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # desc: Display details for a specific show
-# usage: show-info.sh <show-id-or-partial>
+# usage: show.sh <show-id-or-partial>
 set -euo pipefail
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
@@ -9,12 +9,12 @@ VENUES="${REPO_ROOT}/org/touring/venues.json"
 SHOWS_DIR="${REPO_ROOT}/org/touring/shows"
 
 if [ ! -f "$INDEX" ]; then
-  echo "Index not found. Run: ./dirtclaw build:index" >&2
+  echo "Index not found. Run: ./dirtclaw build-index" >&2
   exit 1
 fi
 
 if [ $# -lt 1 ]; then
-  echo "Usage: show-info.sh <show-id-or-partial>" >&2
+  echo "Usage: show.sh <show-id-or-partial>" >&2
   exit 1
 fi
 
