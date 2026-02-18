@@ -96,7 +96,7 @@ Run `./my-band` with no args for an interactive menu, or pass a command directly
 | `dashboard` | Launch live dashboard (builds meta, starts local server) |
 | `runs` | List runs and one-offs with dates, shows, and status |
 | `todos [filter...]` | List todos with optional filters |
-| `help` | List all available commands and skills |
+| `list` | List all available commands and skills |
 
 ## Requirements
 

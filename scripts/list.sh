@@ -28,11 +28,11 @@ echo ""
 echo "Run: ./dirtclaw <command> [args]"
 
 # ── Skills ────────────────────────────────────────────────────────────
-# If .claude/skills/ exists, list available /slash skills
+# If .claude/skills/ exists, list available skills
 
 if [ -d "$SKILLS_DIR" ]; then
   echo ""
-  echo "  slash skills (use as /name in Claude Code)"
+  echo "  skills (use as /name in Claude Code)"
   echo "  ─────────────────────────────────────────────"
   echo ""
 
