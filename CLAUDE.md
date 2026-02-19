@@ -304,10 +304,22 @@ s-YYYY-MMDD-city/
   "advance": {
     "hospitality": "",
     "backline": "",
-    "merch_cut": null
+    "merch_cut": null,
+    "parking": ""
+  },
+  "_provenance": {
+    "source/FILENAME.pdf": {
+      "extracted": "YYYY-MM-DD",
+      "fields": ["guarantee", "door_split", "ages", "..."]
+    },
+    "manual:person-key:YYYY-MM-DD": {
+      "fields": ["set_time", "load_in"]
+    }
   }
 }
 ```
+
+- `_provenance`: Maps source documents to the fields they substantiate. Underscore-prefixed so jq queries and existing scripts ignore it. Keys are paths relative to the show directory, or special values: `"manual:<person>:<date>"`, `"legacy"`, `"legacy:routing-csv"`. Each entry has `extracted` (ISO date) and `fields` (array of field names from show.json that this source substantiates). See `ops/provenance-plan.md` for the full design.
 
 **source/summary.md frontmatter:**
 ```yaml

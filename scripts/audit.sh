@@ -259,6 +259,45 @@ if [ "$bad_paths" -eq 0 ] && [ "$good_paths" -gt 0 ]; then
 fi
 echo ""
 
+# ── Source Provenance — Shows ────────────────────────────────────────
+
+echo "=== Source Provenance — Shows ==="
+
+shows_with_prov=0
+shows_without_prov=0
+while read -r show_id; do
+  show_file="${SHOWS_DIR}/${show_id}/show.json"
+  [ ! -f "$show_file" ] && continue
+
+  has_prov=$(jq 'has("_provenance")' "$show_file")
+  if [ "$has_prov" = "true" ]; then
+    shows_with_prov=$((shows_with_prov + 1))
+
+    # Check that source file paths in _provenance resolve
+    while IFS=$'\t' read -r prov_key; do
+      case "$prov_key" in
+        manual:*|legacy|legacy:*) continue ;;
+      esac
+      if [ -f "${SHOWS_DIR}/${show_id}/${prov_key}" ]; then
+        pass "${show_id}: ${prov_key} exists"
+      else
+        fail "${show_id}: provenance file not found: ${prov_key}"
+      fi
+    done < <(jq -r '._provenance | keys[]' "$show_file")
+  else
+    shows_without_prov=$((shows_without_prov + 1))
+    warn "${show_id}: missing _provenance"
+  fi
+done < <(jq -r 'keys[]' "$INDEX")
+
+total_shows=$((shows_with_prov + shows_without_prov))
+if [ "$total_shows" -gt 0 ]; then
+  pct=$((shows_with_prov * 100 / total_shows))
+  echo "  ${shows_with_prov}/${total_shows} shows with provenance (${pct}%)"
+  checks=$((checks + 1))
+fi
+echo ""
+
 # ── Summary ───────────────────────────────────────────────────────────
 
 echo "=== Summary ==="
