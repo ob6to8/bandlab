@@ -301,6 +301,7 @@ s-YYYY-MMDD-city/
   "wp": null,
   "support": null,
   "tour": "tour-key or null",
+  "touring_party": ["person-key", "..."],
   "advance": {
     "hospitality": "",
     "backline": "",
