@@ -292,6 +292,7 @@ s-YYYY-MMDD-city/
   "one_off": "one-off-key or null",
   "status": "potential|offered|confirmed|advanced|settled|cancelled",
   "guarantee": null,
+  "canada_amount": null,
   "door_split": null,
   "promoter": "person-key",
   "ages": "all-ages|18+|21+",
@@ -312,6 +313,7 @@ s-YYYY-MMDD-city/
 }
 ```
 
+- `canada_amount`: Guarantee in CAD for Canadian shows. The `guarantee` field always stores USD; this field stores the original CAD amount. Null for non-Canadian shows.
 - `sets`: Array of `{"date": "YYYY-MM-DD", "time": "HH:MM-HH:MM", "stage": "Stage Name"}` objects for multi-set festivals. Null for single-set shows.
 - `routing_notes`: Free-text routing context (e.g. border crossing notes, long drive warnings). Null when not needed.
 

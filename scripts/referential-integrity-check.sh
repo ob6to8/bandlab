@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# desc: Verify referential integrity across all state and data files
+# desc: Check that all keys resolve, files exist, and cross-references are valid
 set -euo pipefail
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
