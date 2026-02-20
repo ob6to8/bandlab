@@ -109,7 +109,7 @@ The canonical registry of every person in the system. Band members, crew, manage
 
 - `role`: This person's role relative to your band. Examples: `"advancing"` (advancing contact for a show), `"promoter"`, `"production"`, `"venue-contact"`, `"photographer"`, `"booking-agent"`, `"band"`, `"management"`, `"crew"`. For advancing contacts, unconfirmed status is noted in `notes` (e.g. "Unconfirmed advancing contact.").
 - `org`: Array of prefixed keys linking to the organizations this person belongs to. `"venue:venue-key"` references `venues.json`, `"vendor:vendor-key"` references `vendors.json`. Null if the person isn't linked to a registered org (band, crew, agents). A person can belong to multiple orgs (e.g. a show advance who handles multiple venues gets `["venue:venue-a", "venue:venue-b"]`).
-- `advancing_priority`: Integer 1-4 ranking for advancing outreach order. 1 = Show Advance, 2 = Venue Contact, 3 = Production, 4 = Promoter. Null for non-advancing contacts. See `ops/advancing.md` for details.
+- `advancing_priority`: Integer 1-4 ranking for advancing outreach order. 1 = Show Advance, 2 = Venue Contact, 3 = Production, 4 = Promoter. Null for non-advancing contacts. See `ops/domain/advancing.md` for details.
 - `date_added`: ISO date string (YYYY-MM-DD) when this person was added to the registry. Null for legacy entries.
 - `sources`: Array of provenance references. Paths are relative to `org/` (e.g. `"touring/shows/s-2026-0304-charleston/source/DIRTWIRE_CharlestonPourHouse_DealMemo.pdf"`). Special values: `"manual"` (band/crew entered by hand), `"legacy"` (pre-provenance data), `"legacy:routing-csv"` (from routing spreadsheet import), `"legacy:contracts"` (from contract extraction, cross-venue).
 

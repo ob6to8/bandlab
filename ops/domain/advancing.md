@@ -49,7 +49,7 @@ Show status progresses: `confirmed` → `advanced` (once advancing is complete).
 
 ## Crew Assignments
 
-The touring party varies by geography and show type. Define your crew configurations in your private repo (e.g. `ops/crew-config.md`). This determines who to list in the advancing email.
+The touring party varies by geography and show type. Define your crew configurations in your private repo (e.g. `ops/domain/crew.md`). This determines who to list in the advancing email.
 
 ## Querying
 

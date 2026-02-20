@@ -84,4 +84,4 @@ Shows implicitly reference their own `source/` directory — no `sources` field 
 
 ## Contract Sources
 
-Document your contract format in `ops/contract-format.md` in your private repo. Key sections typically include compensation, ages, merchandise terms, venue/production contacts, and special provisions.
+Document your contract format in `ops/domain/contracts.md` in your private repo. Key sections typically include compensation, ages, merchandise terms, venue/production contacts, and special provisions.
