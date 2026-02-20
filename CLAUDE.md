@@ -302,6 +302,8 @@ s-YYYY-MMDD-city/
   "support": null,
   "tour": "tour-key or null",
   "touring_party": ["person-key", "..."],
+  "sets": null,
+  "routing_notes": null,
   "advance": {
     "hospitality": "",
     "backline": "",
@@ -309,6 +311,9 @@ s-YYYY-MMDD-city/
   }
 }
 ```
+
+- `sets`: Array of `{"date": "YYYY-MM-DD", "time": "HH:MM-HH:MM", "stage": "Stage Name"}` objects for multi-set festivals. Null for single-set shows.
+- `routing_notes`: Free-text routing context (e.g. border crossing notes, long drive warnings). Null when not needed.
 
 **source/summary.md frontmatter:**
 ```yaml
