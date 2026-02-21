@@ -180,6 +180,7 @@ Canonical task list. The agent reads and writes this. Syncs to external surfaces
     "source": "Description of where this todo originated",
     "created": "YYYY-MM-DD",
     "updated": "YYYY-MM-DD",
+    "blocked_by": ["todo-id"],
     "notes": "",
     "history": [
       {"date": "YYYY-MM-DD", "entry": "What happened"}
@@ -191,6 +192,7 @@ Canonical task list. The agent reads and writes this. Syncs to external surfaces
 - `category`: Freeform string for sub-classification within a domain (e.g. `"show-documentation"`, `"advancing"`, `"settlement"`). Null when not needed.
 - `show`: Key into shows index when this todo relates to a specific show. Null otherwise.
 - `owners`: Array of person keys (supports multiple owners).
+- `blocked_by`: Array of todo IDs that must be completed before this todo can proceed. Null or omitted when not blocked. A todo with `blocked_by` entries where any referenced todo is not `"done"` is effectively blocked.
 - `source`: Verbatim name of the originating thread/channel/context, prefixed by type. e.g. `"email:Festival Name // Topic"`, `"slack:2026-02-10"`, `"advancing:s-2026-0315-denver"`, `"manual"`.
 - `updated`: ISO date, updated whenever any field on this todo changes.
 - `notes`: Current-state summary. Overwritten as the situation evolves.

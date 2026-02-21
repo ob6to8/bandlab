@@ -198,6 +198,46 @@ for field in $actual_fields; do
 done
 echo ""
 
+# ── Todo schema check ──────────────────────────────────────────────
+
+echo "=== Todo Schema vs Reality ==="
+
+TODOS="${REPO_ROOT}/org/todos.json"
+
+if [ -f "$TODOS" ]; then
+  actual_todo_fields=$(jq -r '[.[] | keys[]] | unique[]' "$TODOS" | sort -u)
+  todo_schema_fields="id task domain category show owners status due blocked_by source created updated notes history"
+
+  for field in $actual_todo_fields; do
+    found=false
+    for sf in $todo_schema_fields; do
+      if [ "$field" = "$sf" ]; then
+        found=true
+        break
+      fi
+    done
+    if [ "$found" = true ]; then
+      pass "todo field '${field}' is in schema"
+    else
+      warn "todo field '${field}' found in todos.json but NOT in documented schema"
+    fi
+  done
+
+  # Check blocked_by references point to valid todo IDs
+  todo_ids=$(jq -r '.[].id' "$TODOS")
+  blocked_refs=$(jq -r '.[] | select(.blocked_by != null) | .blocked_by[]' "$TODOS" 2>/dev/null || true)
+  for ref in $blocked_refs; do
+    if echo "$todo_ids" | grep -q "^${ref}$"; then
+      pass "blocked_by ref '${ref}' resolves to valid todo"
+    else
+      fail "blocked_by ref '${ref}' does NOT resolve to any todo"
+    fi
+  done
+else
+  warn "todos.json not found"
+fi
+echo ""
+
 # ── Summary ─────────────────────────────────────────────────────────
 
 echo "=== Summary ==="
