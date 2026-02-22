@@ -18,7 +18,7 @@ for f in people.json venues.json todos.json; do
   fi
 done
 if [ ! -f "${ORG}/touring/.state/shows.json" ]; then
-  echo "Missing ${ORG}/touring/.state/shows.json — run ./dirtclaw build-index first" >&2
+  echo "Missing ${ORG}/touring/.state/shows.json — run ./bandlab-cli build-index first" >&2
   exit 1
 fi
 

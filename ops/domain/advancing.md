@@ -49,16 +49,16 @@ Show status progresses: `confirmed` → `advanced` (once advancing is complete).
 
 ## Crew Assignments
 
-The touring party varies by geography and show type. Define your crew configurations in your private repo (e.g. `ops/crew-config.md`). This determines who to list in the advancing email.
+The touring party varies by geography and show type. Define your crew configurations in your private repo (e.g. `ops/domain/crew.md`). This determines who to list in the advancing email.
 
 ## Querying
 
 ```bash
 # Ranked contacts for a specific show
-./bandlab advance-contacts s-2026-0315-denver
+./bandlab-cli advance-contacts s-2026-0315-denver
 
 # Which shows still need advancing
-./bandlab advance-status
+./bandlab-cli advance-status
 
 # All advancing contacts, sorted by priority
 jq -r '[to_entries[] | select(.value.role == "advancing")] | sort_by(.value.advancing_priority) | .[] | [.value.advancing_priority, .value.name, (.value.org // ["null"] | join(",")), .value.contact.email] | @tsv' org/people.json

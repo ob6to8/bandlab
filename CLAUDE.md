@@ -3,8 +3,8 @@
 ## Quick Start (for new agent contexts)
 
 1. Read the relevant `ops/` doc for your task — `advancing.md`, `conventions.md`, `architecture.md`
-2. CLI tools: run `./bandlab` for an interactive menu, or `./bandlab shows` directly
-3. The `touring/.state/shows.json` index aggregates all show.json data — rebuild with `./bandlab build-index`. Canonical registries (people, venues, vendors, todos) live in `org/`.
+2. CLI tools: run `./bandlab-cli` for an interactive menu, or `./bandlab-cli shows` directly
+3. The `touring/.state/shows.json` index aggregates all show.json data — rebuild with `./bandlab-cli build-index`. Canonical registries (people, venues, vendors, todos) live in `org/`.
 
 ## What This Is
 
@@ -50,7 +50,7 @@ org/
 │   │   └── ... (through YYYY-12/)
 │   ├── contacts.md              # Quick reference for touring contacts
 │   └── .state/                  # Derived/generated state
-│       ├── shows.json           # Generated index — run ./bandlab build-index
+│       ├── shows.json           # Generated index — run ./bandlab-cli build-index
 │       └── last-sync.json
 │
 ├── merch/
@@ -109,7 +109,7 @@ The canonical registry of every person in the system. Band members, crew, manage
 
 - `role`: This person's role relative to your band. Examples: `"advancing"` (advancing contact for a show), `"promoter"`, `"production"`, `"venue-contact"`, `"photographer"`, `"booking-agent"`, `"band"`, `"management"`, `"crew"`. For advancing contacts, unconfirmed status is noted in `notes` (e.g. "Unconfirmed advancing contact.").
 - `org`: Array of prefixed keys linking to the organizations this person belongs to. `"venue:venue-key"` references `venues.json`, `"vendor:vendor-key"` references `vendors.json`. Null if the person isn't linked to a registered org (band, crew, agents). A person can belong to multiple orgs (e.g. a show advance who handles multiple venues gets `["venue:venue-a", "venue:venue-b"]`).
-- `advancing_priority`: Integer 1-4 ranking for advancing outreach order. 1 = Show Advance, 2 = Venue Contact, 3 = Production, 4 = Promoter. Null for non-advancing contacts. See `ops/advancing.md` for details.
+- `advancing_priority`: Integer 1-4 ranking for advancing outreach order. 1 = Show Advance, 2 = Venue Contact, 3 = Production, 4 = Promoter. Null for non-advancing contacts. See `ops/domain/advancing.md` for details.
 - `date_added`: ISO date string (YYYY-MM-DD) when this person was added to the registry. Null for legacy entries.
 - `sources`: Array of provenance references. Paths are relative to `org/` (e.g. `"touring/shows/s-2026-0304-charleston/source/DIRTWIRE_CharlestonPourHouse_DealMemo.pdf"`). Special values: `"manual"` (band/crew entered by hand), `"legacy"` (pre-provenance data), `"legacy:routing-csv"` (from routing spreadsheet import), `"legacy:contracts"` (from contract extraction, cross-venue).
 
@@ -180,6 +180,7 @@ Canonical task list. The agent reads and writes this. Syncs to external surfaces
     "source": "Description of where this todo originated",
     "created": "YYYY-MM-DD",
     "updated": "YYYY-MM-DD",
+    "blocked_by": ["todo-id"],
     "notes": "",
     "history": [
       {"date": "YYYY-MM-DD", "entry": "What happened"}
@@ -191,6 +192,7 @@ Canonical task list. The agent reads and writes this. Syncs to external surfaces
 - `category`: Freeform string for sub-classification within a domain (e.g. `"show-documentation"`, `"advancing"`, `"settlement"`). Null when not needed.
 - `show`: Key into shows index when this todo relates to a specific show. Null otherwise.
 - `owners`: Array of person keys (supports multiple owners).
+- `blocked_by`: Array of todo IDs that must be completed before this todo can proceed. Null or omitted when not blocked. A todo with `blocked_by` entries where any referenced todo is not `"done"` is effectively blocked.
 - `source`: Verbatim name of the originating thread/channel/context, prefixed by type. e.g. `"email:Festival Name // Topic"`, `"slack:2026-02-10"`, `"advancing:s-2026-0315-denver"`, `"manual"`.
 - `updated`: ISO date, updated whenever any field on this todo changes.
 - `notes`: Current-state summary. Overwritten as the situation evolves.
@@ -292,6 +294,7 @@ s-YYYY-MMDD-city/
   "one_off": "one-off-key or null",
   "status": "potential|offered|confirmed|advanced|settled|cancelled",
   "guarantee": null,
+  "canada_amount": "$CAD amount or null",
   "door_split": null,
   "promoter": "person-key",
   "ages": "all-ages|18+|21+",
@@ -300,10 +303,10 @@ s-YYYY-MMDD-city/
   "ticket_scaling": null,
   "wp": null,
   "support": null,
-  "canada_amount": "$CAD amount or null",
-  "routing_notes": "free-text or null",
-  "sets": null,
   "tour": "tour-key or null",
+  "touring_party": ["person-key", "..."],
+  "sets": null,
+  "routing_notes": "free-text or null",
   "advance": {
     "hospitality": "",
     "backline": "",

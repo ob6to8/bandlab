@@ -9,7 +9,7 @@ VENUES="${REPO_ROOT}/org/touring/venues.json"
 SHOWS_DIR="${REPO_ROOT}/org/touring/shows"
 
 if [ ! -f "$INDEX" ]; then
-  echo "Index not found. Run: ./dirtclaw build-index" >&2
+  echo "Index not found. Run: ./bandlab-cli build-index" >&2
   exit 1
 fi
 

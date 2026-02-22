@@ -111,7 +111,7 @@ Run `./my-band` with no args for an interactive menu, or pass a command directly
 - **The todo owns the relationship** — one place to write, one place to query
 - **Primary sources ground working data** — contracts and confirmations are truth; show.json is mutable
 
-See `ops/architecture.md` for the full rationale.
+See `ops/systems/architecture.md` for the full rationale.
 
 ## License
 
