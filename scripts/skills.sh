@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# desc: List all available dirtclaw commands and skills
+# desc: List all available commands and skills
 set -euo pipefail
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
@@ -7,7 +7,7 @@ SCRIPTS_DIR="${REPO_ROOT}/bandlab/scripts"
 SKILLS_DIR="${REPO_ROOT}/.claude/skills"
 
 echo ""
-echo "  dirtclaw — available commands"
+echo "  bandlab — available commands"
 echo "  ─────────────────────────────────"
 echo ""
 
@@ -25,7 +25,7 @@ for script in "${SCRIPTS_DIR}"/*.sh; do
 done
 
 echo ""
-echo "Run: ./dirtclaw <command> [args]"
+echo "Run: ./bandlab-cli <command> [args]"
 
 # ── Skills ────────────────────────────────────────────────────────────
 # If .claude/skills/ exists, list available skills

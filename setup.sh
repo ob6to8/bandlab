@@ -1,18 +1,47 @@
 #!/usr/bin/env bash
-# setup.sh — Scaffold the org/ directory tree for a new band repo.
+# setup.sh — Set up a new band repo using the bandlab framework.
 # Run from the repo root: bash bandlab/setup.sh
-# Creates calendar files, empty state JSON, example show, and all domain directories.
+# Generates CLI launcher, symlinks skills, and scaffolds org/ directory tree.
 set -euo pipefail
 
 # Determine the repo root (parent of the bandlab directory this script lives in)
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
+# ── CLI launcher ──────────────────────────────────────────────────────
+if [ ! -f "${REPO_ROOT}/bandlab-cli" ]; then
+  cp "${SCRIPT_DIR}/templates/bandlab-cli" "${REPO_ROOT}/bandlab-cli"
+  chmod +x "${REPO_ROOT}/bandlab-cli"
+  echo "Created ./bandlab-cli"
+else
+  echo "./bandlab-cli already exists, skipping"
+fi
+
+# ── Skill symlinks ───────────────────────────────────────────────────
+mkdir -p "${REPO_ROOT}/.claude/skills"
+link_count=0
+for skill_dir in "${SCRIPT_DIR}/.claude/skills"/*/; do
+  [ -d "$skill_dir" ] || continue
+  skill_name=$(basename "$skill_dir")
+  target="../../bandlab/.claude/skills/${skill_name}"
+  link="${REPO_ROOT}/.claude/skills/${skill_name}"
+  if [ ! -L "$link" ]; then
+    ln -sf "$target" "$link"
+    link_count=$((link_count + 1))
+  fi
+done
+if [ "$link_count" -gt 0 ]; then
+  echo "Linked ${link_count} skills to .claude/skills/"
+else
+  echo "All skill symlinks already exist, skipping"
+fi
+
+# ── Org directory scaffolding ─────────────────────────────────────────
 ORG="${REPO_ROOT}/org"
 
 if [ -d "${ORG}" ]; then
-  echo "org/ directory already exists. Aborting to avoid overwriting data." >&2
-  exit 1
+  echo "org/ already exists, skipping scaffolding"
+  exit 0
 fi
 
 echo "Scaffolding org/ directory tree..."
@@ -217,4 +246,4 @@ echo ""
 echo "Next steps:"
 echo "  1. Delete the example show directory when you're ready"
 echo "  2. Add your venues, people, and shows"
-echo "  3. Run ./bandlab build-index to generate the shows index"
+echo "  3. Run ./bandlab-cli build-index to generate the shows index"

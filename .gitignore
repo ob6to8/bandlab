@@ -7,5 +7,6 @@ assets/
 # Generated artifacts
 dashboard.html
 
-# Claude Code local settings
-.claude/
+# Claude Code local settings (but not skills — those are framework-owned)
+.claude/*
+!.claude/skills/
