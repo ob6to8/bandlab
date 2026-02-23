@@ -348,12 +348,16 @@ if [ -n "$tour" ]; then
       has_prod=$(echo "$tour_json" | jq 'has("production")')
       if [ "$has_prod" = "true" ]; then
         prod_stands=$(n "$(echo "$tour_json" | jq -r '.production.stands_venue')")
+        prod_front_fills=$(n "$(echo "$tour_json" | jq -r '.production.front_fills')")
         prod_mics_v=$(n "$(echo "$tour_json" | jq -r '.production.mics_venue')")
 
         hline
         tsection "BACKLINE: Needed"
         hline
         trow_t "Stands" "$prod_stands" "production.stands_venue"
+        if [ -n "$prod_front_fills" ]; then
+          trow_t "Front Fills" "$prod_front_fills" "production.front_fills"
+        fi
         trow_t "Mics" "$prod_mics_v" "production.mics_venue"
 
         prod_mics_c=$(n "$(echo "$tour_json" | jq -r '.production.mics_carried')")
