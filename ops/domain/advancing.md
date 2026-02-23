@@ -2,7 +2,7 @@
 
 ## Overview
 
-Advancing is the process of confirming show logistics with the venue before the date. It covers load-in times, soundcheck, hospitality, backline, parking, wifi, and anything else needed for a smooth show day.
+Advancing is the process of confirming show logistics with the venue before the date. It populates the `advance` block in show.json — schedule, hospitality, backline, merch terms, parking, showers, loading, guest comps, wifi, labor, crew day, DOS contacts, hotels, settlement, and ticket count. See bandlab/CLAUDE.md for the full 18-field schema.
 
 ## Contact Priority
 
