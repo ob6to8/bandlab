@@ -3,6 +3,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# shellcheck source=lib/config.sh
 source "${SCRIPT_DIR}/lib/config.sh" && load_config
 
 INDEX="${REPO_ROOT}/$(cfg '.entities.shows.index_path')"
@@ -13,25 +14,27 @@ if [ ! -f "$INDEX" ]; then
   exit 1
 fi
 
-printf "%-14s %-12s %-30s %10s  %s\n" "SHOW ID" "DATE" "VENUE" "GUARANTEE" "STATUS"
-printf "%-14s %-12s %-30s %10s  %s\n" "-------" "----" "-----" "---------" "------"
+{
+  printf "%s\t%s\t%s\t%s\t%s\n" "SHOW ID" "DATE" "VENUE" "GUARANTEE" "STATUS"
+  printf "%s\t%s\t%s\t%s\t%s\n" "-------" "----" "-----" "---------" "------"
 
-jq -r '
-  to_entries
-  | sort_by(.value.date)
-  | .[]
-  | [
-      .key,
-      .value.date,
-      .value.venue,
-      (if .value.guarantee then ("$" + (.value.guarantee | tostring)) else "% deal" end),
-      .value.status
-    ]
-  | @tsv
-' "$INDEX" | while IFS=$'\t' read -r id date venue guarantee status; do
-  printf "%-14s %-12s %-30s %10s  %s\n" \
-    "${id#"$STRIP_PREFIX"}" "$date" "$venue" "$guarantee" "$status"
-done
+  jq -r '
+    to_entries
+    | sort_by(.value.date)
+    | .[]
+    | [
+        .key,
+        .value.date,
+        .value.venue,
+        (if .value.guarantee then ("$" + (.value.guarantee | tostring)) else "% deal" end),
+        .value.status
+      ]
+    | @tsv
+  ' "$INDEX" | while IFS=$'\t' read -r id date venue guarantee status; do
+    printf "%s\t%s\t%s\t%s\t%s\n" \
+      "${id#"$STRIP_PREFIX"}" "$date" "$venue" "$guarantee" "$status"
+  done
+} | column -t -s $'\t'
 
 echo ""
 total=$(jq '[.[] | select(.guarantee) | .guarantee] | add' "$INDEX")
