@@ -210,17 +210,17 @@ if [ -n "$routing_notes" ]; then trow "Routing Notes" "$routing_notes"; fi
 hline
 tsection "BAND"
 hline
-trow "Band" "$band_member_1"
-trow "Band" "$band_member_2"
-trow "FOH" "$band_foh"
-trow "LD" "$band_ld"
-trow "VJ" "$band_vj"
-trow "Lasers" "$band_lasers"
-trow "Merch" "$band_merch"
-trow "Driver" "$band_driver"
+trow "Band" "$band_member_1" "band.band_member_1"
+trow "Band" "$band_member_2" "band.band_member_2"
+trow "FOH" "$band_foh" "band.foh"
+trow "LD" "$band_ld" "band.ld"
+trow "VJ" "$band_vj" "band.vj"
+trow "Lasers" "$band_lasers" "band.lasers"
+trow "Merch" "$band_merch" "band.merch"
+trow "Driver" "$band_driver" "band.driver"
 veh="$band_vehicle_type"
 if [ -n "$band_vehicle_length" ]; then veh="${veh} (${band_vehicle_length})"; fi
-trow "Vehicle" "$veh"
+trow "Vehicle" "$veh" "band.vehicle_type"
 trow "Support" "$support" "support"
 
 # Logistics block
@@ -294,7 +294,7 @@ if [ -n "$dos_lines" ]; then
   tsection "DOS CONTACTS"
   hline
   while IFS=$'\t' read -r name phone; do
-    trow "$name" "$phone"
+    trow "$name" "$phone" "advance.dos_contacts"
   done <<< "$dos_lines"
 fi
 
@@ -304,24 +304,8 @@ if [ -n "$hotel_lines" ]; then
   tsection "HOTELS"
   hline
   while IFS= read -r h; do
-    trow "" "$h"
+    trow "" "$h" "advance.hotels"
   done <<< "$hotel_lines"
-fi
-
-# ── Provenance summary ───────────────────────────────────────────
-prov_lines=$(echo "$show_json" | jq -r '
-  ._provenance // {} | to_entries[] |
-  (.key | ltrimstr("source/") | ltrimstr("DIRTWIRE_")) as $short |
-  "\($short)\t\(.value.fields | length) fields"
-' 2>/dev/null)
-
-if [ -n "$prov_lines" ]; then
-  hline
-  tsection "PROVENANCE"
-  hline
-  while IFS=$'\t' read -r src count; do
-    trow "$src" "$count"
-  done <<< "$prov_lines"
 fi
 
 hline
