@@ -363,11 +363,7 @@ Three semantic namespaces — `deal` (contract terms), `venue` (advancing/venue 
     "vj": "person-key or null",
     "lasers": "person-key or null",
     "merch": "person-key or null",
-    "driver": "person-key or null",
-    "vehicle_type": "",
-    "vehicle_length": "",
-    "laminates": "",
-    "backdrop": ""
+    "driver": "person-key or null"
   },
   "_provenance": {
     "source/FILENAME.pdf": {
@@ -428,10 +424,6 @@ Three semantic namespaces — `deal` (contract terms), `venue` (advancing/venue 
   - `lasers`: Laser and floor lighting operator.
   - `merch`: DOS merch coordinator.
   - `driver`: Tour vehicle driver.
-  - `vehicle_type`: String (e.g. `"Sprinter"`, `"SUV"`, `""`). Empty string if unknown.
-  - `vehicle_length`: String (e.g. `"25ft"`, `""`). Empty string if unknown.
-  - `laminates`: Whether the band is carrying laminates for this show (e.g. `"yes"`, `"no"`, `""`). Empty string if unknown.
-  - `backdrop`: Whether the band is carrying a backdrop and what size (e.g. `"yes, 10x20"`, `"no"`, `""`). Empty string if unknown.
 - `_verified`: Flat object mapping field names to ISO dates (YYYY-MM-DD) indicating when a human confirmed the field value is correct. Uses dot-notation matching `_provenance` field names (e.g. `"venue.hospitality"`, `"deal.guarantee"`). Empty object `{}` by default. Underscore-prefixed so jq queries ignore it.
 - `_provenance`: Maps source documents to the fields they substantiate. Underscore-prefixed so jq queries and existing scripts ignore it. Keys are paths relative to the show directory, or special values: `"manual:<person>:<date>"` (agent entered data a person provided verbally/in-session), `"user:<person>:<date>"` (user directly provided the data), `"legacy"`, `"legacy:routing-csv"`. Each entry has `extracted` (ISO date) and `fields` (array of dot-notation field names, e.g. `"deal.guarantee"`, `"venue.parking"`, `"band.foh"`). Non-file key prefixes (`manual:`, `user:`, `legacy:`) must be registered in `bandlab.config.json` under `provenance.special_source_prefixes` so verification scripts skip file-existence checks. See `ops/provenance-plan.md` for the full design.
 
@@ -538,9 +530,26 @@ Tours are directories that hold `tour.json` plus tour-scoped todos (e.g. crew tr
   "runs": ["run-key", "..."],
   "one_offs": ["one-off-key", "..."],
   "shows": ["show-key", "..."],
-  "notes": ""
+  "vehicle_type": "",
+  "vehicle_length": "",
+  "laminates": "",
+  "backdrop": "",
+  "hospitality": "",
+  "production": {},
+  "policies": {},
+  "notes": "",
+  "_provenance": {}
 }
 ```
+
+- `vehicle_type`: String (e.g. `"Bandwagon RV"`, `"Sprinter"`, `""`). Empty string if unknown.
+- `vehicle_length`: String (e.g. `"38'"`, `"25ft"`, `""`). Empty string if unknown.
+- `laminates`: Whether the band is carrying laminates for this tour (e.g. `"yes"`, `"no"`, `""`). Empty string if unknown.
+- `backdrop`: Whether the band is carrying a backdrop and what size (e.g. `"yes, 8x8"`, `"no"`, `""`). Empty string if unknown.
+- `hospitality`: Tour-level hospitality rider text. Empty string if not set.
+- `production`: Object containing production/backline details (stands, mics, console, monitors, etc.).
+- `policies`: Object containing tour-level policies (e.g. `photo_video`).
+- `_provenance`: Same format as show.json provenance — maps sources to field arrays.
 
 ---
 

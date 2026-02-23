@@ -124,10 +124,6 @@ band_vj=$(get '.band.vj')
 band_lasers=$(get '.band.lasers')
 band_merch=$(get '.band.merch')
 band_driver=$(get '.band.driver')
-band_vehicle_type=$(get '.band.vehicle_type')
-band_vehicle_length=$(get '.band.vehicle_length')
-band_laminates=$(get '.band.laminates')
-band_backdrop=$(get '.band.backdrop')
 
 # Venue fields
 adv_hospitality=$(get '.venue.hospitality')
@@ -331,7 +327,8 @@ if [ -n "$tour" ]; then
           "$(trunc "$src" "$W3")"
       }
 
-      tour_hospitality=$(n "$(echo "$tour_json" | jq -r '.hospitality // empty')")
+      tget() { n "$(echo "$tour_json" | jq -r "$1")"; }
+      tour_hospitality=$(tget '.hospitality')
 
       hline
       tsection "BAND: ${tour}"
@@ -339,11 +336,15 @@ if [ -n "$tour" ]; then
       if [ -n "$tour_hospitality" ]; then
         trow_t "Hospitality" "$tour_hospitality" "hospitality"
       fi
-      veh="$band_vehicle_type"
-      if [ -n "$band_vehicle_length" ]; then veh="${veh} (${band_vehicle_length})"; fi
-      trow "Vehicle" "$veh" "band.vehicle_type"
-      trow "Laminates" "$band_laminates" "band.laminates"
-      trow "Backdrop" "$band_backdrop" "band.backdrop"
+      tour_vehicle_type=$(tget '.vehicle_type')
+      tour_vehicle_length=$(tget '.vehicle_length')
+      veh="$tour_vehicle_type"
+      if [ -n "$tour_vehicle_length" ]; then veh="${veh} (${tour_vehicle_length})"; fi
+      trow_t "Vehicle" "$veh" "vehicle_type"
+      tour_laminates=$(tget '.laminates')
+      trow_t "Laminates" "$tour_laminates" "laminates"
+      tour_backdrop=$(tget '.backdrop')
+      trow_t "Backdrop" "$tour_backdrop" "backdrop"
 
       has_prod=$(echo "$tour_json" | jq 'has("production")')
       if [ "$has_prod" = "true" ]; then
