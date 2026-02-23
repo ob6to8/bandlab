@@ -4,6 +4,18 @@ Unified data browser and viewer. No query = list all, with query = show detail.
 
 `/list <entity> [query]`
 
+## Config discovery
+
+Read `bandlab.config.json` to discover entity paths and registries. Key references:
+- Shows index: `.entities.shows.index_path`
+- Shows directory: `.entities.shows.dir`
+- Tours: `.entities.tours.dir`
+- Runs: `.entities.runs.dir`
+- One-offs: `.entities.one_offs.dir`
+- Venues: `.registries.venues.path`
+- People: `.registries.people.path`
+- Todos: `.registries.todos.path`
+
 ## Supported entities
 
 ### shows
@@ -33,13 +45,13 @@ Unified data browser and viewer. No query = list all, with query = show detail.
 
 1. Parse `$ARGUMENTS` to determine the entity type and optional query
 2. If no arguments, show the list of supported subcommands above and exit
-3. Read the relevant data file(s):
-   - **shows**: read `org/touring/.state/shows.json`
-   - **tours**: read `org/touring/tours/*/tour.json`
-   - **runs**: read `org/touring/runs/*/run.json` and `org/touring/one-offs/*/one-off.json`
-   - **venues**: read `org/touring/venues.json`
-   - **people**: read `org/people.json`
-   - **todos**: read `org/todos.json`
+3. Read `bandlab.config.json` and resolve the path for the requested entity type:
+   - **shows**: read the shows index at `entities.shows.index_path`
+   - **tours**: read `entities.tours.dir/*/tour.json`
+   - **runs**: read `entities.runs.dir/*/run.json` and `entities.one_offs.dir/*/one-off.json`
+   - **venues**: read `registries.venues.path`
+   - **people**: read `registries.people.path`
+   - **todos**: read `registries.todos.path`
 4. If a query is provided, filter/match by key, ID, or substring (case-insensitive)
 5. Format output:
    - **List view**: markdown table with key columns
