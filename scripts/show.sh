@@ -405,6 +405,29 @@ if [ -n "$sets" ]; then trow "Sets" "$sets"; fi
 
 hline
 
+# ── Advance checklist ────────────────────────────────────────────
+QUESTIONS="${REPO_ROOT}/$(cfg '.advancing.questions_path')"
+if [ -f "$QUESTIONS" ]; then
+  echo ""
+  hline
+  tsection "ADVANCE"
+  hline
+  while IFS=$'\t' read -r qid fields; do
+    # Check if any mapped field has data
+    answered="no"
+    IFS=',' read -ra flds <<< "$fields"
+    for f in "${flds[@]}"; do
+      val=$(echo "$show_json" | jq -r --arg f "$f" 'getpath($f | split(".")) // empty')
+      if [ -n "$val" ] && [ "$val" != "{}" ] && [ "$val" != "[]" ] && [ "$val" != "null" ]; then
+        answered="yes"
+        break
+      fi
+    done
+    trow "$qid" "$answered"
+  done < <(jq -r '.[] | [.id, (.fields | join(","))] | @tsv' "$QUESTIONS")
+  hline
+fi
+
 # ── Files section ─────────────────────────────────────────────────
 echo ""
 echo "=== Files ==="
