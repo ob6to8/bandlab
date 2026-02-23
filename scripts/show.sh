@@ -182,6 +182,8 @@ echo ""
 hline
 tsection "${show_id} — ${date}"
 hline
+tsection "SHOW"
+hline
 trow "Date" "$date" "date"
 trow "Venue" "$venue_label" "venue"
 trow "Status" "$status"
@@ -210,7 +212,7 @@ if [ -n "$routing_notes" ]; then trow "Routing Notes" "$routing_notes"; fi
 
 # ── Band section ─────────────────────────────────────────────────
 hline
-tsection "BAND"
+tsection "BAND: Show"
 hline
 trow "Band" "$band_member_1" "band.band_member_1"
 trow "Band" "$band_member_2" "band.band_member_2"
@@ -329,18 +331,6 @@ if [ -n "$tour" ]; then
       ')
       tour_src() { echo "$tour_prov" | jq -r --arg f "$1" '.[$f] // empty'; }
 
-      hline
-      tsection "TOUR PRODUCTION (${tour})"
-      hline
-
-      prod_stands=$(n "$(echo "$tour_json" | jq -r '.production.stands_venue')")
-      prod_mics_v=$(n "$(echo "$tour_json" | jq -r '.production.mics_venue')")
-      prod_mics_c=$(n "$(echo "$tour_json" | jq -r '.production.mics_carried')")
-      prod_foh=$(n "$(echo "$tour_json" | jq -r '.production.foh_console')")
-      prod_mon=$(n "$(echo "$tour_json" | jq -r '.production.mon_rack')")
-      prod_monitors=$(n "$(echo "$tour_json" | jq -r '.production.monitors')")
-      prod_audio=$(n "$(echo "$tour_json" | jq -r '.production.audio_notes')")
-
       # Use tour provenance for source column
       ts() { tour_src "$1"; }
       trow_t() {
@@ -354,9 +344,27 @@ if [ -n "$tour" ]; then
           "$(trunc "$src" "$W3")"
       }
 
-      trow_t "Stands (Venue)" "$prod_stands" "production.stands_venue"
-      trow_t "Mics (Venue)" "$prod_mics_v" "production.mics_venue"
-      trow_t "Mics (Carried)" "$prod_mics_c" "production.mics_carried"
+      prod_stands=$(n "$(echo "$tour_json" | jq -r '.production.stands_venue')")
+      prod_mics_v=$(n "$(echo "$tour_json" | jq -r '.production.mics_venue')")
+
+      hline
+      tsection "BAND: ${tour}"
+      hline
+      tsection "BACKLINE"
+      hline
+      trow_t "Stands" "$prod_stands" "production.stands_venue"
+      trow_t "Mics" "$prod_mics_v" "production.mics_venue"
+
+      prod_mics_c=$(n "$(echo "$tour_json" | jq -r '.production.mics_carried')")
+      prod_foh=$(n "$(echo "$tour_json" | jq -r '.production.foh_console')")
+      prod_mon=$(n "$(echo "$tour_json" | jq -r '.production.mon_rack')")
+      prod_monitors=$(n "$(echo "$tour_json" | jq -r '.production.monitors')")
+      prod_audio=$(n "$(echo "$tour_json" | jq -r '.production.audio_notes')")
+
+      hline
+      tsection "CARRIED"
+      hline
+      trow_t "Mics" "$prod_mics_c" "production.mics_carried"
       trow_t "FOH Console" "$prod_foh" "production.foh_console"
       trow_t "Mon Rack" "$prod_mon" "production.mon_rack"
       trow_t "Monitors" "$prod_monitors" "production.monitors"
