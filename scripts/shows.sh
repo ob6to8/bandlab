@@ -25,8 +25,8 @@ fi
     | [
         .key,
         .value.date,
-        .value.venue,
-        (if .value.guarantee then ("$" + (.value.guarantee | tostring)) else "% deal" end),
+        .value.venue.id,
+        (if .value.deal.guarantee then ("$" + (.value.deal.guarantee | tostring)) else "% deal" end),
         .value.status
       ]
     | @tsv
@@ -37,9 +37,9 @@ fi
 } | column -t -s $'\t'
 
 echo ""
-total=$(jq '[.[] | select(.guarantee) | .guarantee] | add' "$INDEX")
+total=$(jq '[.[] | select(.deal.guarantee) | .deal.guarantee] | add' "$INDEX")
 count=$(jq 'length' "$INDEX")
-guaranteed=$(jq '[.[] | select(.guarantee)] | length' "$INDEX")
-pct_deals=$(jq '[.[] | select(.guarantee == null)] | length' "$INDEX")
+guaranteed=$(jq '[.[] | select(.deal.guarantee)] | length' "$INDEX")
+pct_deals=$(jq '[.[] | select(.deal.guarantee == null)] | length' "$INDEX")
 printf "Total: %d shows | Guaranteed: \$%s across %d shows | Pure %%: %d shows\n" \
   "$count" "$total" "$guaranteed" "$pct_deals"

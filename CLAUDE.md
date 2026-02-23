@@ -299,44 +299,34 @@ s-YYYY-MMDD-city/
 ```
 
 **show.json:**
+
+Three semantic namespaces — `deal` (contract terms), `venue` (advancing/venue capabilities), `band` (crew assignments) — plus top-level show identity and metadata.
+
 ```json
 {
   "id": "s-YYYY-MMDD-city",
   "date": "YYYY-MM-DD",
-  "venue": "venue-key",
+  "status": "potential|offered|confirmed|advanced|settled|cancelled",
+  "tour": "tour-key or null",
   "run": "run-key or null",
   "one_off": "one-off-key or null",
-  "status": "potential|offered|confirmed|advanced|settled|cancelled",
-  "guarantee": null,
-  "canada_amount": "$CAD amount or null",
-  "door_split": null,
-  "promoter": "person-key",
-  "ages": "all-ages|18+|21+",
-  "ticket_link": "",
-  "sell_cap": null,
-  "ticket_scaling": null,
-  "wp": null,
-  "support": null,
-  "tour": "tour-key or null",
-  "sets": null,
-  "routing_notes": "free-text or null",
-  "band": {
-    "band_member_1": "person-key or null",
-    "band_member_2": "person-key or null",
-    "foh": "person-key or null",
-    "ld": "person-key or null",
-    "vj": "person-key or null",
-    "lasers": "person-key or null",
-    "merch": "person-key or null",
-    "driver": "person-key or null",
-    "vehicle_type": "",
-    "vehicle_length": "",
-    "laminates": "",
-    "backdrop": ""
+  "deal": {
+    "guarantee": null,
+    "canada_amount": "$CAD amount or null",
+    "door_split": null,
+    "promoter": "person-key",
+    "ages": "all-ages|18+|21+",
+    "ticket_link": "",
+    "sell_cap": null,
+    "ticket_scaling": null,
+    "wp": null,
+    "support": null,
+    "sets": null
   },
-  "advance": {
+  "venue": {
+    "id": "venue-key",
     "hospitality": "",
-    "backline": "",
+    "video": "",
     "merch_cut": null,
     "merch_seller": "",
     "merch_tax_rate": "",
@@ -365,45 +355,55 @@ s-YYYY-MMDD-city/
     "settlement": "",
     "ticket_count": null
   },
+  "band": {
+    "band_member_1": "person-key or null",
+    "band_member_2": "person-key or null",
+    "foh": "person-key or null",
+    "ld": "person-key or null",
+    "vj": "person-key or null",
+    "lasers": "person-key or null",
+    "merch": "person-key or null",
+    "driver": "person-key or null",
+    "vehicle_type": "",
+    "vehicle_length": "",
+    "laminates": "",
+    "backdrop": ""
+  },
   "_provenance": {
     "source/FILENAME.pdf": {
       "extracted": "YYYY-MM-DD",
-      "fields": ["guarantee", "door_split", "ages", "..."]
+      "fields": ["deal.guarantee", "deal.door_split", "deal.ages", "..."]
     },
     "manual:person-key:YYYY-MM-DD": {
-      "fields": ["set_time", "load_in"]
+      "fields": ["venue.schedule", "venue.load"]
     },
     "user:person-key:YYYY-MM-DD": {
       "fields": ["band.foh", "band.driver"]
     }
   },
   "_verified": {
-    "guarantee": "YYYY-MM-DD",
-    "advance.hospitality": "YYYY-MM-DD"
+    "deal.guarantee": "YYYY-MM-DD",
+    "venue.hospitality": "YYYY-MM-DD"
   }
 }
 ```
 
-- `canada_amount`: CAD guarantee string for Canadian shows (e.g. `"$20,000 CAD"`). The `guarantee` field always stores USD. Null for non-Canadian shows.
-- `routing_notes`: Free-text notes from routing (e.g. airport codes, logistics flags). Null when not needed.
-- `sets`: Array of set objects for multi-set festival appearances. Each entry has `date`, `time`, and `stage`. Null for standard single-set shows. Example: `[{"date": "2026-02-26", "time": "20:00-21:30", "stage": "Luna Stage"}]`.
-- **band fields:** Structured block mapping roles to person-keys. Replaces the flat `touring_party` array. Role fields are `"person-key"` or `null` (unfilled/not traveling).
-  - `band_member_1`, `band_member_2`: Band members traveling to this show.
-  - `foh`: Front of house engineer.
-  - `ld`: Lighting director.
-  - `vj`: Visual artist (Touch Designer/Resolume).
-  - `lasers`: Laser and floor lighting operator.
-  - `merch`: DOS merch coordinator.
-  - `driver`: Tour vehicle driver.
-  - `vehicle_type`: String (e.g. `"Sprinter"`, `"SUV"`, `""`). Empty string if unknown.
-  - `vehicle_length`: String (e.g. `"25ft"`, `""`). Empty string if unknown.
-  - `laminates`: Whether the band is carrying laminates for this show (e.g. `"yes"`, `"no"`, `""`). Empty string if unknown.
-  - `backdrop`: Whether the band is carrying a backdrop and what size (e.g. `"yes, 10x20"`, `"no"`, `""`). Empty string if unknown.
-- `_verified`: Flat object mapping field names to ISO dates (YYYY-MM-DD) indicating when a human confirmed the field value is correct. Uses the same dot-notation as `_provenance` field names (e.g. `"advance.hospitality"`). Empty object `{}` by default. Underscore-prefixed so jq queries ignore it.
-- `_provenance`: Maps source documents to the fields they substantiate. Underscore-prefixed so jq queries and existing scripts ignore it. Keys are paths relative to the show directory, or special values: `"manual:<person>:<date>"` (agent entered data a person provided verbally/in-session), `"user:<person>:<date>"` (user directly provided the data), `"legacy"`, `"legacy:routing-csv"`. Each entry has `extracted` (ISO date) and `fields` (array of field names from show.json that this source substantiates). Non-file key prefixes (`manual:`, `user:`, `legacy:`) must be registered in `bandlab.config.json` under `provenance.special_source_prefixes` so verification scripts skip file-existence checks. See `ops/provenance-plan.md` for the full design.
-- **advance fields:**
+- **deal fields:** Contract terms extracted from deal memos. Everything negotiated between artist and promoter/venue.
+  - `guarantee`: USD guarantee amount (integer) or null for percentage deals.
+  - `canada_amount`: CAD guarantee string for Canadian shows (e.g. `"$15,000.00"`). The `guarantee` field always stores USD. Null for non-Canadian shows.
+  - `door_split`: Door/gross split terms as free text. Null if flat guarantee only.
+  - `promoter`: Person-key of the promoter for this show.
+  - `ages`: Age restriction (`"all-ages"`, `"18+"`, `"21+"`). Null if unknown.
+  - `ticket_link`: URL to ticket sales page. Empty string if unknown.
+  - `sell_cap`: Maximum ticket capacity (integer). Null if unknown.
+  - `ticket_scaling`: Ticket price tiers (e.g. `"$25/$30"`). Null if unknown.
+  - `wp`: Walkaway point — guaranteed revenue threshold (integer). Null if unknown.
+  - `support`: Support act details (e.g. `"Buffalo Nichols, $500"`). Null if none.
+  - `sets`: Array of set objects for multi-set festival appearances. Each entry has `date`, `time`, and `stage`. Null for standard single-set shows. Example: `[{"date": "2026-02-26", "time": "20:00-21:30", "stage": "Luna Stage"}]`.
+- **venue fields:** Information gathered through advancing — what the venue provides, day-of-show logistics.
+  - `id`: Venue key referencing `venues.json`.
   - `hospitality`: Catering/hospitality details (buyout amount, dressing room provisions).
-  - `backline`: What the venue provides (amps, drums, keys, etc.). Empty string if unknown.
+  - `video`: Venue video capabilities (LED wall, projection, cat lines for VJ). Empty string if unknown.
   - `merch_cut`: Venue's percentage of merch sales (integer, e.g. `20`). Null if unknown.
   - `merch_seller`: Who sells merch — `"artist"`, `"venue"`, or details about local seller availability.
   - `merch_tax_rate`: Sales tax rate and who retains it (e.g. `"8.9% artist retains"`).
@@ -420,6 +420,20 @@ s-YYYY-MMDD-city/
   - `hotels`: Array of hotel name strings with discount codes (e.g. `["Wiley Hotel (code: ZEROMI)"]`).
   - `settlement`: Settlement method (e.g. `"check or wire"`).
   - `ticket_count`: Current ticket count at time of advancing (integer). Null if unknown.
+- **band fields:** Structured block mapping roles to person-keys. Role fields are `"person-key"` or `null` (unfilled/not traveling).
+  - `band_member_1`, `band_member_2`: Band members traveling to this show.
+  - `foh`: Front of house engineer.
+  - `ld`: Lighting director.
+  - `vj`: Visual artist (Touch Designer/Resolume).
+  - `lasers`: Laser and floor lighting operator.
+  - `merch`: DOS merch coordinator.
+  - `driver`: Tour vehicle driver.
+  - `vehicle_type`: String (e.g. `"Sprinter"`, `"SUV"`, `""`). Empty string if unknown.
+  - `vehicle_length`: String (e.g. `"25ft"`, `""`). Empty string if unknown.
+  - `laminates`: Whether the band is carrying laminates for this show (e.g. `"yes"`, `"no"`, `""`). Empty string if unknown.
+  - `backdrop`: Whether the band is carrying a backdrop and what size (e.g. `"yes, 10x20"`, `"no"`, `""`). Empty string if unknown.
+- `_verified`: Flat object mapping field names to ISO dates (YYYY-MM-DD) indicating when a human confirmed the field value is correct. Uses dot-notation matching `_provenance` field names (e.g. `"venue.hospitality"`, `"deal.guarantee"`). Empty object `{}` by default. Underscore-prefixed so jq queries ignore it.
+- `_provenance`: Maps source documents to the fields they substantiate. Underscore-prefixed so jq queries and existing scripts ignore it. Keys are paths relative to the show directory, or special values: `"manual:<person>:<date>"` (agent entered data a person provided verbally/in-session), `"user:<person>:<date>"` (user directly provided the data), `"legacy"`, `"legacy:routing-csv"`. Each entry has `extracted` (ISO date) and `fields` (array of dot-notation field names, e.g. `"deal.guarantee"`, `"venue.parking"`, `"band.foh"`). Non-file key prefixes (`manual:`, `user:`, `legacy:`) must be registered in `bandlab.config.json` under `provenance.special_source_prefixes` so verification scripts skip file-existence checks. See `ops/provenance-plan.md` for the full design.
 
 **source/summary.md frontmatter:**
 ```yaml

@@ -101,20 +101,19 @@ prov_src()  { echo "$prov_lookup" | jq -r --arg f "$1" '.[$f] // empty'; }
 ver_date()  { echo "$veri_lookup" | jq -r --arg f "$1" '.[$f] // empty'; }
 
 date=$(get '.date')
-venue_key=$(get '.venue')
+venue_key=$(get '.venue.id')
 status=$(get '.status')
-guarantee=$(get '.guarantee')
-canada_amount=$(get '.canada_amount')
-door_split=$(get '.door_split')
-promoter=$(get '.promoter')
-ages=$(get '.ages')
-sell_cap=$(get '.sell_cap')
-ticket_scaling=$(get '.ticket_scaling')
-wp=$(get '.wp')
-support=$(get '.support')
+guarantee=$(get '.deal.guarantee')
+canada_amount=$(get '.deal.canada_amount')
+door_split=$(get '.deal.door_split')
+promoter=$(get '.deal.promoter')
+ages=$(get '.deal.ages')
+sell_cap=$(get '.deal.sell_cap')
+ticket_scaling=$(get '.deal.ticket_scaling')
+wp=$(get '.deal.wp')
+support=$(get '.deal.support')
 tour=$(get '.tour')
-sets=$(echo "$show_json" | jq -r 'if .sets then [.sets[] | "\(.date) \(.time) — \(.stage)"] | join(", ") else "" end')
-routing_notes=$(get '.routing_notes')
+sets=$(echo "$show_json" | jq -r 'if .deal.sets then [.deal.sets[] | "\(.date) \(.time) — \(.stage)"] | join(", ") else "" end')
 # Band block fields
 band_member_1=$(get '.band.band_member_1')
 band_member_2=$(get '.band.band_member_2')
@@ -129,41 +128,41 @@ band_vehicle_length=$(get '.band.vehicle_length')
 band_laminates=$(get '.band.laminates')
 band_backdrop=$(get '.band.backdrop')
 
-# Advance fields
-adv_hospitality=$(get '.advance.hospitality')
-adv_merch_cut=$(get '.advance.merch_cut')
-adv_merch_seller=$(get '.advance.merch_seller')
-adv_merch_tax_rate=$(get '.advance.merch_tax_rate')
-adv_merch_notes=$(get '.advance.merch_notes')
-adv_parking=$(get '.advance.parking')
-adv_showers=$(get '.advance.showers')
-adv_load=$(get '.advance.load')
-adv_guest_comps=$(get '.advance.guest_comps')
-adv_labor=$(get '.advance.labor')
-adv_crew_day=$(get '.advance.crew_day')
-adv_settlement=$(get '.advance.settlement')
-adv_ticket_count=$(get '.advance.ticket_count')
+# Venue fields
+adv_hospitality=$(get '.venue.hospitality')
+adv_merch_cut=$(get '.venue.merch_cut')
+adv_merch_seller=$(get '.venue.merch_seller')
+adv_merch_tax_rate=$(get '.venue.merch_tax_rate')
+adv_merch_notes=$(get '.venue.merch_notes')
+adv_parking=$(get '.venue.parking')
+adv_showers=$(get '.venue.showers')
+adv_load=$(get '.venue.load')
+adv_guest_comps=$(get '.venue.guest_comps')
+adv_labor=$(get '.venue.labor')
+adv_crew_day=$(get '.venue.crew_day')
+adv_settlement=$(get '.venue.settlement')
+adv_ticket_count=$(get '.venue.ticket_count')
 
 # Schedule
-sched_access=$(get '.advance.schedule.access')
-sched_load_in=$(get '.advance.schedule.load_in')
-sched_soundcheck=$(get '.advance.schedule.soundcheck')
-sched_support_check=$(get '.advance.schedule.support_check')
-sched_doors=$(get '.advance.schedule.doors')
-sched_support_set=$(get '.advance.schedule.support_set')
-sched_headliner_set=$(get '.advance.schedule.headliner_set')
-sched_set_length=$(get '.advance.schedule.set_length')
-sched_curfew=$(get '.advance.schedule.curfew')
-sched_backstage_curfew=$(get '.advance.schedule.backstage_curfew')
+sched_access=$(get '.venue.schedule.access')
+sched_load_in=$(get '.venue.schedule.load_in')
+sched_soundcheck=$(get '.venue.schedule.soundcheck')
+sched_support_check=$(get '.venue.schedule.support_check')
+sched_doors=$(get '.venue.schedule.doors')
+sched_support_set=$(get '.venue.schedule.support_set')
+sched_headliner_set=$(get '.venue.schedule.headliner_set')
+sched_set_length=$(get '.venue.schedule.set_length')
+sched_curfew=$(get '.venue.schedule.curfew')
+sched_backstage_curfew=$(get '.venue.schedule.backstage_curfew')
 
 # Wifi (object → "network / password" lines)
-wifi_lines=$(echo "$show_json" | jq -r '.advance.wifi // {} | to_entries[] | "\(.key): \(.value)"' 2>/dev/null)
+wifi_lines=$(echo "$show_json" | jq -r '.venue.wifi // {} | to_entries[] | "\(.key): \(.value)"' 2>/dev/null)
 
 # DOS contacts (object → "key  phone" lines)
-dos_lines=$(echo "$show_json" | jq -r '.advance.dos_contacts // {} | to_entries[] | "\(.key)\t\(.value)"' 2>/dev/null)
+dos_lines=$(echo "$show_json" | jq -r '.venue.dos_contacts // {} | to_entries[] | "\(.key)\t\(.value)"' 2>/dev/null)
 
 # Hotels (array → lines)
-hotel_lines=$(echo "$show_json" | jq -r '.advance.hotels // [] | .[]' 2>/dev/null)
+hotel_lines=$(echo "$show_json" | jq -r '.venue.hotels // [] | .[]' 2>/dev/null)
 
 # Venue lookup for header
 venue_name=$(jq -r --arg v "$venue_key" '.[$v].name // $v' "$VENUES")
@@ -182,57 +181,56 @@ hline
 tsection "SHOW"
 hline
 trow "Date" "$date" "date"
-trow "Venue" "$venue_label" "venue"
+trow "Venue" "$venue_label" "venue.id"
 trow "Status" "$status"
 
 # Guarantee: show amount, append canada_amount if present
 if [ -n "$guarantee" ]; then
   guar_display="\$${guarantee}"
   if [ -n "$canada_amount" ]; then guar_display="${guar_display} (${canada_amount})"; fi
-  trow "Guarantee" "$guar_display" "guarantee"
+  trow "Guarantee" "$guar_display" "deal.guarantee"
 else
   if [ -n "$canada_amount" ]; then
-    trow "Guarantee" "— (${canada_amount})" "guarantee"
+    trow "Guarantee" "— (${canada_amount})" "deal.guarantee"
   else
-    trow "Guarantee" "" "guarantee"
+    trow "Guarantee" "" "deal.guarantee"
   fi
 fi
 
-trow "Door Split" "$door_split" "door_split"
-trow "Promoter" "$promoter" "promoter"
-trow "Ages" "$ages" "ages"
-trow "Sell Cap" "$sell_cap" "sell_cap"
-trow "Tickets" "$ticket_scaling" "ticket_scaling"
-trow "WP" "$wp" "wp"
+trow "Door Split" "$door_split" "deal.door_split"
+trow "Promoter" "$promoter" "deal.promoter"
+trow "Ages" "$ages" "deal.ages"
+trow "Sell Cap" "$sell_cap" "deal.sell_cap"
+trow "Tickets" "$ticket_scaling" "deal.ticket_scaling"
+trow "WP" "$wp" "deal.wp"
 if [ -n "$sets" ]; then trow "Sets" "$sets"; fi
-if [ -n "$routing_notes" ]; then trow "Routing Notes" "$routing_notes"; fi
 
 # ── Venue Capabilities section ───────────────────────────────────
 hline
 tsection "VENUE CAPABILITIES"
 hline
 if [ -n "$adv_merch_cut" ]; then
-  trow "Merch Cut" "${adv_merch_cut}%" "advance.merch_cut"
+  trow "Merch Cut" "${adv_merch_cut}%" "venue.merch_cut"
 else
-  trow "Merch Cut" "" "advance.merch_cut"
+  trow "Merch Cut" "" "venue.merch_cut"
 fi
-trow "Merch Seller" "$adv_merch_seller" "advance.merch_seller"
-trow "Merch Tax" "$adv_merch_tax_rate" "advance.merch_tax_rate"
-trow "Merch Notes" "$adv_merch_notes" "advance.merch_notes"
-trow "Parking" "$adv_parking" "advance.parking"
-trow "Showers" "$adv_showers" "advance.showers"
-trow "Load" "$adv_load" "advance.load"
-trow "Guest Comps" "$adv_guest_comps" "advance.guest_comps"
-trow "Labor" "$adv_labor" "advance.labor"
-trow "Crew Day" "$adv_crew_day" "advance.crew_day"
-trow "Settlement" "$adv_settlement" "advance.settlement"
-trow "Ticket Count" "$adv_ticket_count" "advance.ticket_count"
-trow "Hospitality" "$adv_hospitality" "advance.hospitality"
+trow "Merch Seller" "$adv_merch_seller" "venue.merch_seller"
+trow "Merch Tax" "$adv_merch_tax_rate" "venue.merch_tax_rate"
+trow "Merch Notes" "$adv_merch_notes" "venue.merch_notes"
+trow "Parking" "$adv_parking" "venue.parking"
+trow "Showers" "$adv_showers" "venue.showers"
+trow "Load" "$adv_load" "venue.load"
+trow "Guest Comps" "$adv_guest_comps" "venue.guest_comps"
+trow "Labor" "$adv_labor" "venue.labor"
+trow "Crew Day" "$adv_crew_day" "venue.crew_day"
+trow "Settlement" "$adv_settlement" "venue.settlement"
+trow "Ticket Count" "$adv_ticket_count" "venue.ticket_count"
+trow "Hospitality" "$adv_hospitality" "venue.hospitality"
 
 # Wifi
 if [ -n "$wifi_lines" ]; then
   while IFS= read -r line; do
-    trow "Wifi" "$line" "advance.wifi"
+    trow "Wifi" "$line" "venue.wifi"
   done <<< "$wifi_lines"
 fi
 
@@ -246,20 +244,20 @@ if $has_schedule; then
   hline
   tsection "SCHEDULE"
   hline
-  trow "Access" "$sched_access" "advance.schedule"
-  trow "Load-in" "$sched_load_in" "advance.schedule"
-  trow "Soundcheck" "$sched_soundcheck" "advance.schedule"
-  trow "Support Check" "$sched_support_check" "advance.schedule"
-  trow "Doors" "$sched_doors" "advance.schedule"
-  trow "Support Set" "$sched_support_set" "advance.schedule"
-  trow "Headliner Set" "$sched_headliner_set" "advance.schedule"
+  trow "Access" "$sched_access" "venue.schedule"
+  trow "Load-in" "$sched_load_in" "venue.schedule"
+  trow "Soundcheck" "$sched_soundcheck" "venue.schedule"
+  trow "Support Check" "$sched_support_check" "venue.schedule"
+  trow "Doors" "$sched_doors" "venue.schedule"
+  trow "Support Set" "$sched_support_set" "venue.schedule"
+  trow "Headliner Set" "$sched_headliner_set" "venue.schedule"
   if [ -n "$sched_set_length" ]; then
-    trow "Set Length" "${sched_set_length} min" "advance.schedule"
+    trow "Set Length" "${sched_set_length} min" "venue.schedule"
   else
-    trow "Set Length" "" "advance.schedule"
+    trow "Set Length" "" "venue.schedule"
   fi
-  trow "Curfew" "$sched_curfew" "advance.schedule"
-  trow "Backstage" "$sched_backstage_curfew" "advance.schedule"
+  trow "Curfew" "$sched_curfew" "venue.schedule"
+  trow "Backstage" "$sched_backstage_curfew" "venue.schedule"
 fi
 
 # ── DOS Contacts ──────────────────────────────────────────────────
@@ -268,7 +266,7 @@ if [ -n "$dos_lines" ]; then
   tsection "DOS CONTACTS"
   hline
   while IFS=$'\t' read -r name phone; do
-    trow "$name" "$phone" "advance.dos_contacts"
+    trow "$name" "$phone" "venue.dos_contacts"
   done <<< "$dos_lines"
 fi
 
@@ -278,7 +276,7 @@ if [ -n "$hotel_lines" ]; then
   tsection "HOTELS"
   hline
   while IFS= read -r h; do
-    trow "" "$h" "advance.hotels"
+    trow "" "$h" "venue.hotels"
   done <<< "$hotel_lines"
 fi
 
@@ -301,7 +299,7 @@ if [ -n "$band_vehicle_length" ]; then veh="${veh} (${band_vehicle_length})"; fi
 trow "Vehicle" "$veh" "band.vehicle_type"
 trow "Laminates" "$band_laminates" "band.laminates"
 trow "Backdrop" "$band_backdrop" "band.backdrop"
-trow "Support" "$support" "support"
+trow "Support" "$support" "deal.support"
 
 # ── Tour Production ──────────────────────────────────────────────
 TOURS_DIR="${REPO_ROOT}/$(cfg '.entities.tours.dir')"

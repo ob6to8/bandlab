@@ -68,7 +68,24 @@ for show_dir in "${SHOWS_DIR}"/s-*/; do
       unsourced_fields=$((unsourced_fields + 1))
       warn "${show_id}: field '${field}' has data but no provenance entry"
     fi
-  done < <(jq -r --argjson skip "$skip_fields" 'to_entries[] | select(.key as $k | $skip | index($k) | not) | select(.value != null and .value != "" and .value != []) | .key' "${show_dir}/show.json")
+  done < <(jq -r --argjson skip "$skip_fields" '
+    # Check if a value has real content (not null, empty string, empty array, or all-empty object)
+    def has_content:
+      . != null and . != "" and . != [] and . != {} and
+      ((type | . != "object") or ([to_entries[].value | . != null and . != "" and . != [] and . != {}] | any));
+
+    # Flatten namespace objects (deal, venue) into dot-notation keys
+    # Skip container keys and skip_fields, then enumerate leaf fields
+    (to_entries[] | select(.key as $k | $skip | index($k) | not) |
+      if (.value | type) == "object" then
+        .key as $prefix | .value | to_entries[] |
+        select(.value | has_content) |
+        ($prefix + "." + .key)
+      else
+        select(.value | has_content) | .key
+      end
+    )
+  ' "${show_dir}/show.json")
 
   # Check for manual provenance entries
   manual_count=$(jq -r --arg f "$prov_field" '.[$f] | keys[] | select(startswith("manual:"))' "${show_dir}/show.json" 2>/dev/null | wc -l | tr -d ' ')

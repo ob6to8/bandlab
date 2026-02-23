@@ -43,7 +43,7 @@ if [ -z "$show_id" ]; then
 fi
 
 # Get venue for this show
-venue=$(jq -r ".[\"${show_id}\"].venue" "$INDEX")
+venue=$(jq -r ".[\"${show_id}\"].venue.id" "$INDEX")
 date=$(jq -r ".[\"${show_id}\"].date" "$INDEX")
 
 echo "=== ${show_id} | ${date} | ${venue} ==="

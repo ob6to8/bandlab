@@ -509,21 +509,21 @@ const showEntries = Object.entries(DATA.shows)
     id,
     date: s.date,
     day: dayOfWeek(s.date),
-    city: venueCity(s.venue),
-    venue: venueName(s.venue),
-    venueKey: s.venue,
+    city: venueCity(s.venue?.id),
+    venue: venueName(s.venue?.id),
+    venueKey: s.venue?.id,
     run: s.run,
     runDisplay: runName(s.run),
     status: s.status,
-    guarantee: s.guarantee,
-    wp: s.wp,
-    sell_cap: s.sell_cap,
-    scaling: s.ticket_scaling || '',
-    support: s.support || '',
-    ages: s.ages || '',
+    guarantee: s.deal?.guarantee,
+    wp: s.deal?.wp,
+    sell_cap: s.deal?.sell_cap,
+    scaling: s.deal?.ticket_scaling || '',
+    support: s.deal?.support || '',
+    ages: s.deal?.ages || '',
     advancing: advStatus(id),
-    promoter: personName(s.promoter),
-    promoterKey: s.promoter,
+    promoter: personName(s.deal?.promoter),
+    promoterKey: s.deal?.promoter,
     _raw: s
   }))
   .sort((a, b) => a.date.localeCompare(b.date));
@@ -642,12 +642,12 @@ function renderTodos() {
 function openDetail(showId) {
   const s = DATA.shows[showId];
   if (!s) return;
-  const v = DATA.venues[s.venue] || {};
+  const v = DATA.venues[s.venue?.id] || {};
   const fs = DATA.file_status[showId] || {};
   const adv = advStatus(showId);
 
   // Advancing contacts: people linked to this venue with advancing role
-  const venueOrg = 'venue:' + s.venue;
+  const venueOrg = 'venue:' + (s.venue?.id || '');
   const contacts = Object.entries(DATA.people)
     .filter(([_, p]) => p.role === 'advancing' && (p.org === venueOrg || p.org === null))
     .sort((a, b) => (a[1].advancing_priority || 99) - (b[1].advancing_priority || 99));
@@ -662,18 +662,18 @@ function openDetail(showId) {
     <h3>Show Info</h3>
     <dl class="detail-grid">
       <dt>Date</dt><dd>${s.date} (${dayOfWeek(s.date)})</dd>
-      <dt>Venue</dt><dd>${venueName(s.venue)}</dd>
-      <dt>City</dt><dd>${venueCity(s.venue)}${v.state ? ', ' + v.state : ''}</dd>
+      <dt>Venue</dt><dd>${venueName(s.venue?.id)}</dd>
+      <dt>City</dt><dd>${venueCity(s.venue?.id)}${v.state ? ', ' + v.state : ''}</dd>
       <dt>Status</dt><dd><span class="badge ${statusBadgeClass(s.status)}">${s.status}</span></dd>
-      <dt>Guarantee</dt><dd>${s.guarantee ? fmtMoney(s.guarantee) : '% deal'}</dd>
-      <dt>WP</dt><dd>${fmtMoney(s.wp)}</dd>
-      <dt>Sell Cap</dt><dd>${s.sell_cap || '—'}</dd>
-      <dt>Scaling</dt><dd>${s.ticket_scaling || '—'}</dd>
-      <dt>Ages</dt><dd>${s.ages || '—'}</dd>
-      <dt>Support</dt><dd>${s.support || '—'}</dd>
+      <dt>Guarantee</dt><dd>${s.deal?.guarantee ? fmtMoney(s.deal.guarantee) : '% deal'}</dd>
+      <dt>WP</dt><dd>${fmtMoney(s.deal?.wp)}</dd>
+      <dt>Sell Cap</dt><dd>${s.deal?.sell_cap || '—'}</dd>
+      <dt>Scaling</dt><dd>${s.deal?.ticket_scaling || '—'}</dd>
+      <dt>Ages</dt><dd>${s.deal?.ages || '—'}</dd>
+      <dt>Support</dt><dd>${s.deal?.support || '—'}</dd>
       <dt>Run</dt><dd>${runName(s.run)}</dd>
-      <dt>Promoter</dt><dd>${personName(s.promoter)}</dd>
-      <dt>Merch Cut</dt><dd>${s.advance?.merch_cut != null ? s.advance.merch_cut + '%' : '—'}</dd>
+      <dt>Promoter</dt><dd>${personName(s.deal?.promoter)}</dd>
+      <dt>Merch Cut</dt><dd>${s.venue?.merch_cut != null ? s.venue.merch_cut + '%' : '—'}</dd>
     </dl>
   </div>`;
 

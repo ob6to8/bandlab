@@ -73,7 +73,7 @@ while IFS=$'\t' read -r show_id date venue; do
     needs_outreach="${needs_outreach}${short_date}\t${venue}\t${name:-NONE}\t${email:--}\n"
     needs_count=$((needs_count + 1))
   fi
-done < <(jq -r 'to_entries | sort_by(.value.date) | .[] | [.key, .value.date, .value.venue] | @tsv' "$INDEX")
+done < <(jq -r 'to_entries | sort_by(.value.date) | .[] | [.key, .value.date, .value.venue.id] | @tsv' "$INDEX")
 
 # ── Print grouped output ──────────────────────────────────────────
 if [ "$needs_count" -gt 0 ]; then
