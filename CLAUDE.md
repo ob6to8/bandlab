@@ -24,6 +24,18 @@ There is no database. The directory tree IS the data store. Every file is human-
 
 **Primary sources ground the working data.** Show files contain the agent's working understanding. Contracts, advancing confirmations, and tech packs are the primary sources. The audit compares them and flags discrepancies. Contract summaries are agent-extracted but require human approval before they're trusted.
 
+## Legible Architecture — Three-Tier Design
+
+This framework uses a three-tier architecture where each tier declares its assumptions via config. The structure enforces comprehension — config files are contracts that declare "here's what I have and where it lives." When an agent runs a verification script, it can read `bandlab.config.json` to understand what's being checked without reading the script. The config becomes documentation.
+
+| Tier | Location | What it knows |
+|---|---|---|
+| **General** | `~/.claude/skills/` | Session lifecycle. Reads config to discover CLI name and verification scripts. |
+| **Framework** | `bandlab/` (submodule) | Generic engines. Reads `bandlab.config.json` for all paths, schemas, parameters. |
+| **Client** | Repo root | Declares its data in `bandlab.config.json`. Contains `org/` data, `ops/` domain knowledge. |
+
+Every framework script sources `scripts/lib/config.sh` and calls `load_config` to initialize paths from `bandlab.config.json`. No script hardcodes paths, registries, or domain vocabulary — everything is declared in the client's config file.
+
 ## Directory Structure
 
 Generate the following directory tree. Create all files with the frontmatter and placeholder content described below. For the calendar, generate every day of your touring year (January through December).
