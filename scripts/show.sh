@@ -206,17 +206,6 @@ trow "Ages" "$ages" "ages"
 trow "Sell Cap" "$sell_cap" "sell_cap"
 trow "Tickets" "$ticket_scaling" "ticket_scaling"
 trow "WP" "$wp" "wp"
-trow "Support" "$support" "support"
-
-# Logistics block
-if [ -n "$run" ]; then
-  trow "Run" "$run"
-elif [ -n "$one_off" ]; then
-  trow "One-off" "$one_off"
-fi
-
-trow "Tour" "$tour"
-
 if [ -n "$sets" ]; then trow "Sets" "$sets"; fi
 if [ -n "$routing_notes" ]; then trow "Routing Notes" "$routing_notes"; fi
 
@@ -232,11 +221,19 @@ trow "VJ" "$band_vj"
 trow "Lasers" "$band_lasers"
 trow "Merch" "$band_merch"
 trow "Driver" "$band_driver"
-if [ -n "$band_vehicle_type" ]; then
-  veh="$band_vehicle_type"
-  if [ -n "$band_vehicle_length" ]; then veh="${veh} (${band_vehicle_length})"; fi
-  trow "Vehicle" "$veh"
+veh="$band_vehicle_type"
+if [ -n "$band_vehicle_length" ]; then veh="${veh} (${band_vehicle_length})"; fi
+trow "Vehicle" "$veh"
+trow "Support" "$support" "support"
+
+# Logistics block
+if [ -n "$run" ]; then
+  trow "Run" "$run"
+elif [ -n "$one_off" ]; then
+  trow "One-off" "$one_off"
 fi
+
+trow "Tour" "$tour"
 
 # ── Advance section ───────────────────────────────────────────────
 hline
