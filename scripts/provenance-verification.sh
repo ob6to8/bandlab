@@ -20,6 +20,10 @@ covered_fields=0
 manual_fields=0
 unsourced_fields=0
 
+# Verification counters
+verified_fields=0
+shows_with_verified=0
+
 # ── Check if provenance is enabled ───────────────────────────────────
 
 prov_enabled=$(cfg_default '.provenance.enabled' 'false')
@@ -95,6 +99,13 @@ for show_dir in "${SHOWS_DIR}"/s-*/; do
       fail "${show_id}: provenance source file missing: ${source_key}"
     fi
   done < <(jq -r --arg f "$prov_field" '.[$f] | keys[]' "${show_dir}/show.json")
+
+  # Count human-verified fields
+  show_verified=$(jq '._verified // {} | length' "${show_dir}/show.json")
+  if [ "$show_verified" -gt 0 ]; then
+    shows_with_verified=$((shows_with_verified + 1))
+    verified_fields=$((verified_fields + show_verified))
+  fi
 done
 echo ""
 
@@ -181,6 +192,8 @@ if [ "$total_data_fields" -gt 0 ]; then
 fi
 
 echo "  Manual provenance entries across shows: ${manual_fields}"
+echo ""
+echo "  Human-verified fields: ${verified_fields} (across ${shows_with_verified} shows)"
 echo ""
 
 # ── Summary ──────────────────────────────────────────────────────────

@@ -32,6 +32,31 @@ fi
 kv()  { printf "  %-18s%s\n" "$1" "${2:-—}"; }
 ikv() { printf "    %-16s%s\n" "$1" "${2:-—}"; }
 
+# Key-value with provenance + verified sub-row (only when present)
+# Usage: kvpv "Label" "value" "field_key"
+kvpv() {
+  local label="$1" value="${2:-—}" field="$3"
+  local src vdate subrow=""
+  src=$(prov_src "$field")
+  vdate=$(ver_date "$field")
+  if [ -n "$src" ]; then subrow="← ${src}"; fi
+  if [ -n "$vdate" ]; then subrow="${subrow}  ✓${vdate}"; fi
+  printf "  %-18s%s\n" "$label" "$value"
+  if [ -n "$subrow" ]; then printf "  %-18s%s\n" "" "$subrow"; fi
+}
+
+# Indented version for advance/schedule sub-fields
+ikvpv() {
+  local label="$1" value="${2:-—}" field="$3"
+  local src vdate subrow=""
+  src=$(prov_src "$field")
+  vdate=$(ver_date "$field")
+  if [ -n "$src" ]; then subrow="← ${src}"; fi
+  if [ -n "$vdate" ]; then subrow="${subrow}  ✓${vdate}"; fi
+  printf "    %-16s%s\n" "$label" "$value"
+  if [ -n "$subrow" ]; then printf "    %-16s%s\n" "" "$subrow"; fi
+}
+
 # Normalize jq null/empty to empty string for shell
 n() { local v="$1"; if [ "$v" = "null" ] || [ -z "$v" ]; then echo ""; else echo "$v"; fi; }
 
@@ -39,6 +64,21 @@ n() { local v="$1"; if [ "$v" = "null" ] || [ -z "$v" ]; then echo ""; else echo
 show_json=$(jq --arg id "$show_id" '.[$id]' "$INDEX")
 get()  { n "$(echo "$show_json" | jq -r "$1")"; }
 getr() { echo "$show_json" | jq -r "$1"; }
+
+# ── Provenance + verification lookups ────────────────────────────
+# Invert _provenance (source→fields) to field→source JSON object
+# Shorten source names: strip "source/" prefix and "DIRTWIRE_" prefix
+prov_lookup=$(echo "$show_json" | jq '
+  [._provenance // {} | to_entries[] |
+   .key as $src | .value.fields // [] | .[] |
+   {key: ., value: ($src | ltrimstr("source/") | ltrimstr("DIRTWIRE_"))}
+  ] | from_entries
+')
+veri_lookup=$(echo "$show_json" | jq '._verified // {}')
+
+# Lookup helpers — query the JSON objects
+prov_src()  { echo "$prov_lookup" | jq -r --arg f "$1" '.[$f] // empty'; }
+ver_date()  { echo "$veri_lookup" | jq -r --arg f "$1" '.[$f] // empty'; }
 
 date=$(get '.date')
 venue_key=$(get '.venue')
@@ -109,30 +149,30 @@ fi
 echo ""
 echo "=== ${show_id} — ${date} ==="
 echo ""
-kv "Date" "$date"
-kv "Venue" "$venue_label"
+kvpv "Date" "$date" "date"
+kvpv "Venue" "$venue_label" "venue"
 kv "Status" "$status"
 
 # Guarantee: show amount, append canada_amount if present
 if [ -n "$guarantee" ]; then
   guar_display="\$${guarantee}"
   [ -n "$canada_amount" ] && guar_display="${guar_display} (${canada_amount})"
-  kv "Guarantee" "$guar_display"
+  kvpv "Guarantee" "$guar_display" "guarantee"
 else
   if [ -n "$canada_amount" ]; then
-    kv "Guarantee" "— (${canada_amount})"
+    kvpv "Guarantee" "— (${canada_amount})" "guarantee"
   else
-    kv "Guarantee" ""
+    kvpv "Guarantee" "" "guarantee"
   fi
 fi
 
-kv "Door Split" "$door_split"
-kv "Promoter" "$promoter"
-kv "Ages" "$ages"
-kv "Sell Cap" "$sell_cap"
-kv "Tickets" "$ticket_scaling"
-kv "WP" "$wp"
-kv "Support" "$support"
+kvpv "Door Split" "$door_split" "door_split"
+kvpv "Promoter" "$promoter" "promoter"
+kvpv "Ages" "$ages" "ages"
+kvpv "Sell Cap" "$sell_cap" "sell_cap"
+kvpv "Tickets" "$ticket_scaling" "ticket_scaling"
+kvpv "WP" "$wp" "wp"
+kvpv "Support" "$support" "support"
 
 # Logistics block
 if [ -n "$run" ]; then
@@ -151,24 +191,24 @@ kv "Touring Party" "$touring_party"
 # ── Advance section ───────────────────────────────────────────────
 echo ""
 echo "  Advance"
-ikv "Hospitality" "$adv_hospitality"
-ikv "Backline" "$adv_backline"
+ikvpv "Hospitality" "$adv_hospitality" "advance.hospitality"
+ikvpv "Backline" "$adv_backline" "advance.backline"
 if [ -n "$adv_merch_cut" ]; then
-  ikv "Merch Cut" "${adv_merch_cut}%"
+  ikvpv "Merch Cut" "${adv_merch_cut}%" "advance.merch_cut"
 else
-  ikv "Merch Cut" ""
+  ikvpv "Merch Cut" "" "advance.merch_cut"
 fi
-ikv "Merch Seller" "$adv_merch_seller"
-ikv "Merch Tax" "$adv_merch_tax_rate"
-ikv "Merch Notes" "$adv_merch_notes"
-ikv "Parking" "$adv_parking"
-ikv "Showers" "$adv_showers"
-ikv "Load" "$adv_load"
-ikv "Guest Comps" "$adv_guest_comps"
-ikv "Labor" "$adv_labor"
-ikv "Crew Day" "$adv_crew_day"
-ikv "Settlement" "$adv_settlement"
-ikv "Ticket Count" "$adv_ticket_count"
+ikvpv "Merch Seller" "$adv_merch_seller" "advance.merch_seller"
+ikvpv "Merch Tax" "$adv_merch_tax_rate" "advance.merch_tax_rate"
+ikvpv "Merch Notes" "$adv_merch_notes" "advance.merch_notes"
+ikvpv "Parking" "$adv_parking" "advance.parking"
+ikvpv "Showers" "$adv_showers" "advance.showers"
+ikvpv "Load" "$adv_load" "advance.load"
+ikvpv "Guest Comps" "$adv_guest_comps" "advance.guest_comps"
+ikvpv "Labor" "$adv_labor" "advance.labor"
+ikvpv "Crew Day" "$adv_crew_day" "advance.crew_day"
+ikvpv "Settlement" "$adv_settlement" "advance.settlement"
+ikvpv "Ticket Count" "$adv_ticket_count" "advance.ticket_count"
 
 # Wifi
 if [ -n "$wifi_lines" ]; then
@@ -188,20 +228,20 @@ done
 if $has_schedule; then
   echo ""
   echo "  Schedule"
-  ikv "Access" "$sched_access"
-  ikv "Load-in" "$sched_load_in"
-  ikv "Soundcheck" "$sched_soundcheck"
-  ikv "Support Check" "$sched_support_check"
-  ikv "Doors" "$sched_doors"
-  ikv "Support Set" "$sched_support_set"
-  ikv "Headliner Set" "$sched_headliner_set"
+  ikvpv "Access" "$sched_access" "advance.schedule"
+  ikvpv "Load-in" "$sched_load_in" "advance.schedule"
+  ikvpv "Soundcheck" "$sched_soundcheck" "advance.schedule"
+  ikvpv "Support Check" "$sched_support_check" "advance.schedule"
+  ikvpv "Doors" "$sched_doors" "advance.schedule"
+  ikvpv "Support Set" "$sched_support_set" "advance.schedule"
+  ikvpv "Headliner Set" "$sched_headliner_set" "advance.schedule"
   if [ -n "$sched_set_length" ]; then
-    ikv "Set Length" "${sched_set_length} min"
+    ikvpv "Set Length" "${sched_set_length} min" "advance.schedule"
   else
-    ikv "Set Length" ""
+    ikvpv "Set Length" "" "advance.schedule"
   fi
-  ikv "Curfew" "$sched_curfew"
-  ikv "Backstage" "$sched_backstage_curfew"
+  ikvpv "Curfew" "$sched_curfew" "advance.schedule"
+  ikvpv "Backstage" "$sched_backstage_curfew" "advance.schedule"
 fi
 
 # ── DOS Contacts ──────────────────────────────────────────────────

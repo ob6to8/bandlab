@@ -30,7 +30,7 @@ This framework uses a three-tier architecture where each tier declares its assum
 
 | Tier | Location | What it knows |
 |---|---|---|
-| **General** | `~/.claude/skills/` | Session lifecycle. Reads config to discover CLI name and verification scripts. |
+| **General** | `~/.claude/skills/` | Session lifecycle. Reads `.claude/project.json` to discover CLI name and verification scripts. |
 | **Framework** | `bandlab/` (submodule) | Generic engines. Reads `bandlab.config.json` for all paths, schemas, parameters. |
 | **Client** | Repo root | Declares its data in `bandlab.config.json`. Contains `org/` data, `ops/` domain knowledge. |
 
@@ -360,6 +360,10 @@ s-YYYY-MMDD-city/
     "manual:person-key:YYYY-MM-DD": {
       "fields": ["set_time", "load_in"]
     }
+  },
+  "_verified": {
+    "guarantee": "YYYY-MM-DD",
+    "advance.hospitality": "YYYY-MM-DD"
   }
 }
 ```
@@ -367,6 +371,7 @@ s-YYYY-MMDD-city/
 - `canada_amount`: CAD guarantee string for Canadian shows (e.g. `"$20,000 CAD"`). The `guarantee` field always stores USD. Null for non-Canadian shows.
 - `routing_notes`: Free-text notes from routing (e.g. airport codes, logistics flags). Null when not needed.
 - `sets`: Array of set objects for multi-set festival appearances. Each entry has `date`, `time`, and `stage`. Null for standard single-set shows. Example: `[{"date": "2026-02-26", "time": "20:00-21:30", "stage": "Luna Stage"}]`.
+- `_verified`: Flat object mapping field names to ISO dates (YYYY-MM-DD) indicating when a human confirmed the field value is correct. Uses the same dot-notation as `_provenance` field names (e.g. `"advance.hospitality"`). Empty object `{}` by default. Underscore-prefixed so jq queries ignore it.
 - `_provenance`: Maps source documents to the fields they substantiate. Underscore-prefixed so jq queries and existing scripts ignore it. Keys are paths relative to the show directory, or special values: `"manual:<person>:<date>"`, `"legacy"`, `"legacy:routing-csv"`. Each entry has `extracted` (ISO date) and `fields` (array of field names from show.json that this source substantiates). See `ops/provenance-plan.md` for the full design.
 - **advance fields:**
   - `hospitality`: Catering/hospitality details (buyout amount, dressing room provisions).
