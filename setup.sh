@@ -59,7 +59,7 @@ if [ ! -f "${REPO_ROOT}/bandlab.config.json" ]; then
       "glob": "org/touring/shows/s-*/show.json",
       "id_field": "id",
       "index_path": "org/touring/.state/shows.json",
-      "schema_fields": ["id", "date", "venue", "run", "one_off", "status", "guarantee", "door_split", "promoter", "ages", "ticket_link", "sell_cap", "ticket_scaling", "wp", "support", "tour", "touring_party", "advance", "_provenance"],
+      "schema_fields": ["id", "date", "venue", "run", "one_off", "status", "guarantee", "door_split", "promoter", "ages", "ticket_link", "sell_cap", "ticket_scaling", "wp", "support", "tour", "band", "advance", "_provenance"],
       "file_checklist": ["show.json", "source/summary.md", "tech-pack.md", "advancing/thread.md", "advancing/confirmed.md"],
       "references": {
         "venue": { "registry": "venues", "nullable": true },
@@ -91,7 +91,7 @@ if [ ! -f "${REPO_ROOT}/bandlab.config.json" ]; then
   "provenance": {
     "enabled": true,
     "field_name": "_provenance",
-    "skip_fields": ["id", "_provenance", "advance", "run", "one_off", "tour", "touring_party", "status", "routing_notes", "sets", "ticket_link"],
+    "skip_fields": ["id", "_provenance", "advance", "run", "one_off", "tour", "band", "status", "routing_notes", "sets", "ticket_link"],
     "special_source_values": ["manual", "legacy"],
     "special_source_prefixes": ["manual:", "legacy:"],
     "source_base_dir": "org"

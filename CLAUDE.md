@@ -318,9 +318,20 @@ s-YYYY-MMDD-city/
   "wp": null,
   "support": null,
   "tour": "tour-key or null",
-  "touring_party": ["person-key", "..."],
   "sets": null,
   "routing_notes": "free-text or null",
+  "band": {
+    "band_member_1": "person-key or null",
+    "band_member_2": "person-key or null",
+    "foh": "person-key or null",
+    "ld": "person-key or null",
+    "vj": "person-key or null",
+    "lasers": "person-key or null",
+    "merch": "person-key or null",
+    "driver": "person-key or null",
+    "vehicle_type": "",
+    "vehicle_length": ""
+  },
   "advance": {
     "hospitality": "",
     "backline": "",
@@ -371,6 +382,16 @@ s-YYYY-MMDD-city/
 - `canada_amount`: CAD guarantee string for Canadian shows (e.g. `"$20,000 CAD"`). The `guarantee` field always stores USD. Null for non-Canadian shows.
 - `routing_notes`: Free-text notes from routing (e.g. airport codes, logistics flags). Null when not needed.
 - `sets`: Array of set objects for multi-set festival appearances. Each entry has `date`, `time`, and `stage`. Null for standard single-set shows. Example: `[{"date": "2026-02-26", "time": "20:00-21:30", "stage": "Luna Stage"}]`.
+- **band fields:** Structured block mapping roles to person-keys. Replaces the flat `touring_party` array. Role fields are `"person-key"` or `null` (unfilled/not traveling).
+  - `band_member_1`, `band_member_2`: Band members traveling to this show.
+  - `foh`: Front of house engineer.
+  - `ld`: Lighting director.
+  - `vj`: Visual artist (Touch Designer/Resolume).
+  - `lasers`: Laser and floor lighting operator.
+  - `merch`: DOS merch coordinator.
+  - `driver`: Tour vehicle driver.
+  - `vehicle_type`: String (e.g. `"Sprinter"`, `"SUV"`, `""`). Empty string if unknown.
+  - `vehicle_length`: String (e.g. `"25ft"`, `""`). Empty string if unknown.
 - `_verified`: Flat object mapping field names to ISO dates (YYYY-MM-DD) indicating when a human confirmed the field value is correct. Uses the same dot-notation as `_provenance` field names (e.g. `"advance.hospitality"`). Empty object `{}` by default. Underscore-prefixed so jq queries ignore it.
 - `_provenance`: Maps source documents to the fields they substantiate. Underscore-prefixed so jq queries and existing scripts ignore it. Keys are paths relative to the show directory, or special values: `"manual:<person>:<date>"`, `"legacy"`, `"legacy:routing-csv"`. Each entry has `extracted` (ISO date) and `fields` (array of field names from show.json that this source substantiates). See `ops/provenance-plan.md` for the full design.
 - **advance fields:**

@@ -120,7 +120,17 @@ one_off=$(get '.one_off')
 tour=$(get '.tour')
 sets=$(echo "$show_json" | jq -r 'if .sets then [.sets[] | "\(.date) \(.time) — \(.stage)"] | join(", ") else "" end')
 routing_notes=$(get '.routing_notes')
-touring_party=$(getr '[.touring_party // [] | .[] ] | join(", ")')
+# Band block fields
+band_member_1=$(get '.band.band_member_1')
+band_member_2=$(get '.band.band_member_2')
+band_foh=$(get '.band.foh')
+band_ld=$(get '.band.ld')
+band_vj=$(get '.band.vj')
+band_lasers=$(get '.band.lasers')
+band_merch=$(get '.band.merch')
+band_driver=$(get '.band.driver')
+band_vehicle_type=$(get '.band.vehicle_type')
+band_vehicle_length=$(get '.band.vehicle_length')
 
 # Advance fields
 adv_hospitality=$(get '.advance.hospitality')
@@ -210,7 +220,30 @@ trow "Tour" "$tour"
 if [ -n "$sets" ]; then trow "Sets" "$sets"; fi
 if [ -n "$routing_notes" ]; then trow "Routing Notes" "$routing_notes"; fi
 
-trow "Touring Party" "$touring_party"
+# ── Band section ─────────────────────────────────────────────────
+has_band=false
+for v in "$band_member_1" "$band_member_2" "$band_foh" "$band_ld" "$band_vj" "$band_lasers" "$band_merch" "$band_driver"; do
+  if [ -n "$v" ]; then has_band=true; fi
+done
+
+if $has_band; then
+  hline
+  tsection "BAND"
+  hline
+  if [ -n "$band_member_1" ]; then trow "Band" "$band_member_1"; fi
+  if [ -n "$band_member_2" ]; then trow "Band" "$band_member_2"; fi
+  if [ -n "$band_foh" ]; then trow "FOH" "$band_foh"; fi
+  if [ -n "$band_ld" ]; then trow "LD" "$band_ld"; fi
+  if [ -n "$band_vj" ]; then trow "VJ" "$band_vj"; fi
+  if [ -n "$band_lasers" ]; then trow "Lasers" "$band_lasers"; fi
+  if [ -n "$band_merch" ]; then trow "Merch" "$band_merch"; fi
+  if [ -n "$band_driver" ]; then trow "Driver" "$band_driver"; fi
+  if [ -n "$band_vehicle_type" ]; then
+    veh="$band_vehicle_type"
+    if [ -n "$band_vehicle_length" ]; then veh="${veh} (${band_vehicle_length})"; fi
+    trow "Vehicle" "$veh"
+  fi
+fi
 
 # ── Advance section ───────────────────────────────────────────────
 hline

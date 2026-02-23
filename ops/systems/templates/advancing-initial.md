@@ -12,10 +12,10 @@ The agent populates `{{placeholders}}` from the data store.
 | `{{venue_city}}` | `venues.json[show.venue].city` |
 | `{{venue_state}}` | `venues.json[show.venue].state` |
 | `{{show_date}}` | `show.json.date` — format as `M.DD.YYYY` |
-| `{{touring_party}}` | `people.json` filtered by role (band, foh, vj, etc.) — numbered list of who's traveling |
-| `{{foh_name}}` | `people.json` entry with role `foh` — full name |
-| `{{foh_phone}}` | `people.json` entry with role `foh` — phone |
-| `{{vj_name}}` | `people.json` entry with role `vj` — full name (conditional on video capability) |
+| `{{touring_party}}` | `show.json.band` block — numbered list of who's traveling, with roles |
+| `{{foh_name}}` | `people.json[show.band.foh].name` — FOH engineer name |
+| `{{foh_phone}}` | `people.json[show.band.foh].contact.phone` — FOH engineer phone |
+| `{{vj_name}}` | `people.json[show.band.vj].name` — VJ name (conditional on video capability) |
 | `{{merch_manager_name}}` | person handling merch management — name |
 | `{{merch_manager_email}}` | person handling merch management — email |
 | `{{merch_manager_phone}}` | person handling merch management — phone |
