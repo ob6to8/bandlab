@@ -28,34 +28,57 @@ if [ -z "$show_id" ]; then
   exit 1
 fi
 
-# ── Formatting helpers ─────────────────────────────────────────────
-kv()  { printf "  %-18s%s\n" "$1" "${2:-—}"; }
-ikv() { printf "    %-16s%s\n" "$1" "${2:-—}"; }
+# ── Table formatting ──────────────────────────────────────────────
+# Column widths: Field fixed 14, Source fixed 30, Value gets remainder
+TERM_W=$(tput cols 2>/dev/null || echo 100)
+W1=14; W3=30
+W2=$((TERM_W - W1 - W3 - 10))  # 10 = borders + padding
+if [ "$W2" -lt 20 ]; then W2=20; fi
 
-# Key-value with provenance + verified sub-row (only when present)
-# Usage: kvpv "Label" "value" "field_key"
-kvpv() {
-  local label="$1" value="${2:-—}" field="$3"
-  local src vdate subrow=""
-  src=$(prov_src "$field")
-  vdate=$(ver_date "$field")
-  if [ -n "$src" ]; then subrow="← ${src}"; fi
-  if [ -n "$vdate" ]; then subrow="${subrow}  ✓${vdate}"; fi
-  printf "  %-18s%s\n" "$label" "$value"
-  if [ -n "$subrow" ]; then printf "  %-18s%s\n" "" "$subrow"; fi
+# Truncate string to max length, append ".." if truncated
+trunc() {
+  local s="$1" max="$2"
+  if [ "${#s}" -le "$max" ]; then
+    printf '%s' "$s"
+  else
+    printf '%s' "${s:0:$((max-2))}.."
+  fi
 }
 
-# Indented version for advance/schedule sub-fields
-ikvpv() {
-  local label="$1" value="${2:-—}" field="$3"
-  local src vdate subrow=""
-  src=$(prov_src "$field")
-  vdate=$(ver_date "$field")
-  if [ -n "$src" ]; then subrow="← ${src}"; fi
-  if [ -n "$vdate" ]; then subrow="${subrow}  ✓${vdate}"; fi
-  printf "    %-16s%s\n" "$label" "$value"
-  if [ -n "$subrow" ]; then printf "    %-16s%s\n" "" "$subrow"; fi
+# Horizontal separator line
+hline() {
+  printf "+-%s-+-%s-+-%s-+\n" \
+    "$(printf '%*s' "$W1" '' | tr ' ' '-')" \
+    "$(printf '%*s' "$W2" '' | tr ' ' '-')" \
+    "$(printf '%*s' "$W3" '' | tr ' ' '-')"
 }
+
+# Data row: trow "Field" "Value" "prov_field_key"
+trow() {
+  local label="$1" value="$2" field="${3:-}"
+  if [ -z "$value" ]; then value="--"; fi
+  local src="" vdate=""
+  if [ -n "$field" ]; then
+    src=$(prov_src "$field")
+    vdate=$(ver_date "$field")
+    if [ -n "$vdate" ]; then src="${src} ✓${vdate}"; fi
+  fi
+  printf "| %-${W1}s | %-${W2}s | %-${W3}s |\n" \
+    "$(trunc "$label" "$W1")" \
+    "$(trunc "$value" "$W2")" \
+    "$(trunc "$src" "$W3")"
+}
+
+# Section header row spanning all columns
+tsection() {
+  local title="$1"
+  local inner=$((W1 + W2 + W3 + 7))  # hline total is W1+W2+W3+10, minus "| " and "|"
+  printf "| %-${inner}s|\n" "$title"
+}
+
+# Plain kv for non-table sections (venue, files)
+kv()  { local v="$2"; if [ -z "$v" ]; then v="--"; fi; printf "  %-18s%s\n" "$1" "$v"; }
+ikv() { local v="$2"; if [ -z "$v" ]; then v="--"; fi; printf "    %-16s%s\n" "$1" "$v"; }
 
 # Normalize jq null/empty to empty string for shell
 n() { local v="$1"; if [ "$v" = "null" ] || [ -z "$v" ]; then echo ""; else echo "$v"; fi; }
@@ -145,136 +168,143 @@ if [ -n "$venue_city" ] && [ -n "$venue_state" ]; then
   venue_label="${venue_name} (${venue_city}, ${venue_state})"
 fi
 
-# ── Print show ─────────────────────────────────────────────────────
+# ── Print show table ──────────────────────────────────────────────
 echo ""
-echo "=== ${show_id} — ${date} ==="
-echo ""
-kvpv "Date" "$date" "date"
-kvpv "Venue" "$venue_label" "venue"
-kv "Status" "$status"
+hline
+tsection "${show_id} — ${date}"
+hline
+trow "Date" "$date" "date"
+trow "Venue" "$venue_label" "venue"
+trow "Status" "$status"
 
 # Guarantee: show amount, append canada_amount if present
 if [ -n "$guarantee" ]; then
   guar_display="\$${guarantee}"
-  [ -n "$canada_amount" ] && guar_display="${guar_display} (${canada_amount})"
-  kvpv "Guarantee" "$guar_display" "guarantee"
+  if [ -n "$canada_amount" ]; then guar_display="${guar_display} (${canada_amount})"; fi
+  trow "Guarantee" "$guar_display" "guarantee"
 else
   if [ -n "$canada_amount" ]; then
-    kvpv "Guarantee" "— (${canada_amount})" "guarantee"
+    trow "Guarantee" "— (${canada_amount})" "guarantee"
   else
-    kvpv "Guarantee" "" "guarantee"
+    trow "Guarantee" "" "guarantee"
   fi
 fi
 
-kvpv "Door Split" "$door_split" "door_split"
-kvpv "Promoter" "$promoter" "promoter"
-kvpv "Ages" "$ages" "ages"
-kvpv "Sell Cap" "$sell_cap" "sell_cap"
-kvpv "Tickets" "$ticket_scaling" "ticket_scaling"
-kvpv "WP" "$wp" "wp"
-kvpv "Support" "$support" "support"
+trow "Door Split" "$door_split" "door_split"
+trow "Promoter" "$promoter" "promoter"
+trow "Ages" "$ages" "ages"
+trow "Sell Cap" "$sell_cap" "sell_cap"
+trow "Tickets" "$ticket_scaling" "ticket_scaling"
+trow "WP" "$wp" "wp"
+trow "Support" "$support" "support"
 
 # Logistics block
 if [ -n "$run" ]; then
-  kv "Run" "$run"
+  trow "Run" "$run"
 elif [ -n "$one_off" ]; then
-  kv "One-off" "$one_off"
+  trow "One-off" "$one_off"
 fi
 
-kv "Tour" "$tour"
+trow "Tour" "$tour"
 
-[ -n "$sets" ] && kv "Sets" "$sets"
-[ -n "$routing_notes" ] && kv "Routing Notes" "$routing_notes"
+if [ -n "$sets" ]; then trow "Sets" "$sets"; fi
+if [ -n "$routing_notes" ]; then trow "Routing Notes" "$routing_notes"; fi
 
-kv "Touring Party" "$touring_party"
+trow "Touring Party" "$touring_party"
 
 # ── Advance section ───────────────────────────────────────────────
-echo ""
-echo "  Advance"
-ikvpv "Hospitality" "$adv_hospitality" "advance.hospitality"
-ikvpv "Backline" "$adv_backline" "advance.backline"
+hline
+tsection "ADVANCE"
+hline
+trow "Hospitality" "$adv_hospitality" "advance.hospitality"
+trow "Backline" "$adv_backline" "advance.backline"
 if [ -n "$adv_merch_cut" ]; then
-  ikvpv "Merch Cut" "${adv_merch_cut}%" "advance.merch_cut"
+  trow "Merch Cut" "${adv_merch_cut}%" "advance.merch_cut"
 else
-  ikvpv "Merch Cut" "" "advance.merch_cut"
+  trow "Merch Cut" "" "advance.merch_cut"
 fi
-ikvpv "Merch Seller" "$adv_merch_seller" "advance.merch_seller"
-ikvpv "Merch Tax" "$adv_merch_tax_rate" "advance.merch_tax_rate"
-ikvpv "Merch Notes" "$adv_merch_notes" "advance.merch_notes"
-ikvpv "Parking" "$adv_parking" "advance.parking"
-ikvpv "Showers" "$adv_showers" "advance.showers"
-ikvpv "Load" "$adv_load" "advance.load"
-ikvpv "Guest Comps" "$adv_guest_comps" "advance.guest_comps"
-ikvpv "Labor" "$adv_labor" "advance.labor"
-ikvpv "Crew Day" "$adv_crew_day" "advance.crew_day"
-ikvpv "Settlement" "$adv_settlement" "advance.settlement"
-ikvpv "Ticket Count" "$adv_ticket_count" "advance.ticket_count"
+trow "Merch Seller" "$adv_merch_seller" "advance.merch_seller"
+trow "Merch Tax" "$adv_merch_tax_rate" "advance.merch_tax_rate"
+trow "Merch Notes" "$adv_merch_notes" "advance.merch_notes"
+trow "Parking" "$adv_parking" "advance.parking"
+trow "Showers" "$adv_showers" "advance.showers"
+trow "Load" "$adv_load" "advance.load"
+trow "Guest Comps" "$adv_guest_comps" "advance.guest_comps"
+trow "Labor" "$adv_labor" "advance.labor"
+trow "Crew Day" "$adv_crew_day" "advance.crew_day"
+trow "Settlement" "$adv_settlement" "advance.settlement"
+trow "Ticket Count" "$adv_ticket_count" "advance.ticket_count"
 
 # Wifi
 if [ -n "$wifi_lines" ]; then
-  echo ""
-  echo "    Wifi"
   while IFS= read -r line; do
-    printf "      %s\n" "$line"
+    trow "Wifi" "$line" "advance.wifi"
   done <<< "$wifi_lines"
 fi
 
 # ── Schedule ──────────────────────────────────────────────────────
 has_schedule=false
 for v in "$sched_access" "$sched_load_in" "$sched_soundcheck" "$sched_doors" "$sched_headliner_set"; do
-  [ -n "$v" ] && has_schedule=true
+  if [ -n "$v" ]; then has_schedule=true; fi
 done
 
 if $has_schedule; then
-  echo ""
-  echo "  Schedule"
-  ikvpv "Access" "$sched_access" "advance.schedule"
-  ikvpv "Load-in" "$sched_load_in" "advance.schedule"
-  ikvpv "Soundcheck" "$sched_soundcheck" "advance.schedule"
-  ikvpv "Support Check" "$sched_support_check" "advance.schedule"
-  ikvpv "Doors" "$sched_doors" "advance.schedule"
-  ikvpv "Support Set" "$sched_support_set" "advance.schedule"
-  ikvpv "Headliner Set" "$sched_headliner_set" "advance.schedule"
+  hline
+  tsection "SCHEDULE"
+  hline
+  trow "Access" "$sched_access" "advance.schedule"
+  trow "Load-in" "$sched_load_in" "advance.schedule"
+  trow "Soundcheck" "$sched_soundcheck" "advance.schedule"
+  trow "Support Check" "$sched_support_check" "advance.schedule"
+  trow "Doors" "$sched_doors" "advance.schedule"
+  trow "Support Set" "$sched_support_set" "advance.schedule"
+  trow "Headliner Set" "$sched_headliner_set" "advance.schedule"
   if [ -n "$sched_set_length" ]; then
-    ikvpv "Set Length" "${sched_set_length} min" "advance.schedule"
+    trow "Set Length" "${sched_set_length} min" "advance.schedule"
   else
-    ikvpv "Set Length" "" "advance.schedule"
+    trow "Set Length" "" "advance.schedule"
   fi
-  ikvpv "Curfew" "$sched_curfew" "advance.schedule"
-  ikvpv "Backstage" "$sched_backstage_curfew" "advance.schedule"
+  trow "Curfew" "$sched_curfew" "advance.schedule"
+  trow "Backstage" "$sched_backstage_curfew" "advance.schedule"
 fi
 
 # ── DOS Contacts ──────────────────────────────────────────────────
 if [ -n "$dos_lines" ]; then
-  echo ""
-  echo "  DOS Contacts"
+  hline
+  tsection "DOS CONTACTS"
+  hline
   while IFS=$'\t' read -r name phone; do
-    ikv "$name" "$phone"
+    trow "$name" "$phone"
   done <<< "$dos_lines"
 fi
 
 # ── Hotels ────────────────────────────────────────────────────────
 if [ -n "$hotel_lines" ]; then
-  echo ""
-  echo "  Hotels"
+  hline
+  tsection "HOTELS"
+  hline
   while IFS= read -r h; do
-    printf "    %s\n" "$h"
+    trow "" "$h"
   done <<< "$hotel_lines"
 fi
 
-# ── Provenance ────────────────────────────────────────────────────
+# ── Provenance summary ───────────────────────────────────────────
 prov_lines=$(echo "$show_json" | jq -r '
   ._provenance // {} | to_entries[] |
-  "\(.key) (\(.value.fields | length) fields)"
+  (.key | ltrimstr("source/") | ltrimstr("DIRTWIRE_")) as $short |
+  "\($short)\t\(.value.fields | length) fields"
 ' 2>/dev/null)
 
 if [ -n "$prov_lines" ]; then
-  echo ""
-  echo "  Provenance"
-  while IFS= read -r p; do
-    printf "    %s\n" "$p"
+  hline
+  tsection "PROVENANCE"
+  hline
+  while IFS=$'\t' read -r src count; do
+    trow "$src" "$count"
   done <<< "$prov_lines"
 fi
+
+hline
 
 # ── Venue section ─────────────────────────────────────────────────
 echo ""
