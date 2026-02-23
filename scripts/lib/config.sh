@@ -4,7 +4,6 @@
 # Every script sources this file and calls load_config to initialize:
 #   REPO_ROOT — git repository root
 #   CONFIG    — path to bandlab.config.json
-#   ORG       — path to org/ directory (REPO_ROOT + registries base)
 #
 # Provides:
 #   cfg <jq-expr>           — read a config value (exits on null)
@@ -22,9 +21,6 @@ load_config() {
     echo "Missing bandlab.config.json — run: bash bandlab/setup.sh" >&2
     exit 1
   fi
-  # Derive ORG from the registries base — used by sourcing scripts
-  # shellcheck disable=SC2034
-  ORG="${REPO_ROOT}/org"
 }
 
 # Read a config value. Returns the raw jq result (caller checks for "null" if needed).

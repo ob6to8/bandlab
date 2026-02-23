@@ -372,6 +372,9 @@ s-YYYY-MMDD-city/
     },
     "manual:person-key:YYYY-MM-DD": {
       "fields": ["set_time", "load_in"]
+    },
+    "user:person-key:YYYY-MM-DD": {
+      "fields": ["band.foh", "band.driver"]
     }
   },
   "_verified": {
@@ -397,7 +400,7 @@ s-YYYY-MMDD-city/
   - `laminates`: Whether the band is carrying laminates for this show (e.g. `"yes"`, `"no"`, `""`). Empty string if unknown.
   - `backdrop`: Whether the band is carrying a backdrop and what size (e.g. `"yes, 10x20"`, `"no"`, `""`). Empty string if unknown.
 - `_verified`: Flat object mapping field names to ISO dates (YYYY-MM-DD) indicating when a human confirmed the field value is correct. Uses the same dot-notation as `_provenance` field names (e.g. `"advance.hospitality"`). Empty object `{}` by default. Underscore-prefixed so jq queries ignore it.
-- `_provenance`: Maps source documents to the fields they substantiate. Underscore-prefixed so jq queries and existing scripts ignore it. Keys are paths relative to the show directory, or special values: `"manual:<person>:<date>"`, `"legacy"`, `"legacy:routing-csv"`. Each entry has `extracted` (ISO date) and `fields` (array of field names from show.json that this source substantiates). See `ops/provenance-plan.md` for the full design.
+- `_provenance`: Maps source documents to the fields they substantiate. Underscore-prefixed so jq queries and existing scripts ignore it. Keys are paths relative to the show directory, or special values: `"manual:<person>:<date>"` (agent entered data a person provided verbally/in-session), `"user:<person>:<date>"` (user directly provided the data), `"legacy"`, `"legacy:routing-csv"`. Each entry has `extracted` (ISO date) and `fields` (array of field names from show.json that this source substantiates). Non-file key prefixes (`manual:`, `user:`, `legacy:`) must be registered in `bandlab.config.json` under `provenance.special_source_prefixes` so verification scripts skip file-existence checks. See `ops/provenance-plan.md` for the full design.
 - **advance fields:**
   - `hospitality`: Catering/hospitality details (buyout amount, dressing room provisions).
   - `backline`: What the venue provides (amps, drums, keys, etc.). Empty string if unknown.
