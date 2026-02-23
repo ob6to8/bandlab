@@ -17,6 +17,118 @@ else
   echo "./bandlab-cli already exists, skipping"
 fi
 
+# ── Config file ─────────────────────────────────────────────────────────
+if [ ! -f "${REPO_ROOT}/bandlab.config.json" ]; then
+  cat > "${REPO_ROOT}/bandlab.config.json" << 'CONFIGEOF'
+{
+  "$schema": "bandlab-config-v1",
+
+  "project": {
+    "name": "My Band",
+    "cli_name": "bandlab-cli"
+  },
+
+  "registries": {
+    "people": {
+      "path": "org/people.json",
+      "key_type": "object",
+      "has_sources": true,
+      "has_org_refs": true,
+      "org_prefixes": ["venue", "vendor", "management"]
+    },
+    "venues": {
+      "path": "org/touring/venues.json",
+      "key_type": "object",
+      "has_sources": true,
+      "has_contacts": true
+    },
+    "vendors": {
+      "path": "org/vendors.json",
+      "key_type": "object"
+    },
+    "todos": {
+      "path": "org/todos.json",
+      "key_type": "array",
+      "schema_fields": ["id", "task", "domain", "category", "show", "owners", "status", "due", "blocked_by", "source", "created", "updated", "notes", "history"]
+    }
+  },
+
+  "entities": {
+    "shows": {
+      "dir": "org/touring/shows",
+      "glob": "org/touring/shows/s-*/show.json",
+      "id_field": "id",
+      "index_path": "org/touring/.state/shows.json",
+      "schema_fields": ["id", "date", "venue", "run", "one_off", "status", "guarantee", "door_split", "promoter", "ages", "ticket_link", "sell_cap", "ticket_scaling", "wp", "support", "tour", "touring_party", "advance", "_provenance"],
+      "file_checklist": ["show.json", "source/summary.md", "tech-pack.md", "advancing/thread.md", "advancing/confirmed.md"],
+      "references": {
+        "venue": { "registry": "venues", "nullable": true },
+        "promoter": { "registry": "people", "nullable": true, "null_severity": "warn" }
+      }
+    },
+    "runs": {
+      "dir": "org/touring/runs",
+      "glob": "org/touring/runs/*/run.json",
+      "id_field": "id"
+    },
+    "one_offs": {
+      "dir": "org/touring/one-offs",
+      "glob": "org/touring/one-offs/*/one-off.json",
+      "id_field": "id"
+    },
+    "tours": {
+      "dir": "org/touring/tours",
+      "glob": "org/touring/tours/*/tour.json",
+      "id_field": "id"
+    }
+  },
+
+  "calendar": {
+    "path": "org/touring/calendar",
+    "show_link_field": "show"
+  },
+
+  "provenance": {
+    "enabled": true,
+    "field_name": "_provenance",
+    "skip_fields": ["id", "_provenance", "advance", "run", "one_off", "tour", "touring_party", "status", "routing_notes", "sets", "ticket_link"],
+    "special_source_values": ["manual", "legacy"],
+    "special_source_prefixes": ["manual:", "legacy:"],
+    "source_base_dir": "org"
+  },
+
+  "verification": {
+    "scripts": [
+      { "name": "referential-integrity-check", "label": "Referential Integrity" },
+      { "name": "provenance-verification", "label": "Provenance Verification" },
+      { "name": "doc-check", "label": "Documentation Sync" }
+    ]
+  },
+
+  "documentation": {
+    "claude_md": "CLAUDE.md",
+    "ops_dir": "ops",
+    "skills_dir": ".claude/skills",
+    "scripts_dir": "bandlab/scripts"
+  },
+
+  "owner_aliases": {},
+
+  "todo_filters": {
+    "domains": ["touring", "admin", "merch", "licensing"],
+    "categories": ["advancing", "settlement", "production", "show-documentation"]
+  },
+
+  "display": {
+    "show_id_strip_prefix": "s-2026-"
+  }
+}
+CONFIGEOF
+  echo "Created bandlab.config.json (edit to customize)"
+else
+  echo "bandlab.config.json already exists, skipping"
+fi
+
 # ── Skill symlinks ───────────────────────────────────────────────────
 mkdir -p "${REPO_ROOT}/.claude/skills"
 link_count=0

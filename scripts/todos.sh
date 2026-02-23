@@ -3,8 +3,10 @@
 # usage: todos.sh [filter...]
 set -euo pipefail
 
-REPO_ROOT="$(git rev-parse --show-toplevel)"
-TODOS="${REPO_ROOT}/org/todos.json"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "${SCRIPT_DIR}/lib/config.sh" && load_config
+
+TODOS="${REPO_ROOT}/$(cfg '.registries.todos.path')"
 
 if [ ! -f "$TODOS" ]; then
   echo "Missing ${TODOS}" >&2
@@ -13,56 +15,73 @@ fi
 
 TODAY=$(date +%Y-%m-%d)
 
+# ── Load filter vocabularies from config ──────────────────────────
+# Owner aliases: {"evan": "evan-fraser", "mark": "mark-reveley", ...}
+# Domains: ["touring", "admin", ...]
+# Categories: ["advancing", "settlement", ...]
+
+owner_aliases=$(cfg '.owner_aliases // {}')
+domains=$(cfg '.todo_filters.domains // []')
+categories=$(cfg '.todo_filters.categories // []')
+
+# Build help string dynamically
+alias_names=$(echo "$owner_aliases" | jq -r 'keys | join("|")')
+domain_names=$(echo "$domains" | jq -r 'join("|")')
+category_names=$(echo "$categories" | jq -r 'join("|")')
+
 # ── Parse filters ──────────────────────────────────────────────────
 # Default: status != "done"
 jq_filters=()
 status_filter='select(.status != "done")'
 
 for arg in "$@"; do
+  # Check status filters
   case "$arg" in
-    # Status filters
     open|in-progress|blocked|done)
       status_filter="select(.status == \"${arg}\")"
+      continue
       ;;
     all)
       status_filter=""
+      continue
       ;;
-    # Owner filters (partial match)
-    evan)
-      jq_filters+=('select(.owners | index("evan-fraser"))')
-      ;;
-    mark)
-      jq_filters+=('select(.owners | index("mark-reveley"))')
-      ;;
-    david)
-      jq_filters+=('select(.owners | index("david-sartore"))')
-      ;;
-    # Domain filters
-    touring|admin|merch|licensing)
-      jq_filters+=("select(.domain == \"${arg}\")")
-      ;;
-    # Category filters
-    advancing|settlement|production|show-documentation)
-      jq_filters+=("select(.category == \"${arg}\")")
-      ;;
-    # Show ID
     s-*)
       jq_filters+=("select(.show == \"${arg}\")")
+      continue
       ;;
-    # Date filters
     overdue)
       jq_filters+=("select(.due != null and .due < \"${TODAY}\")")
+      continue
       ;;
     upcoming)
       upcoming_end=$(date -v+7d +%Y-%m-%d 2>/dev/null || date -d "+7 days" +%Y-%m-%d)
       jq_filters+=("select(.due != null and .due >= \"${TODAY}\" and .due <= \"${upcoming_end}\")")
-      ;;
-    *)
-      echo "Unknown filter: ${arg}" >&2
-      echo "Filters: open|in-progress|blocked|done|all|evan|mark|david|touring|admin|merch|licensing|advancing|settlement|production|show-documentation|s-YYYY-MMDD-city|overdue|upcoming" >&2
-      exit 1
+      continue
       ;;
   esac
+
+  # Check owner aliases from config
+  owner_key=$(echo "$owner_aliases" | jq -r --arg a "$arg" '.[$a] // empty')
+  if [ -n "$owner_key" ]; then
+    jq_filters+=("select(.owners | index(\"${owner_key}\"))")
+    continue
+  fi
+
+  # Check domain filters from config
+  if echo "$domains" | jq -e --arg a "$arg" 'index($a) != null' > /dev/null 2>&1; then
+    jq_filters+=("select(.domain == \"${arg}\")")
+    continue
+  fi
+
+  # Check category filters from config
+  if echo "$categories" | jq -e --arg a "$arg" 'index($a) != null' > /dev/null 2>&1; then
+    jq_filters+=("select(.category == \"${arg}\")")
+    continue
+  fi
+
+  echo "Unknown filter: ${arg}" >&2
+  echo "Filters: open|in-progress|blocked|done|all|${alias_names}|${domain_names}|${category_names}|s-YYYY-MMDD-city|overdue|upcoming" >&2
+  exit 1
 done
 
 # ── Build jq pipeline ─────────────────────────────────────────────

@@ -2,10 +2,23 @@
 # desc: Show next advancing actions needed across shows
 set -euo pipefail
 
-REPO_ROOT="$(git rev-parse --show-toplevel)"
-INDEX="${REPO_ROOT}/org/touring/.state/shows.json"
-PEOPLE="${REPO_ROOT}/org/people.json"
-SHOWS_DIR="${REPO_ROOT}/org/touring/shows"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "${SCRIPT_DIR}/lib/config.sh" && load_config
+
+# Check if advancing is configured
+if [ "$(cfg '.advancing // empty')" = "" ]; then
+  echo "Advancing not configured in bandlab.config.json" >&2
+  exit 0
+fi
+
+INDEX="${REPO_ROOT}/$(cfg '.entities.shows.index_path')"
+PEOPLE="${REPO_ROOT}/$(cfg '.registries.people.path')"
+SHOWS_DIR="${REPO_ROOT}/$(cfg '.entities.shows.dir')"
+THREAD_FILE=$(cfg '.advancing.thread_file')
+CONFIRMED_FILE=$(cfg '.advancing.confirmed_file')
+CONTACT_ROLE=$(cfg '.advancing.contact_role')
+ORG_PREFIX=$(cfg '.advancing.contact_org_prefix')
+PRIORITY_FIELD=$(cfg '.advancing.priority_field')
 
 if [ ! -f "$INDEX" ]; then
   echo "Index not found. Run: ./bandlab-cli build-index" >&2
@@ -28,27 +41,27 @@ while IFS=$'\t' read -r show_id date venue; do
   short_date="${date:5}"
 
   # Determine state
-  if [ -f "${dir}/advancing/confirmed.md" ]; then
+  if [ -f "${dir}/${CONFIRMED_FILE}" ]; then
     # Get confirmed date from frontmatter
-    conf_date=$(grep '^confirmed_date:' "${dir}/advancing/confirmed.md" 2>/dev/null | sed 's/^confirmed_date: *//' || echo "unknown")
+    conf_date=$(grep '^confirmed_date:' "${dir}/${CONFIRMED_FILE}" 2>/dev/null | sed 's/^confirmed_date: *//' || echo "unknown")
     confirmed="${confirmed}${short_date}\t${venue}\t(confirmed ${conf_date})\n"
     confirmed_count=$((confirmed_count + 1))
-  elif [ -f "${dir}/advancing/thread.md" ]; then
+  elif [ -f "${dir}/${THREAD_FILE}" ]; then
     # Get thread start date (first line after frontmatter, or file mod date)
-    thread_date=$(head -20 "${dir}/advancing/thread.md" 2>/dev/null | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}' | head -1 || echo "unknown")
+    thread_date=$(head -20 "${dir}/${THREAD_FILE}" 2>/dev/null | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}' | head -1 || echo "unknown")
     awaiting_reply="${awaiting_reply}${short_date}\t${venue}\t(thread started ${thread_date})\n"
     awaiting_count=$((awaiting_count + 1))
   else
     # Find top contact for this venue
-    contact_info=$(jq -r --arg venue "$venue" '
-      ("venue:" + $venue) as $org_ref |
+    contact_info=$(jq -r --arg venue "$venue" --arg role "$CONTACT_ROLE" --arg prefix "$ORG_PREFIX" --arg pfield "$PRIORITY_FIELD" '
+      ($prefix + ":" + $venue) as $org_ref |
       to_entries
       | map(select(
-          .value.role == "advancing"
+          .value.role == $role
           and .value.org != null
           and (.value.org | index($org_ref))
         ))
-      | sort_by(.value.advancing_priority)
+      | sort_by(.value[$pfield])
       | first
       | [.value.name, .value.contact.email]
       | @tsv

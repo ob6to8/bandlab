@@ -2,23 +2,30 @@
 # desc: Launch live dashboard (builds meta, starts local server)
 set -euo pipefail
 
-REPO_ROOT="$(git rev-parse --show-toplevel)"
-ORG="${REPO_ROOT}/org"
-SHOWS_DIR="${REPO_ROOT}/org/touring/shows"
-RUNS_DIR="${REPO_ROOT}/org/touring/runs"
-ONEOFFS_DIR="${REPO_ROOT}/org/touring/one-offs"
-META_OUT="${ORG}/touring/.state/dashboard-meta.json"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "${SCRIPT_DIR}/lib/config.sh" && load_config
+
+SHOWS_DIR="${REPO_ROOT}/$(cfg '.entities.shows.dir')"
+RUNS_DIR="${REPO_ROOT}/$(cfg '.entities.runs.dir')"
+ONEOFFS_DIR="${REPO_ROOT}/$(cfg '.entities.one_offs.dir')"
+INDEX="${REPO_ROOT}/$(cfg '.entities.shows.index_path')"
+PEOPLE="${REPO_ROOT}/$(cfg '.registries.people.path')"
+VENUES="${REPO_ROOT}/$(cfg '.registries.venues.path')"
+TODOS="${REPO_ROOT}/$(cfg '.registries.todos.path')"
+CAL_DIR="${REPO_ROOT}/$(cfg '.calendar.path')"
+# Meta lives alongside the shows index
+META_OUT="$(dirname "$INDEX")/dashboard-meta.json"
 PORT=8026
 
 # ── Preflight checks ───────────────────────────────────────────────
-for f in people.json venues.json todos.json; do
-  if [ ! -f "${ORG}/${f}" ]; then
-    echo "Missing ${ORG}/${f}" >&2
+for f in "$PEOPLE" "$VENUES" "$TODOS"; do
+  if [ ! -f "$f" ]; then
+    echo "Missing ${f}" >&2
     exit 1
   fi
 done
-if [ ! -f "${ORG}/touring/.state/shows.json" ]; then
-  echo "Missing ${ORG}/touring/.state/shows.json — run ./bandlab-cli build-index first" >&2
+if [ ! -f "$INDEX" ]; then
+  echo "Missing ${INDEX} — run ./bandlab-cli build-index first" >&2
   exit 1
 fi
 
@@ -78,13 +85,12 @@ while IFS= read -r show_id; do
     --argjson csum "$has_contract_summary" \
     --argjson tech "$has_tech_pack" \
     '. + {($id): {"thread_md": $thread, "confirmed_md": $confirmed, "contract_pdf": $cpdf, "contract_summary": $csum, "tech_pack": $tech}}')
-done < <(jq -r 'keys[]' "${ORG}/touring/.state/shows.json")
+done < <(jq -r 'keys[]' "$INDEX")
 
 # ── Extract schedules from calendar files ─────────────────────────────
 # Reads YAML frontmatter from calendar .md files, extracts non-empty schedule arrays.
 # Uses Python (already required for the HTTP server) with a simple regex parser
 # since our YAML is controlled and simple — no PyYAML dependency needed.
-CAL_DIR="${REPO_ROOT}/org/touring/calendar"
 schedules=$(python3 -c "
 import os, re, json, sys
 

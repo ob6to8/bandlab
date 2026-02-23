@@ -2,34 +2,20 @@
 # desc: Check that documentation accurately describes the system
 set -euo pipefail
 
-REPO_ROOT="$(git rev-parse --show-toplevel)"
-CLAUDE_MD="${REPO_ROOT}/CLAUDE.md"
-SKILLS_DIR="${REPO_ROOT}/.claude/skills"
-SCRIPTS_DIR="${REPO_ROOT}/bandlab/scripts"
-SHOWS_DIR="${REPO_ROOT}/org/touring/shows"
-INDEX="${REPO_ROOT}/org/touring/.state/shows.json"
-OPS_DIR="${REPO_ROOT}/ops"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# shellcheck source=lib/config.sh
+source "${SCRIPT_DIR}/lib/config.sh" && load_config
+
+CLAUDE_MD="${REPO_ROOT}/$(cfg '.documentation.claude_md')"
+SKILLS_DIR="${REPO_ROOT}/$(cfg '.documentation.skills_dir')"
+SCRIPTS_DIR="${REPO_ROOT}/$(cfg '.documentation.scripts_dir')"
+SHOWS_DIR="${REPO_ROOT}/$(cfg '.entities.shows.dir')"
+INDEX="${REPO_ROOT}/$(cfg '.entities.shows.index_path')"
+OPS_DIR="${REPO_ROOT}/$(cfg '.documentation.ops_dir')"
 
 errors=0
 warnings=0
 checks=0
-
-pass() {
-  printf "  ✓ %s\n" "$1"
-  checks=$((checks + 1))
-}
-
-fail() {
-  printf "  ✗ %s\n" "$1"
-  errors=$((errors + 1))
-  checks=$((checks + 1))
-}
-
-warn() {
-  printf "  ? %s\n" "$1"
-  warnings=$((warnings + 1))
-  checks=$((checks + 1))
-}
 
 # ── Skills table ↔ skill directories ─────────────────────────────────
 
@@ -109,7 +95,7 @@ while IFS= read -r line; do
   if [ -f "${SCRIPTS_DIR}/${script_name}" ]; then
     pass "/${skill} → ${script_name} exists"
   else
-    fail "/${skill} → ${script_name} NOT FOUND in bandlab/scripts/"
+    fail "/${skill} → ${script_name} NOT FOUND in $(basename "$SCRIPTS_DIR")/"
   fi
 done < "$CLAUDE_MD"
 echo ""
@@ -178,9 +164,8 @@ echo "=== Schema vs Reality ==="
 # Get the union of all fields across all show.json files
 actual_fields=$(find "$SHOWS_DIR" -name 'show.json' -exec jq -r 'keys[]' {} + | sort -u)
 
-# Known schema fields from bandlab/CLAUDE.md show.json definition
-# These are the fields documented in the schema
-schema_fields="id date venue run one_off status guarantee canada_amount door_split promoter ages ticket_link sell_cap ticket_scaling wp support tour touring_party sets routing_notes advance _provenance"
+# Read schema fields from config
+schema_fields=$(cfg '.entities.shows.schema_fields | .[]')
 
 for field in $actual_fields; do
   found=false
@@ -202,11 +187,11 @@ echo ""
 
 echo "=== Todo Schema vs Reality ==="
 
-TODOS="${REPO_ROOT}/org/todos.json"
+TODOS="${REPO_ROOT}/$(cfg '.registries.todos.path')"
 
 if [ -f "$TODOS" ]; then
   actual_todo_fields=$(jq -r '[.[] | keys[]] | unique[]' "$TODOS" | sort -u)
-  todo_schema_fields="id task domain category show owners status due blocked_by source created updated notes history"
+  todo_schema_fields=$(cfg '.registries.todos.schema_fields | .[]')
 
   for field in $actual_todo_fields; do
     found=false

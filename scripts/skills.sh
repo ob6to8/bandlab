@@ -2,9 +2,11 @@
 # desc: List all available commands and skills
 set -euo pipefail
 
-REPO_ROOT="$(git rev-parse --show-toplevel)"
-SCRIPTS_DIR="${REPO_ROOT}/bandlab/scripts"
-SKILLS_DIR="${REPO_ROOT}/.claude/skills"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "${SCRIPT_DIR}/lib/config.sh" && load_config
+
+SCRIPTS_DIR="${REPO_ROOT}/$(cfg '.documentation.scripts_dir')"
+SKILLS_DIR="${REPO_ROOT}/$(cfg '.documentation.skills_dir')"
 
 echo ""
 echo "  bandlab — available commands"
@@ -28,7 +30,7 @@ echo ""
 echo "Run: ./bandlab-cli <command> [args]"
 
 # ── Skills ────────────────────────────────────────────────────────────
-# If .claude/skills/ exists, list available skills
+# If skills dir exists, list available skills
 
 if [ -d "$SKILLS_DIR" ]; then
   echo ""

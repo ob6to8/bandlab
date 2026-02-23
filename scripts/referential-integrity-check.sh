@@ -2,34 +2,20 @@
 # desc: Check that all keys resolve, files exist, and cross-references are valid
 set -euo pipefail
 
-REPO_ROOT="$(git rev-parse --show-toplevel)"
-ORG="${REPO_ROOT}/org"
-SHOWS_DIR="${REPO_ROOT}/org/touring/shows"
-CALENDAR="${REPO_ROOT}/org/touring/calendar"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+# shellcheck source=lib/config.sh
+source "${SCRIPT_DIR}/lib/config.sh" && load_config
 
-INDEX="${ORG}/touring/.state/shows.json"
-PEOPLE="${ORG}/people.json"
-VENUES="${ORG}/touring/venues.json"
+SHOWS_DIR="${REPO_ROOT}/$(cfg '.entities.shows.dir')"
+INDEX="${REPO_ROOT}/$(cfg '.entities.shows.index_path')"
+PEOPLE="${REPO_ROOT}/$(cfg '.registries.people.path')"
+VENUES="${REPO_ROOT}/$(cfg '.registries.venues.path')"
+CALENDAR_REL=$(cfg_default '.calendar.path' '')
+CALENDAR="${REPO_ROOT}/${CALENDAR_REL}"
+
 errors=0
 warnings=0
 checks=0
-
-pass() {
-  printf "  ✓ %s\n" "$1"
-  checks=$((checks + 1))
-}
-
-fail() {
-  printf "  ✗ %s\n" "$1"
-  errors=$((errors + 1))
-  checks=$((checks + 1))
-}
-
-warn() {
-  printf "  ? %s\n" "$1"
-  warnings=$((warnings + 1))
-  checks=$((checks + 1))
-}
 
 # ── Required files ────────────────────────────────────────────────────
 
@@ -75,184 +61,208 @@ while read -r show_id; do
 done < <(jq -r 'keys[]' "$INDEX")
 echo ""
 
-# ── Venue references ─────────────────────────────────────────────────
+# ── Show → Registry references (config-driven) ───────────────────────
 
-echo "=== Show → Venue References ==="
+# Read reference definitions from config and check each one
+# shellcheck disable=SC2034
+while IFS=$'\t' read -r ref_field ref_registry ref_nullable ref_null_severity; do
+  registry_path="${REPO_ROOT}/$(cfg ".registries.${ref_registry}.path")"
+  # Capitalize first letter (compatible with bash 3)
+  first_char=$(echo "$ref_field" | cut -c1 | tr '[:lower:]' '[:upper:]')
+  rest=$(echo "$ref_field" | cut -c2-)
+  section_label="${first_char}${rest}"
 
-while IFS=$'\t' read -r show_id venue; do
-  if [ "$venue" = "null" ] || [ -z "$venue" ]; then
-    warn "${show_id}: venue is null"
-    continue
-  fi
+  echo "=== Show → ${section_label} References ==="
 
-  exists=$(jq -r --arg v "$venue" 'has($v)' "$VENUES")
-  if [ "$exists" = "true" ]; then
-    pass "${show_id} → ${venue}"
-  else
-    fail "${show_id} → ${venue} NOT FOUND in venues.json"
-  fi
-done < <(jq -r 'to_entries[] | [.key, .value.venue] | @tsv' "$INDEX")
-echo ""
+  while IFS=$'\t' read -r show_id value; do
+    if [ "$value" = "null" ] || [ -z "$value" ]; then
+      if [ "$ref_null_severity" = "warn" ]; then
+        warn "${show_id}: ${ref_field} is null"
+      fi
+      continue
+    fi
 
-# ── Promoter references ──────────────────────────────────────────────
-
-echo "=== Show → Promoter References ==="
-
-while IFS=$'\t' read -r show_id promoter; do
-  if [ "$promoter" = "null" ] || [ -z "$promoter" ]; then
-    warn "${show_id}: promoter is null"
-    continue
-  fi
-
-  exists=$(jq -r --arg p "$promoter" 'has($p)' "$PEOPLE")
-  if [ "$exists" = "true" ]; then
-    pass "${show_id} → ${promoter}"
-  else
-    fail "${show_id} → ${promoter} NOT FOUND in people.json"
-  fi
-done < <(jq -r 'to_entries[] | [.key, .value.promoter] | @tsv' "$INDEX")
-echo ""
+    exists=$(jq -r --arg v "$value" 'has($v)' "$registry_path")
+    if [ "$exists" = "true" ]; then
+      pass "${show_id} → ${value}"
+    else
+      fail "${show_id} → ${value} NOT FOUND in $(basename "$registry_path")"
+    fi
+  done < <(jq -r "to_entries[] | [.key, .value.${ref_field}] | @tsv" "$INDEX")
+  echo ""
+done < <(jq -r '.entities.shows.references | to_entries[] | [.key, .value.registry, (.value.nullable // false | tostring), (.value.null_severity // "skip")] | @tsv' "$CONFIG")
 
 # ── Venue contact references ─────────────────────────────────────────
 
-echo "=== Venue → Contact References ==="
+# Only check if venues registry declares has_contacts
+has_contacts=$(cfg_default '.registries.venues.has_contacts' 'false')
+if [ "$has_contacts" = "true" ]; then
+  echo "=== Venue → Contact References ==="
 
-while IFS=$'\t' read -r venue role person_key; do
-  exists=$(jq -r --arg p "$person_key" 'has($p)' "$PEOPLE")
-  if [ "$exists" = "true" ]; then
-    pass "${venue} [${role}] → ${person_key}"
-  else
-    fail "${venue} [${role}] → ${person_key} NOT FOUND in people.json"
-  fi
-done < <(jq -r 'to_entries[] | .key as $venue | .value.contacts | to_entries[] | [$venue, .key, .value] | @tsv' "$VENUES")
-echo ""
+  while IFS=$'\t' read -r venue role person_key; do
+    exists=$(jq -r --arg p "$person_key" 'has($p)' "$PEOPLE")
+    if [ "$exists" = "true" ]; then
+      pass "${venue} [${role}] → ${person_key}"
+    else
+      fail "${venue} [${role}] → ${person_key} NOT FOUND in people.json"
+    fi
+  done < <(jq -r 'to_entries[] | .key as $venue | .value.contacts | to_entries[] | [$venue, .key, .value] | @tsv' "$VENUES")
+  echo ""
+fi
 
 # ── Calendar ↔ Show linkage ──────────────────────────────────────────
 
-echo "=== Calendar ↔ Show Linkage ==="
+# Only check if calendar section exists in config
+if [ -n "$CALENDAR_REL" ] && [ -d "$CALENDAR" ]; then
+  echo "=== Calendar ↔ Show Linkage ==="
 
-# Check that every show's date has a calendar file linking back to it
-while IFS=$'\t' read -r show_id date; do
-  month=$(echo "$date" | cut -d'-' -f1-2)
-  day=$(echo "$date" | cut -d'-' -f3 | sed 's/^0//')
-  cal_file="${CALENDAR}/${month}/$(printf '%02d' "$day").md"
+  show_link_field=$(cfg '.calendar.show_link_field')
 
-  if [ ! -f "$cal_file" ]; then
-    fail "${show_id} (${date}): calendar file MISSING"
-    continue
-  fi
+  # Check that every show's date has a calendar file linking back to it
+  while IFS=$'\t' read -r show_id date; do
+    month=$(echo "$date" | cut -d'-' -f1-2)
+    day=$(echo "$date" | cut -d'-' -f3 | sed 's/^0//')
+    cal_file="${CALENDAR}/${month}/$(printf '%02d' "$day").md"
 
-  # Check that the calendar file references this show
-  if grep -q "show: ${show_id}" "$cal_file"; then
-    pass "${show_id} ↔ ${date}"
-  else
-    fail "${show_id} (${date}): calendar file exists but does NOT reference show"
-  fi
-done < <(jq -r 'to_entries[] | [.key, .value.date] | @tsv' "$INDEX")
-echo ""
+    if [ ! -f "$cal_file" ]; then
+      fail "${show_id} (${date}): calendar file MISSING"
+      continue
+    fi
+
+    # Check that the calendar file references this show
+    if grep -q "${show_link_field}: ${show_id}" "$cal_file"; then
+      pass "${show_id} ↔ ${date}"
+    else
+      fail "${show_id} (${date}): calendar file exists but does NOT reference show"
+    fi
+  done < <(jq -r 'to_entries[] | [.key, .value.date] | @tsv' "$INDEX")
+  echo ""
+fi
 
 # ── People with org refs ─────────────────────────────────────────────
 
-VENDORS="${ORG}/vendors.json"
+# Only check if people registry declares has_org_refs
+has_org_refs=$(cfg_default '.registries.people.has_org_refs' 'false')
+if [ "$has_org_refs" = "true" ]; then
+  echo "=== People → Org References ==="
 
-echo "=== People → Org References ==="
+  # Build the org prefix → registry path mapping from config
+  # Read org_prefixes array and map each to its registry
+  org_prefix_count=$(cfg '.registries.people.org_prefixes | length')
 
-# Check that every person's org field (venue:key or vendor:key) resolves
-while IFS=$'\t' read -r person_key org_ref; do
-  org_type="${org_ref%%:*}"
-  org_key="${org_ref#*:}"
+  # Check that every person's org field (prefix:key) resolves
+  while IFS=$'\t' read -r person_key org_ref; do
+    org_type="${org_ref%%:*}"
+    org_key="${org_ref#*:}"
 
-  if [ "$org_type" = "venue" ]; then
-    exists=$(jq -r --arg v "$org_key" 'has($v)' "$VENUES")
-    if [ "$exists" = "true" ]; then
-      pass "${person_key} → ${org_ref}"
-    else
-      fail "${person_key} → ${org_ref} NOT FOUND in venues.json"
+    resolved=false
+    # Check each known org prefix
+    i=0
+    while [ "$i" -lt "$org_prefix_count" ]; do
+      prefix=$(cfg ".registries.people.org_prefixes[$i]")
+      if [ "$org_type" = "$prefix" ]; then
+        # Find the registry for this prefix
+        # Convention: "venue" → registries.venues, "vendor" → registries.vendors
+        registry_name="${prefix}s"
+        registry_path_rel=$(cfg_default ".registries.${registry_name}.path" "")
+        if [ -n "$registry_path_rel" ] && [ "$registry_path_rel" != "null" ]; then
+          registry_path="${REPO_ROOT}/${registry_path_rel}"
+          if [ -f "$registry_path" ]; then
+            exists=$(jq -r --arg v "$org_key" 'has($v)' "$registry_path")
+            if [ "$exists" = "true" ]; then
+              pass "${person_key} → ${org_ref}"
+            else
+              fail "${person_key} → ${org_ref} NOT FOUND in $(basename "$registry_path")"
+            fi
+          fi
+        else
+          # No registry for this prefix (e.g., "management") — valid without lookup
+          pass "${person_key} → ${org_ref}"
+        fi
+        resolved=true
+        break
+      fi
+      i=$((i + 1))
+    done
+
+    if [ "$resolved" = false ]; then
+      # Build expected prefixes string for error message
+      expected=$(cfg '.registries.people.org_prefixes | join(":, ")' )
+      fail "${person_key} → ${org_ref} UNKNOWN org prefix (expected ${expected}:)"
     fi
-  elif [ "$org_type" = "vendor" ]; then
-    exists=$(jq -r --arg v "$org_key" 'has($v)' "$VENDORS")
-    if [ "$exists" = "true" ]; then
-      pass "${person_key} → ${org_ref}"
-    else
-      fail "${person_key} → ${org_ref} NOT FOUND in vendors.json"
-    fi
-  elif [ "$org_type" = "management" ]; then
-    # management: prefix is valid — no registry to check against
-    pass "${person_key} → ${org_ref}"
-  else
-    fail "${person_key} → ${org_ref} UNKNOWN org prefix (expected venue:, vendor:, or management:)"
-  fi
-done < <(jq -r 'to_entries[] | select(.value.org != null) | .key as $k | .value.org[] | [$k, .] | @tsv' "$PEOPLE")
-echo ""
+  done < <(jq -r 'to_entries[] | select(.value.org != null) | .key as $k | .value.org[] | [$k, .] | @tsv' "$PEOPLE")
+  echo ""
+fi
 
 # ── Source Provenance ─────────────────────────────────────────────────
 
 echo "=== Source Provenance ==="
 
-# Check people.json: every entry should have a sources array
-people_with=0
-people_without=0
-while read -r person_key; do
-  has_sources=$(jq -r --arg k "$person_key" '.[$k] | has("sources")' "$PEOPLE")
-  if [ "$has_sources" = "true" ]; then
-    people_with=$((people_with + 1))
-  else
-    people_without=$((people_without + 1))
-    fail "${person_key}: missing sources field in people.json"
+# Read special source values from config for file path validation
+special_values=$(cfg '.provenance.special_source_values // []')
+special_prefixes=$(cfg '.provenance.special_source_prefixes // []')
+
+# Build a case pattern for skipping special values
+# We build this inline per-check below
+
+# Check registries that have sources
+# shellcheck disable=SC2034
+while IFS=$'\t' read -r reg_name reg_path; do
+  reg_file="${REPO_ROOT}/${reg_path}"
+  [ -f "$reg_file" ] || continue
+
+  with=0
+  without=0
+  while read -r entry_key; do
+    has_sources=$(jq -r --arg k "$entry_key" '.[$k] | has("sources")' "$reg_file")
+    if [ "$has_sources" = "true" ]; then
+      with=$((with + 1))
+    else
+      without=$((without + 1))
+      fail "${entry_key}: missing sources field in $(basename "$reg_file")"
+    fi
+  done < <(jq -r 'keys[]' "$reg_file")
+
+  if [ "$without" -eq 0 ]; then
+    pass "$(basename "$reg_file"): all ${with} entries have sources"
   fi
-done < <(jq -r 'keys[]' "$PEOPLE")
-
-if [ "$people_without" -eq 0 ]; then
-  pass "people.json: all ${people_with} entries have sources"
-fi
-
-# Check venues.json: every entry should have a sources array
-venues_with=0
-venues_without=0
-while read -r venue_key; do
-  has_sources=$(jq -r --arg k "$venue_key" '.[$k] | has("sources")' "$VENUES")
-  if [ "$has_sources" = "true" ]; then
-    venues_with=$((venues_with + 1))
-  else
-    venues_without=$((venues_without + 1))
-    fail "${venue_key}: missing sources field in venues.json"
-  fi
-done < <(jq -r 'keys[]' "$VENUES")
-
-if [ "$venues_without" -eq 0 ]; then
-  pass "venues.json: all ${venues_with} entries have sources"
-fi
+done < <(jq -r '.registries | to_entries[] | select(.value.has_sources == true) | [.key, .value.path] | @tsv' "$CONFIG")
 
 # Check that file-path sources resolve to real files
 # Special values (manual, legacy, legacy:*) are valid without file checks
 bad_paths=0
 good_paths=0
-while IFS=$'\t' read -r entry_key source_path; do
-  # Skip special values
-  case "$source_path" in
-    manual|legacy|legacy:*) continue ;;
-  esac
 
-  if [ -f "${ORG}/${source_path}" ]; then
-    good_paths=$((good_paths + 1))
-  else
-    bad_paths=$((bad_paths + 1))
-    fail "${entry_key}: source file not found: ${source_path}"
-  fi
-done < <(jq -r 'to_entries[] | .key as $k | .value.sources // [] | .[] | [$k, .] | @tsv' "$PEOPLE")
+# Iterate source-bearing registries
+# shellcheck disable=SC2034
+while IFS=$'\t' read -r _reg_name reg_path; do
+  reg_file="${REPO_ROOT}/${reg_path}"
+  [ -f "$reg_file" ] || continue
 
-while IFS=$'\t' read -r entry_key source_path; do
-  case "$source_path" in
-    manual|legacy|legacy:*) continue ;;
-  esac
+  while IFS=$'\t' read -r entry_key source_path; do
+    # Skip special values
+    is_special=false
+    for sv in $(echo "$special_values" | jq -r '.[]'); do
+      [ "$source_path" = "$sv" ] && is_special=true && break
+    done
+    if [ "$is_special" = false ]; then
+      for sp in $(echo "$special_prefixes" | jq -r '.[]'); do
+        case "$source_path" in
+          "${sp}"*) is_special=true; break ;;
+        esac
+      done
+    fi
+    [ "$is_special" = true ] && continue
 
-  if [ -f "${ORG}/${source_path}" ]; then
-    good_paths=$((good_paths + 1))
-  else
-    bad_paths=$((bad_paths + 1))
-    fail "${entry_key}: source file not found: ${source_path}"
-  fi
-done < <(jq -r 'to_entries[] | .key as $k | .value.sources // [] | .[] | [$k, .] | @tsv' "$VENUES")
+    source_base="${REPO_ROOT}/$(cfg '.provenance.source_base_dir')"
+    if [ -f "${source_base}/${source_path}" ]; then
+      good_paths=$((good_paths + 1))
+    else
+      bad_paths=$((bad_paths + 1))
+      fail "${entry_key}: source file not found: ${source_path}"
+    fi
+  done < <(jq -r 'to_entries[] | .key as $k | .value.sources // [] | .[] | [$k, .] | @tsv' "$reg_file")
+done < <(jq -r '.registries | to_entries[] | select(.value.has_sources == true) | [.key, .value.path] | @tsv' "$CONFIG")
 
 if [ "$bad_paths" -eq 0 ] && [ "$good_paths" -gt 0 ]; then
   pass "all ${good_paths} file-path sources resolve"
@@ -261,42 +271,56 @@ echo ""
 
 # ── Source Provenance — Shows ────────────────────────────────────────
 
-echo "=== Source Provenance — Shows ==="
+prov_enabled=$(cfg_default '.provenance.enabled' 'false')
+if [ "$prov_enabled" = "true" ]; then
+  prov_field=$(cfg '.provenance.field_name')
 
-shows_with_prov=0
-shows_without_prov=0
-while read -r show_id; do
-  show_file="${SHOWS_DIR}/${show_id}/show.json"
-  [ ! -f "$show_file" ] && continue
+  echo "=== Source Provenance — Shows ==="
 
-  has_prov=$(jq 'has("_provenance")' "$show_file")
-  if [ "$has_prov" = "true" ]; then
-    shows_with_prov=$((shows_with_prov + 1))
+  shows_with_prov=0
+  shows_without_prov=0
+  while read -r show_id; do
+    show_file="${SHOWS_DIR}/${show_id}/show.json"
+    [ ! -f "$show_file" ] && continue
 
-    # Check that source file paths in _provenance resolve
-    while IFS=$'\t' read -r prov_key; do
-      case "$prov_key" in
-        manual:*|legacy|legacy:*) continue ;;
-      esac
-      if [ -f "${SHOWS_DIR}/${show_id}/${prov_key}" ]; then
-        pass "${show_id}: ${prov_key} exists"
-      else
-        fail "${show_id}: provenance file not found: ${prov_key}"
-      fi
-    done < <(jq -r '._provenance | keys[]' "$show_file")
-  else
-    shows_without_prov=$((shows_without_prov + 1))
-    warn "${show_id}: missing _provenance"
+    has_prov=$(jq --arg f "$prov_field" 'has($f)' "$show_file")
+    if [ "$has_prov" = "true" ]; then
+      shows_with_prov=$((shows_with_prov + 1))
+
+      # Check that source file paths in _provenance resolve
+      while IFS=$'\t' read -r prov_key; do
+        # Skip special source values/prefixes
+        is_special=false
+        for sp in $(echo "$special_prefixes" | jq -r '.[]'); do
+          case "$prov_key" in
+            "${sp}"*) is_special=true; break ;;
+          esac
+        done
+        for sv in $(echo "$special_values" | jq -r '.[]'); do
+          [ "$prov_key" = "$sv" ] && is_special=true && break
+        done
+        [ "$is_special" = true ] && continue
+
+        if [ -f "${SHOWS_DIR}/${show_id}/${prov_key}" ]; then
+          pass "${show_id}: ${prov_key} exists"
+        else
+          fail "${show_id}: provenance file not found: ${prov_key}"
+        fi
+      done < <(jq -r --arg f "$prov_field" '.[$f] | keys[]' "$show_file")
+    else
+      shows_without_prov=$((shows_without_prov + 1))
+      warn "${show_id}: missing ${prov_field}"
+    fi
+  done < <(jq -r 'keys[]' "$INDEX")
+
+  total_shows=$((shows_with_prov + shows_without_prov))
+  if [ "$total_shows" -gt 0 ]; then
+    pct=$((shows_with_prov * 100 / total_shows))
+    echo "  ${shows_with_prov}/${total_shows} shows with provenance (${pct}%)"
+    checks=$((checks + 1))
   fi
-done < <(jq -r 'keys[]' "$INDEX")
-
-total_shows=$((shows_with_prov + shows_without_prov))
-if [ "$total_shows" -gt 0 ]; then
-  pct=$((shows_with_prov * 100 / total_shows))
-  echo "  ${shows_with_prov}/${total_shows} shows with provenance (${pct}%)"
-  checks=$((checks + 1))
+  echo ""
 fi
-echo ""
 
 # ── Summary ───────────────────────────────────────────────────────────
 

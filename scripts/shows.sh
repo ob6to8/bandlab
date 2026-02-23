@@ -2,8 +2,11 @@
 # desc: List all shows with date, venue, guarantee, and status
 set -euo pipefail
 
-REPO_ROOT="$(git rev-parse --show-toplevel)"
-INDEX="${REPO_ROOT}/org/touring/.state/shows.json"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "${SCRIPT_DIR}/lib/config.sh" && load_config
+
+INDEX="${REPO_ROOT}/$(cfg '.entities.shows.index_path')"
+STRIP_PREFIX=$(cfg_default '.display.show_id_strip_prefix' 's-')
 
 if [ ! -f "$INDEX" ]; then
   echo "Index not found. Run: ./bandlab-cli build-index" >&2
@@ -27,7 +30,7 @@ jq -r '
   | @tsv
 ' "$INDEX" | while IFS=$'\t' read -r id date venue guarantee status; do
   printf "%-14s %-12s %-30s %10s  %s\n" \
-    "${id#s-2026-}" "$date" "$venue" "$guarantee" "$status"
+    "${id#"$STRIP_PREFIX"}" "$date" "$venue" "$guarantee" "$status"
 done
 
 echo ""

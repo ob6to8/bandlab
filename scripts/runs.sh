@@ -2,9 +2,11 @@
 # desc: List runs and one-offs with dates, shows, and status
 set -euo pipefail
 
-REPO_ROOT="$(git rev-parse --show-toplevel)"
-RUNS_DIR="${REPO_ROOT}/org/touring/runs"
-ONEOFFS_DIR="${REPO_ROOT}/org/touring/one-offs"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "${SCRIPT_DIR}/lib/config.sh" && load_config
+
+RUNS_DIR="${REPO_ROOT}/$(cfg '.entities.runs.dir')"
+ONEOFFS_DIR="${REPO_ROOT}/$(cfg '.entities.one_offs.dir')"
 
 # ── Collect all logistics blocks into one JSON array ───────────────
 blocks="[]"

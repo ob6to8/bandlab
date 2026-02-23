@@ -3,10 +3,12 @@
 # usage: show.sh <show-id-or-partial>
 set -euo pipefail
 
-REPO_ROOT="$(git rev-parse --show-toplevel)"
-INDEX="${REPO_ROOT}/org/touring/.state/shows.json"
-VENUES="${REPO_ROOT}/org/touring/venues.json"
-SHOWS_DIR="${REPO_ROOT}/org/touring/shows"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "${SCRIPT_DIR}/lib/config.sh" && load_config
+
+INDEX="${REPO_ROOT}/$(cfg '.entities.shows.index_path')"
+VENUES="${REPO_ROOT}/$(cfg '.registries.venues.path')"
+SHOWS_DIR="${REPO_ROOT}/$(cfg '.entities.shows.dir')"
 
 if [ ! -f "$INDEX" ]; then
   echo "Index not found. Run: ./bandlab-cli build-index" >&2
@@ -40,13 +42,15 @@ jq --arg v "$venue" '.[$v]' "$VENUES"
 echo ""
 echo "=== Files ==="
 show_dir="${SHOWS_DIR}/${show_id}"
-for f in show.json source/summary.md tech-pack.md advancing/thread.md advancing/confirmed.md; do
+
+# Read file checklist from config
+while IFS= read -r f; do
   if [ -f "${show_dir}/${f}" ]; then
     echo "  [x] ${f}"
   else
     echo "  [ ] ${f}"
   fi
-done
+done < <(cfg '.entities.shows.file_checklist[]')
 
 # Source PDFs
 source_count=$(find "${show_dir}/source" -name "*.pdf" 2>/dev/null | wc -l | tr -d ' ')

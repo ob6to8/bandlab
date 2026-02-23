@@ -2,21 +2,26 @@
 # desc: Generate a static HTML dashboard from show/todo/venue data
 set -euo pipefail
 
-REPO_ROOT="$(git rev-parse --show-toplevel)"
-ORG="${REPO_ROOT}/org"
-SHOWS_DIR="${REPO_ROOT}/org/touring/shows"
-RUNS_DIR="${REPO_ROOT}/org/touring/runs"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "${SCRIPT_DIR}/lib/config.sh" && load_config
+
+SHOWS_DIR="${REPO_ROOT}/$(cfg '.entities.shows.dir')"
+RUNS_DIR="${REPO_ROOT}/$(cfg '.entities.runs.dir')"
+INDEX="${REPO_ROOT}/$(cfg '.entities.shows.index_path')"
+PEOPLE="${REPO_ROOT}/$(cfg '.registries.people.path')"
+VENUES="${REPO_ROOT}/$(cfg '.registries.venues.path')"
+TODOS="${REPO_ROOT}/$(cfg '.registries.todos.path')"
 OUTPUT="${REPO_ROOT}/dashboard.html"
 
 # ── Preflight checks ───────────────────────────────────────────────
-for f in people.json venues.json todos.json; do
-  if [ ! -f "${ORG}/${f}" ]; then
-    echo "Missing ${ORG}/${f}" >&2
+for f in "$PEOPLE" "$VENUES" "$TODOS"; do
+  if [ ! -f "$f" ]; then
+    echo "Missing ${f}" >&2
     exit 1
   fi
 done
-if [ ! -f "${ORG}/touring/.state/shows.json" ]; then
-  echo "Missing ${ORG}/touring/.state/shows.json — run ./bandlab-cli build-index first" >&2
+if [ ! -f "$INDEX" ]; then
+  echo "Missing ${INDEX} — run ./bandlab-cli build-index first" >&2
   exit 1
 fi
 
@@ -70,15 +75,15 @@ while IFS= read -r show_id; do
     --argjson csum "$has_contract_summary" \
     --argjson tech "$has_tech_pack" \
     '. + {($id): {"thread_md": $thread, "confirmed_md": $confirmed, "contract_pdf": $cpdf, "contract_summary": $csum, "tech_pack": $tech}}')
-done < <(jq -r 'keys[]' "${ORG}/touring/.state/shows.json")
+done < <(jq -r 'keys[]' "$INDEX")
 
 # ── Build the combined data blob ────────────────────────────────────
 # This JSON object gets embedded in the HTML as `const DATA = ...`
 DATA=$(jq -n \
-  --slurpfile shows "${ORG}/touring/.state/shows.json" \
-  --slurpfile people "${ORG}/people.json" \
-  --slurpfile venues "${ORG}/touring/venues.json" \
-  --slurpfile todos "${ORG}/todos.json" \
+  --slurpfile shows "$INDEX" \
+  --slurpfile people "$PEOPLE" \
+  --slurpfile venues "$VENUES" \
+  --slurpfile todos "$TODOS" \
   --argjson run_names "$run_names" \
   --argjson adv_status "$adv_status" \
   --argjson file_status "$file_status" \

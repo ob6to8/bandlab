@@ -4,9 +4,22 @@
 # example: advance-contacts.sh 0304  (matches s-2026-0304-charleston)
 set -euo pipefail
 
-REPO_ROOT="$(git rev-parse --show-toplevel)"
-INDEX="${REPO_ROOT}/org/touring/.state/shows.json"
-PEOPLE="${REPO_ROOT}/org/people.json"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+source "${SCRIPT_DIR}/lib/config.sh" && load_config
+
+# Check if advancing is configured
+if [ "$(cfg '.advancing // empty')" = "" ]; then
+  echo "Advancing not configured in bandlab.config.json" >&2
+  exit 0
+fi
+
+INDEX="${REPO_ROOT}/$(cfg '.entities.shows.index_path')"
+PEOPLE="${REPO_ROOT}/$(cfg '.registries.people.path')"
+SHOWS_DIR="${REPO_ROOT}/$(cfg '.entities.shows.dir')"
+THREAD_FILE=$(cfg '.advancing.thread_file')
+CONTACT_ROLE=$(cfg '.advancing.contact_role')
+ORG_PREFIX=$(cfg '.advancing.contact_org_prefix')
+PRIORITY_FIELD=$(cfg '.advancing.priority_field')
 
 if [ ! -f "$INDEX" ]; then
   echo "Index not found. Run: ./bandlab-cli build-index" >&2
@@ -37,19 +50,19 @@ echo "=== ${show_id} | ${date} | ${venue} ==="
 echo ""
 
 # Find advancing contacts for this venue, sorted by priority
-# Matches on org field (venue:key prefix) or null org (cross-venue contacts)
-jq -r --arg venue "$venue" '
-  ("venue:" + $venue) as $org_ref |
+# Matches on org field (prefix:key) or null org (cross-venue contacts)
+jq -r --arg venue "$venue" --arg role "$CONTACT_ROLE" --arg prefix "$ORG_PREFIX" --arg pfield "$PRIORITY_FIELD" '
+  ($prefix + ":" + $venue) as $org_ref |
   to_entries
   | map(select(
-      .value.role == "advancing"
+      .value.role == $role
       and .value.org != null
       and (.value.org | index($org_ref))
     ))
-  | sort_by(.value.advancing_priority)
+  | sort_by(.value[$pfield])
   | .[]
   | [
-      .value.advancing_priority,
+      .value[$pfield],
       .value.name,
       .value.role,
       .value.contact.email,
@@ -61,7 +74,7 @@ jq -r --arg venue "$venue" '
 done
 
 # Check if advancing has started
-thread="${REPO_ROOT}/org/touring/shows/${show_id}/advancing/thread.md"
+thread="${SHOWS_DIR}/${show_id}/${THREAD_FILE}"
 if [ -f "$thread" ]; then
   echo ""
   echo "  Advancing thread exists: ${thread}"
