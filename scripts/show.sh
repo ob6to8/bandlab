@@ -222,6 +222,8 @@ veh="$band_vehicle_type"
 if [ -n "$band_vehicle_length" ]; then veh="${veh} (${band_vehicle_length})"; fi
 trow "Vehicle" "$veh" "band.vehicle_type"
 trow "Support" "$support" "support"
+trow "Hospitality" "$adv_hospitality" "advance.hospitality"
+trow "Backline" "$adv_backline" "advance.backline"
 
 # Logistics block
 if [ -n "$run" ]; then
@@ -232,12 +234,10 @@ fi
 
 trow "Tour" "$tour"
 
-# ── Advance section ───────────────────────────────────────────────
+# ── Venue Capabilities section ───────────────────────────────────
 hline
-tsection "ADVANCE"
+tsection "VENUE CAPABILITIES"
 hline
-trow "Hospitality" "$adv_hospitality" "advance.hospitality"
-trow "Backline" "$adv_backline" "advance.backline"
 if [ -n "$adv_merch_cut" ]; then
   trow "Merch Cut" "${adv_merch_cut}%" "advance.merch_cut"
 else
