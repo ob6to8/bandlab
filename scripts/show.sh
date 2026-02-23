@@ -112,8 +112,6 @@ sell_cap=$(get '.sell_cap')
 ticket_scaling=$(get '.ticket_scaling')
 wp=$(get '.wp')
 support=$(get '.support')
-run=$(get '.run')
-one_off=$(get '.one_off')
 tour=$(get '.tour')
 sets=$(echo "$show_json" | jq -r 'if .sets then [.sets[] | "\(.date) \(.time) — \(.stage)"] | join(", ") else "" end')
 routing_notes=$(get '.routing_notes')
@@ -133,7 +131,6 @@ band_backdrop=$(get '.band.backdrop')
 
 # Advance fields
 adv_hospitality=$(get '.advance.hospitality')
-adv_backline=$(get '.advance.backline')
 adv_merch_cut=$(get '.advance.merch_cut')
 adv_merch_seller=$(get '.advance.merch_seller')
 adv_merch_tax_rate=$(get '.advance.merch_tax_rate')
@@ -230,6 +227,7 @@ trow "Labor" "$adv_labor" "advance.labor"
 trow "Crew Day" "$adv_crew_day" "advance.crew_day"
 trow "Settlement" "$adv_settlement" "advance.settlement"
 trow "Ticket Count" "$adv_ticket_count" "advance.ticket_count"
+trow "Hospitality" "$adv_hospitality" "advance.hospitality"
 
 # Wifi
 if [ -n "$wifi_lines" ]; then
@@ -304,17 +302,6 @@ trow "Vehicle" "$veh" "band.vehicle_type"
 trow "Laminates" "$band_laminates" "band.laminates"
 trow "Backdrop" "$band_backdrop" "band.backdrop"
 trow "Support" "$support" "support"
-trow "Hospitality" "$adv_hospitality" "advance.hospitality"
-trow "Backline" "$adv_backline" "advance.backline"
-
-# Logistics block
-if [ -n "$run" ]; then
-  trow "Run" "$run"
-elif [ -n "$one_off" ]; then
-  trow "One-off" "$one_off"
-fi
-
-trow "Tour" "$tour"
 
 # ── Tour Production ──────────────────────────────────────────────
 TOURS_DIR="${REPO_ROOT}/$(cfg '.entities.tours.dir')"
@@ -322,8 +309,8 @@ if [ -n "$tour" ]; then
   tour_json_file="${TOURS_DIR}/${tour}/tour.json"
   if [ -f "$tour_json_file" ]; then
     tour_json=$(jq '.' "$tour_json_file")
-    has_prod=$(echo "$tour_json" | jq 'has("production")')
-    if [ "$has_prod" = "true" ]; then
+    has_tour_data=$(echo "$tour_json" | jq 'has("production") or has("hospitality")')
+    if [ "$has_tour_data" = "true" ]; then
       # Build provenance lookup for tour
       tour_prov=$(echo "$tour_json" | jq '
         [._provenance // {} | to_entries[] |
@@ -346,31 +333,41 @@ if [ -n "$tour" ]; then
           "$(trunc "$src" "$W3")"
       }
 
-      prod_stands=$(n "$(echo "$tour_json" | jq -r '.production.stands_venue')")
-      prod_mics_v=$(n "$(echo "$tour_json" | jq -r '.production.mics_venue')")
+      tour_hospitality=$(n "$(echo "$tour_json" | jq -r '.hospitality // empty')")
 
       hline
       tsection "BAND: ${tour}"
       hline
-      tsection "BACKLINE"
-      hline
-      trow_t "Stands" "$prod_stands" "production.stands_venue"
-      trow_t "Mics" "$prod_mics_v" "production.mics_venue"
+      if [ -n "$tour_hospitality" ]; then
+        trow_t "Hospitality" "$tour_hospitality" "hospitality"
+      fi
 
-      prod_mics_c=$(n "$(echo "$tour_json" | jq -r '.production.mics_carried')")
-      prod_foh=$(n "$(echo "$tour_json" | jq -r '.production.foh_console')")
-      prod_mon=$(n "$(echo "$tour_json" | jq -r '.production.mon_rack')")
-      prod_monitors=$(n "$(echo "$tour_json" | jq -r '.production.monitors')")
-      prod_audio=$(n "$(echo "$tour_json" | jq -r '.production.audio_notes')")
+      has_prod=$(echo "$tour_json" | jq 'has("production")')
+      if [ "$has_prod" = "true" ]; then
+        prod_stands=$(n "$(echo "$tour_json" | jq -r '.production.stands_venue')")
+        prod_mics_v=$(n "$(echo "$tour_json" | jq -r '.production.mics_venue')")
 
-      hline
-      tsection "CARRIED"
-      hline
-      trow_t "Mics" "$prod_mics_c" "production.mics_carried"
-      trow_t "FOH Console" "$prod_foh" "production.foh_console"
-      trow_t "Mon Rack" "$prod_mon" "production.mon_rack"
-      trow_t "Monitors" "$prod_monitors" "production.monitors"
-      trow_t "Audio Notes" "$prod_audio" "production.audio_notes"
+        hline
+        tsection "BACKLINE"
+        hline
+        trow_t "Stands" "$prod_stands" "production.stands_venue"
+        trow_t "Mics" "$prod_mics_v" "production.mics_venue"
+
+        prod_mics_c=$(n "$(echo "$tour_json" | jq -r '.production.mics_carried')")
+        prod_foh=$(n "$(echo "$tour_json" | jq -r '.production.foh_console')")
+        prod_mon=$(n "$(echo "$tour_json" | jq -r '.production.mon_rack')")
+        prod_monitors=$(n "$(echo "$tour_json" | jq -r '.production.monitors')")
+        prod_audio=$(n "$(echo "$tour_json" | jq -r '.production.audio_notes')")
+
+        hline
+        tsection "CARRIED"
+        hline
+        trow_t "Mics" "$prod_mics_c" "production.mics_carried"
+        trow_t "FOH Console" "$prod_foh" "production.foh_console"
+        trow_t "Mon Rack" "$prod_mon" "production.mon_rack"
+        trow_t "Monitors" "$prod_monitors" "production.monitors"
+        trow_t "Audio Notes" "$prod_audio" "production.audio_notes"
+      fi
     fi
   fi
 fi
