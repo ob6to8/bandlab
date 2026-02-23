@@ -29,11 +29,8 @@ if [ -z "$show_id" ]; then
 fi
 
 # ── Table formatting ──────────────────────────────────────────────
-# Column widths: Field fixed 14, Source fixed 10, Value gets remainder
-TERM_W=$(tput cols 2>/dev/null || echo 100)
-W1=14; W3=10
-W2=$((TERM_W - W1 - W3 - 10))  # 10 = borders + padding
-if [ "$W2" -lt 20 ]; then W2=20; fi
+# Column widths: all fixed, table may exceed terminal width
+W1=14; W2=48; W3=30
 
 # Truncate string to max length, append ".." if truncated
 trunc() {
