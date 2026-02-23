@@ -73,9 +73,8 @@ tsection() {
   printf "| %-${inner}s|\n" "$title"
 }
 
-# Plain kv for non-table sections (venue, files)
+# Plain kv for non-table sections (files)
 kv()  { local v="$2"; if [ -z "$v" ]; then v="--"; fi; printf "  %-18s%s\n" "$1" "$v"; }
-ikv() { local v="$2"; if [ -z "$v" ]; then v="--"; fi; printf "    %-16s%s\n" "$1" "$v"; }
 
 # Normalize jq null/empty to empty string for shell
 n() { local v="$1"; if [ "$v" = "null" ] || [ -z "$v" ]; then echo ""; else echo "$v"; fi; }
@@ -113,6 +112,8 @@ ticket_scaling=$(get '.deal.ticket_scaling')
 wp=$(get '.deal.wp')
 support=$(get '.deal.support')
 tour=$(get '.tour')
+run=$(get '.run')
+one_off=$(get '.one_off')
 sets=$(echo "$show_json" | jq -r 'if .deal.sets then [.deal.sets[] | "\(.date) \(.time) — \(.stage)"] | join(", ") else "" end')
 # Band block fields
 band_member_1=$(get '.band.band_member_1')
@@ -173,7 +174,14 @@ if [ -n "$venue_city" ] && [ -n "$venue_state" ]; then
   venue_label="${venue_name} (${venue_city}, ${venue_state})"
 fi
 
-# ── Print show table ──────────────────────────────────────────────
+# Venue registry data
+venue_json=$(jq --arg v "$venue_key" '.[$v]' "$VENUES")
+v_address=$(n "$(echo "$venue_json" | jq -r '.address')")
+v_capacity=$(n "$(echo "$venue_json" | jq -r '.capacity')")
+v_notes=$(n "$(echo "$venue_json" | jq -r '.notes')")
+v_contacts=$(echo "$venue_json" | jq -r '.contacts // {} | to_entries[] | "\(.key)\t\(.value)"' 2>/dev/null)
+
+# ── Print SHOW block ─────────────────────────────────────────────
 echo ""
 hline
 tsection "${show_id} — ${date}"
@@ -183,32 +191,32 @@ hline
 trow "Date" "$date" "date"
 trow "Venue" "$venue_label" "venue.id"
 trow "Status" "$status"
-
-# Guarantee: show amount, append canada_amount if present
-if [ -n "$guarantee" ]; then
-  guar_display="\$${guarantee}"
-  if [ -n "$canada_amount" ]; then guar_display="${guar_display} (${canada_amount})"; fi
-  trow "Guarantee" "$guar_display" "deal.guarantee"
-else
-  if [ -n "$canada_amount" ]; then
-    trow "Guarantee" "— (${canada_amount})" "deal.guarantee"
-  else
-    trow "Guarantee" "" "deal.guarantee"
-  fi
+if [ -n "$tour" ]; then trow "Tour" "$tour"; fi
+if [ -n "$run" ]; then
+  trow "Run" "$run"
+elif [ -n "$one_off" ]; then
+  trow "One-off" "$one_off"
 fi
 
-trow "Door Split" "$door_split" "deal.door_split"
-trow "Promoter" "$promoter" "deal.promoter"
-trow "Ages" "$ages" "deal.ages"
-trow "Sell Cap" "$sell_cap" "deal.sell_cap"
-trow "Tickets" "$ticket_scaling" "deal.ticket_scaling"
-trow "WP" "$wp" "deal.wp"
-if [ -n "$sets" ]; then trow "Sets" "$sets"; fi
+# ── Print VENUE block ────────────────────────────────────────────
+echo ""
+hline
+tsection "VENUE"
+hline
 
-# ── Venue Capabilities section ───────────────────────────────────
-hline
-tsection "VENUE CAPABILITIES"
-hline
+# Registry info
+trow "Address" "$v_address"
+if [ -n "$v_capacity" ]; then trow "Capacity" "$v_capacity"; fi
+if [ -n "$v_contacts" ]; then
+  while IFS=$'\t' read -r role person; do
+    trow "$role" "$person"
+  done <<< "$v_contacts"
+fi
+if [ -n "$v_notes" ]; then trow "Notes" "$v_notes"; fi
+
+# Capabilities
+trow "Hospitality" "$adv_hospitality" "venue.hospitality"
+trow "Video" "$(get '.venue.video')" "venue.video"
 if [ -n "$adv_merch_cut" ]; then
   trow "Merch Cut" "${adv_merch_cut}%" "venue.merch_cut"
 else
@@ -225,7 +233,6 @@ trow "Labor" "$adv_labor" "venue.labor"
 trow "Crew Day" "$adv_crew_day" "venue.crew_day"
 trow "Settlement" "$adv_settlement" "venue.settlement"
 trow "Ticket Count" "$adv_ticket_count" "venue.ticket_count"
-trow "Hospitality" "$adv_hospitality" "venue.hospitality"
 
 # Wifi
 if [ -n "$wifi_lines" ]; then
@@ -234,7 +241,7 @@ if [ -n "$wifi_lines" ]; then
   done <<< "$wifi_lines"
 fi
 
-# ── Schedule ──────────────────────────────────────────────────────
+# ── Schedule subsection ──────────────────────────────────────────
 has_schedule=false
 for v in "$sched_access" "$sched_load_in" "$sched_soundcheck" "$sched_doors" "$sched_headliner_set"; do
   if [ -n "$v" ]; then has_schedule=true; fi
@@ -260,7 +267,7 @@ if $has_schedule; then
   trow "Backstage" "$sched_backstage_curfew" "venue.schedule"
 fi
 
-# ── DOS Contacts ──────────────────────────────────────────────────
+# ── DOS Contacts subsection ──────────────────────────────────────
 if [ -n "$dos_lines" ]; then
   hline
   tsection "DOS CONTACTS"
@@ -270,7 +277,7 @@ if [ -n "$dos_lines" ]; then
   done <<< "$dos_lines"
 fi
 
-# ── Hotels ────────────────────────────────────────────────────────
+# ── Hotels subsection ────────────────────────────────────────────
 if [ -n "$hotel_lines" ]; then
   hline
   tsection "HOTELS"
@@ -280,8 +287,7 @@ if [ -n "$hotel_lines" ]; then
   done <<< "$hotel_lines"
 fi
 
-# ── Band section ─────────────────────────────────────────────────
-hline
+# ── Print BAND block ────────────────────────────────────────────
 echo ""
 hline
 tsection "BAND: Show"
@@ -299,7 +305,6 @@ if [ -n "$band_vehicle_length" ]; then veh="${veh} (${band_vehicle_length})"; fi
 trow "Vehicle" "$veh" "band.vehicle_type"
 trow "Laminates" "$band_laminates" "band.laminates"
 trow "Backdrop" "$band_backdrop" "band.backdrop"
-trow "Support" "$support" "deal.support"
 
 # ── Tour Production ──────────────────────────────────────────────
 TOURS_DIR="${REPO_ROOT}/$(cfg '.entities.tours.dir')"
@@ -346,7 +351,7 @@ if [ -n "$tour" ]; then
         prod_mics_v=$(n "$(echo "$tour_json" | jq -r '.production.mics_venue')")
 
         hline
-        tsection "BACKLINE"
+        tsection "BACKLINE: Needed"
         hline
         trow_t "Stands" "$prod_stands" "production.stands_venue"
         trow_t "Mics" "$prod_mics_v" "production.mics_venue"
@@ -358,7 +363,7 @@ if [ -n "$tour" ]; then
         prod_audio=$(n "$(echo "$tour_json" | jq -r '.production.audio_notes')")
 
         hline
-        tsection "CARRIED"
+        tsection "BACKLINE: Carried"
         hline
         trow_t "Mics" "$prod_mics_c" "production.mics_carried"
         trow_t "FOH Console" "$prod_foh" "production.foh_console"
@@ -370,35 +375,35 @@ if [ -n "$tour" ]; then
   fi
 fi
 
+# ── Print DEAL block ────────────────────────────────────────────
+echo ""
+hline
+tsection "DEAL"
 hline
 
-# ── Venue section ─────────────────────────────────────────────────
-echo ""
-echo "=== Venue: ${venue_key} ==="
-venue_json=$(jq --arg v "$venue_key" '.[$v]' "$VENUES")
-v_name=$(n "$(echo "$venue_json" | jq -r '.name')")
-v_address=$(n "$(echo "$venue_json" | jq -r '.address')")
-v_city=$(n "$(echo "$venue_json" | jq -r '.city')")
-v_state=$(n "$(echo "$venue_json" | jq -r '.state')")
-v_capacity=$(n "$(echo "$venue_json" | jq -r '.capacity')")
-v_notes=$(n "$(echo "$venue_json" | jq -r '.notes')")
-
-kv "Name" "$v_name"
-kv "Address" "$v_address"
-kv "City" "$v_city"
-kv "State" "$v_state"
-[ -n "$v_capacity" ] && kv "Capacity" "$v_capacity"
-
-# Venue contacts
-v_contacts=$(echo "$venue_json" | jq -r '.contacts // {} | to_entries[] | "\(.key)\t\(.value)"' 2>/dev/null)
-if [ -n "$v_contacts" ]; then
-  echo "  Contacts"
-  while IFS=$'\t' read -r role person; do
-    ikv "$role" "$person"
-  done <<< "$v_contacts"
+# Guarantee: show amount, append canada_amount if present
+if [ -n "$guarantee" ]; then
+  guar_display="\$${guarantee}"
+  if [ -n "$canada_amount" ]; then guar_display="${guar_display} (${canada_amount})"; fi
+  trow "Guarantee" "$guar_display" "deal.guarantee"
+else
+  if [ -n "$canada_amount" ]; then
+    trow "Guarantee" "— (${canada_amount})" "deal.guarantee"
+  else
+    trow "Guarantee" "" "deal.guarantee"
+  fi
 fi
 
-[ -n "$v_notes" ] && kv "Notes" "$v_notes"
+trow "Door Split" "$door_split" "deal.door_split"
+trow "Promoter" "$promoter" "deal.promoter"
+trow "Ages" "$ages" "deal.ages"
+trow "Sell Cap" "$sell_cap" "deal.sell_cap"
+trow "Tickets" "$ticket_scaling" "deal.ticket_scaling"
+trow "WP" "$wp" "deal.wp"
+trow "Support" "$support" "deal.support"
+if [ -n "$sets" ]; then trow "Sets" "$sets"; fi
+
+hline
 
 # ── Files section ─────────────────────────────────────────────────
 echo ""
