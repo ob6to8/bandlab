@@ -137,6 +137,7 @@ Master list of venues. Accumulates institutional knowledge over time.
 {
   "venue-key": {
     "name": "Venue Name",
+    "address": "Full street address",
     "city": "",
     "state": "",
     "capacity": null,
@@ -147,6 +148,7 @@ Master list of venues. Accumulates institutional knowledge over time.
 }
 ```
 
+- `address`: Full street address of the venue (e.g. `"887 W Marietta St NW C, Atlanta, GA 30318"`). Empty string if unknown.
 - `contacts`: Object mapping role to person key, e.g. `{"talent_buyer": "jane-doe", "production": "john-smith"}`.
 - `sources`: Array of provenance references. Same format as people.json sources. Paths relative to `org/`.
 - `notes`: Institutional knowledge — load-in details, green room info, quirks, history.
@@ -323,7 +325,32 @@ s-YYYY-MMDD-city/
     "hospitality": "",
     "backline": "",
     "merch_cut": null,
-    "parking": ""
+    "merch_seller": "",
+    "merch_tax_rate": "",
+    "merch_notes": "",
+    "parking": "",
+    "showers": "",
+    "load": "",
+    "guest_comps": null,
+    "wifi": {},
+    "labor": "",
+    "crew_day": "",
+    "schedule": {
+      "access": "",
+      "load_in": "",
+      "soundcheck": "",
+      "support_check": "",
+      "doors": "",
+      "support_set": "",
+      "headliner_set": "",
+      "set_length": null,
+      "curfew": "",
+      "backstage_curfew": ""
+    },
+    "dos_contacts": {},
+    "hotels": [],
+    "settlement": "",
+    "ticket_count": null
   },
   "_provenance": {
     "source/FILENAME.pdf": {
@@ -341,6 +368,25 @@ s-YYYY-MMDD-city/
 - `routing_notes`: Free-text notes from routing (e.g. airport codes, logistics flags). Null when not needed.
 - `sets`: Array of set objects for multi-set festival appearances. Each entry has `date`, `time`, and `stage`. Null for standard single-set shows. Example: `[{"date": "2026-02-26", "time": "20:00-21:30", "stage": "Luna Stage"}]`.
 - `_provenance`: Maps source documents to the fields they substantiate. Underscore-prefixed so jq queries and existing scripts ignore it. Keys are paths relative to the show directory, or special values: `"manual:<person>:<date>"`, `"legacy"`, `"legacy:routing-csv"`. Each entry has `extracted` (ISO date) and `fields` (array of field names from show.json that this source substantiates). See `ops/provenance-plan.md` for the full design.
+- **advance fields:**
+  - `hospitality`: Catering/hospitality details (buyout amount, dressing room provisions).
+  - `backline`: What the venue provides (amps, drums, keys, etc.). Empty string if unknown.
+  - `merch_cut`: Venue's percentage of merch sales (integer, e.g. `20`). Null if unknown.
+  - `merch_seller`: Who sells merch — `"artist"`, `"venue"`, or details about local seller availability.
+  - `merch_tax_rate`: Sales tax rate and who retains it (e.g. `"8.9% artist retains"`).
+  - `merch_notes`: Freeform merch info (POS availability, special arrangements, etc.).
+  - `parking`: Parking instructions for van/bus/trailer. Empty string if unknown.
+  - `showers`: Shower availability. Empty string if unknown.
+  - `load`: Loading notes (load-in/out help, dock info, elevator, stairs, etc.).
+  - `guest_comps`: Number of complimentary guest list spots (integer). Null if unknown.
+  - `wifi`: Object with network name/password pairs, keyed by area (e.g. `{"backstage": "Net / pass123"}`). Empty object if unknown.
+  - `labor`: House tech/labor details (e.g. `"3 house techs: FOH, MON, LD"`).
+  - `crew_day`: Crew day length and overage terms.
+  - `schedule`: Object with day-of-show timing. All time fields are strings (e.g. `"3:30 PM"`). `set_length` is integer minutes or null. `backstage_curfew` is freeform (e.g. `"90 min after show ends"`).
+  - `dos_contacts`: Object mapping person-key to phone number for day-of-show contacts.
+  - `hotels`: Array of hotel name strings with discount codes (e.g. `["Wiley Hotel (code: ZEROMI)"]`).
+  - `settlement`: Settlement method (e.g. `"check or wire"`).
+  - `ticket_count`: Current ticket count at time of advancing (integer). Null if unknown.
 
 **source/summary.md frontmatter:**
 ```yaml
