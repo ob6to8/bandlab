@@ -300,11 +300,6 @@ trow "VJ" "$band_vj" "band.vj"
 trow "Lasers" "$band_lasers" "band.lasers"
 trow "Merch" "$band_merch" "band.merch"
 trow "Driver" "$band_driver" "band.driver"
-veh="$band_vehicle_type"
-if [ -n "$band_vehicle_length" ]; then veh="${veh} (${band_vehicle_length})"; fi
-trow "Vehicle" "$veh" "band.vehicle_type"
-trow "Laminates" "$band_laminates" "band.laminates"
-trow "Backdrop" "$band_backdrop" "band.backdrop"
 
 # ── Tour Production ──────────────────────────────────────────────
 TOURS_DIR="${REPO_ROOT}/$(cfg '.entities.tours.dir')"
@@ -344,6 +339,11 @@ if [ -n "$tour" ]; then
       if [ -n "$tour_hospitality" ]; then
         trow_t "Hospitality" "$tour_hospitality" "hospitality"
       fi
+      veh="$band_vehicle_type"
+      if [ -n "$band_vehicle_length" ]; then veh="${veh} (${band_vehicle_length})"; fi
+      trow "Vehicle" "$veh" "band.vehicle_type"
+      trow "Laminates" "$band_laminates" "band.laminates"
+      trow "Backdrop" "$band_backdrop" "band.backdrop"
 
       has_prod=$(echo "$tour_json" | jq 'has("production")')
       if [ "$has_prod" = "true" ]; then
