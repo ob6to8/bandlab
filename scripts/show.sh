@@ -221,28 +221,21 @@ if [ -n "$sets" ]; then trow "Sets" "$sets"; fi
 if [ -n "$routing_notes" ]; then trow "Routing Notes" "$routing_notes"; fi
 
 # ── Band section ─────────────────────────────────────────────────
-has_band=false
-for v in "$band_member_1" "$band_member_2" "$band_foh" "$band_ld" "$band_vj" "$band_lasers" "$band_merch" "$band_driver"; do
-  if [ -n "$v" ]; then has_band=true; fi
-done
-
-if $has_band; then
-  hline
-  tsection "BAND"
-  hline
-  if [ -n "$band_member_1" ]; then trow "Band" "$band_member_1"; fi
-  if [ -n "$band_member_2" ]; then trow "Band" "$band_member_2"; fi
-  if [ -n "$band_foh" ]; then trow "FOH" "$band_foh"; fi
-  if [ -n "$band_ld" ]; then trow "LD" "$band_ld"; fi
-  if [ -n "$band_vj" ]; then trow "VJ" "$band_vj"; fi
-  if [ -n "$band_lasers" ]; then trow "Lasers" "$band_lasers"; fi
-  if [ -n "$band_merch" ]; then trow "Merch" "$band_merch"; fi
-  if [ -n "$band_driver" ]; then trow "Driver" "$band_driver"; fi
-  if [ -n "$band_vehicle_type" ]; then
-    veh="$band_vehicle_type"
-    if [ -n "$band_vehicle_length" ]; then veh="${veh} (${band_vehicle_length})"; fi
-    trow "Vehicle" "$veh"
-  fi
+hline
+tsection "BAND"
+hline
+trow "Band" "$band_member_1"
+trow "Band" "$band_member_2"
+trow "FOH" "$band_foh"
+trow "LD" "$band_ld"
+trow "VJ" "$band_vj"
+trow "Lasers" "$band_lasers"
+trow "Merch" "$band_merch"
+trow "Driver" "$band_driver"
+if [ -n "$band_vehicle_type" ]; then
+  veh="$band_vehicle_type"
+  if [ -n "$band_vehicle_length" ]; then veh="${veh} (${band_vehicle_length})"; fi
+  trow "Vehicle" "$veh"
 fi
 
 # ── Advance section ───────────────────────────────────────────────
