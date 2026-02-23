@@ -128,6 +128,8 @@ band_merch=$(get '.band.merch')
 band_driver=$(get '.band.driver')
 band_vehicle_type=$(get '.band.vehicle_type')
 band_vehicle_length=$(get '.band.vehicle_length')
+band_laminates=$(get '.band.laminates')
+band_backdrop=$(get '.band.backdrop')
 
 # Advance fields
 adv_hospitality=$(get '.advance.hospitality')
@@ -221,6 +223,8 @@ trow "Driver" "$band_driver" "band.driver"
 veh="$band_vehicle_type"
 if [ -n "$band_vehicle_length" ]; then veh="${veh} (${band_vehicle_length})"; fi
 trow "Vehicle" "$veh" "band.vehicle_type"
+trow "Laminates" "$band_laminates" "band.laminates"
+trow "Backdrop" "$band_backdrop" "band.backdrop"
 trow "Support" "$support" "support"
 trow "Hospitality" "$adv_hospitality" "advance.hospitality"
 trow "Backline" "$adv_backline" "advance.backline"
@@ -306,6 +310,59 @@ if [ -n "$hotel_lines" ]; then
   while IFS= read -r h; do
     trow "" "$h" "advance.hotels"
   done <<< "$hotel_lines"
+fi
+
+# ── Tour Production ──────────────────────────────────────────────
+TOURS_DIR="${REPO_ROOT}/$(cfg '.entities.tours.dir')"
+if [ -n "$tour" ]; then
+  tour_json_file="${TOURS_DIR}/${tour}/tour.json"
+  if [ -f "$tour_json_file" ]; then
+    tour_json=$(jq '.' "$tour_json_file")
+    has_prod=$(echo "$tour_json" | jq 'has("production")')
+    if [ "$has_prod" = "true" ]; then
+      # Build provenance lookup for tour
+      tour_prov=$(echo "$tour_json" | jq '
+        [._provenance // {} | to_entries[] |
+         .key as $src | .value.fields // [] | .[] |
+         {key: ., value: ($src | ltrimstr("source/"))}
+        ] | from_entries
+      ')
+      tour_src() { echo "$tour_prov" | jq -r --arg f "$1" '.[$f] // empty'; }
+
+      hline
+      tsection "TOUR PRODUCTION (${tour})"
+      hline
+
+      prod_stands=$(n "$(echo "$tour_json" | jq -r '.production.stands_venue')")
+      prod_mics_v=$(n "$(echo "$tour_json" | jq -r '.production.mics_venue')")
+      prod_mics_c=$(n "$(echo "$tour_json" | jq -r '.production.mics_carried')")
+      prod_foh=$(n "$(echo "$tour_json" | jq -r '.production.foh_console')")
+      prod_mon=$(n "$(echo "$tour_json" | jq -r '.production.mon_rack')")
+      prod_monitors=$(n "$(echo "$tour_json" | jq -r '.production.monitors')")
+      prod_audio=$(n "$(echo "$tour_json" | jq -r '.production.audio_notes')")
+
+      # Use tour provenance for source column
+      ts() { tour_src "$1"; }
+      trow_t() {
+        local label="$1" value="$2" field="${3:-}"
+        if [ -z "$value" ]; then value="--"; fi
+        local src=""
+        if [ -n "$field" ]; then src=$(ts "$field"); fi
+        printf "| %-${W1}s | %-${W2}s | %-${W3}s |\n" \
+          "$(trunc "$label" "$W1")" \
+          "$(trunc "$value" "$W2")" \
+          "$(trunc "$src" "$W3")"
+      }
+
+      trow_t "Stands (Venue)" "$prod_stands" "production.stands_venue"
+      trow_t "Mics (Venue)" "$prod_mics_v" "production.mics_venue"
+      trow_t "Mics (Carried)" "$prod_mics_c" "production.mics_carried"
+      trow_t "FOH Console" "$prod_foh" "production.foh_console"
+      trow_t "Mon Rack" "$prod_mon" "production.mon_rack"
+      trow_t "Monitors" "$prod_monitors" "production.monitors"
+      trow_t "Audio Notes" "$prod_audio" "production.audio_notes"
+    fi
+  fi
 fi
 
 hline

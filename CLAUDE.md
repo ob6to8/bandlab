@@ -330,7 +330,9 @@ s-YYYY-MMDD-city/
     "merch": "person-key or null",
     "driver": "person-key or null",
     "vehicle_type": "",
-    "vehicle_length": ""
+    "vehicle_length": "",
+    "laminates": "",
+    "backdrop": ""
   },
   "advance": {
     "hospitality": "",
@@ -392,6 +394,8 @@ s-YYYY-MMDD-city/
   - `driver`: Tour vehicle driver.
   - `vehicle_type`: String (e.g. `"Sprinter"`, `"SUV"`, `""`). Empty string if unknown.
   - `vehicle_length`: String (e.g. `"25ft"`, `""`). Empty string if unknown.
+  - `laminates`: Whether the band is carrying laminates for this show (e.g. `"yes"`, `"no"`, `""`). Empty string if unknown.
+  - `backdrop`: Whether the band is carrying a backdrop and what size (e.g. `"yes, 10x20"`, `"no"`, `""`). Empty string if unknown.
 - `_verified`: Flat object mapping field names to ISO dates (YYYY-MM-DD) indicating when a human confirmed the field value is correct. Uses the same dot-notation as `_provenance` field names (e.g. `"advance.hospitality"`). Empty object `{}` by default. Underscore-prefixed so jq queries ignore it.
 - `_provenance`: Maps source documents to the fields they substantiate. Underscore-prefixed so jq queries and existing scripts ignore it. Keys are paths relative to the show directory, or special values: `"manual:<person>:<date>"`, `"legacy"`, `"legacy:routing-csv"`. Each entry has `extracted` (ISO date) and `fields` (array of field names from show.json that this source substantiates). See `ops/provenance-plan.md` for the full design.
 - **advance fields:**
