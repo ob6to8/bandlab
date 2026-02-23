@@ -210,36 +210,6 @@ trow "WP" "$wp" "wp"
 if [ -n "$sets" ]; then trow "Sets" "$sets"; fi
 if [ -n "$routing_notes" ]; then trow "Routing Notes" "$routing_notes"; fi
 
-# ── Band section ─────────────────────────────────────────────────
-hline
-tsection "BAND: Show"
-hline
-trow "Band" "$band_member_1" "band.band_member_1"
-trow "Band" "$band_member_2" "band.band_member_2"
-trow "FOH" "$band_foh" "band.foh"
-trow "LD" "$band_ld" "band.ld"
-trow "VJ" "$band_vj" "band.vj"
-trow "Lasers" "$band_lasers" "band.lasers"
-trow "Merch" "$band_merch" "band.merch"
-trow "Driver" "$band_driver" "band.driver"
-veh="$band_vehicle_type"
-if [ -n "$band_vehicle_length" ]; then veh="${veh} (${band_vehicle_length})"; fi
-trow "Vehicle" "$veh" "band.vehicle_type"
-trow "Laminates" "$band_laminates" "band.laminates"
-trow "Backdrop" "$band_backdrop" "band.backdrop"
-trow "Support" "$support" "support"
-trow "Hospitality" "$adv_hospitality" "advance.hospitality"
-trow "Backline" "$adv_backline" "advance.backline"
-
-# Logistics block
-if [ -n "$run" ]; then
-  trow "Run" "$run"
-elif [ -n "$one_off" ]; then
-  trow "One-off" "$one_off"
-fi
-
-trow "Tour" "$tour"
-
 # ── Venue Capabilities section ───────────────────────────────────
 hline
 tsection "VENUE CAPABILITIES"
@@ -313,6 +283,38 @@ if [ -n "$hotel_lines" ]; then
     trow "" "$h" "advance.hotels"
   done <<< "$hotel_lines"
 fi
+
+# ── Band section ─────────────────────────────────────────────────
+hline
+echo ""
+hline
+tsection "BAND: Show"
+hline
+trow "Band" "$band_member_1" "band.band_member_1"
+trow "Band" "$band_member_2" "band.band_member_2"
+trow "FOH" "$band_foh" "band.foh"
+trow "LD" "$band_ld" "band.ld"
+trow "VJ" "$band_vj" "band.vj"
+trow "Lasers" "$band_lasers" "band.lasers"
+trow "Merch" "$band_merch" "band.merch"
+trow "Driver" "$band_driver" "band.driver"
+veh="$band_vehicle_type"
+if [ -n "$band_vehicle_length" ]; then veh="${veh} (${band_vehicle_length})"; fi
+trow "Vehicle" "$veh" "band.vehicle_type"
+trow "Laminates" "$band_laminates" "band.laminates"
+trow "Backdrop" "$band_backdrop" "band.backdrop"
+trow "Support" "$support" "support"
+trow "Hospitality" "$adv_hospitality" "advance.hospitality"
+trow "Backline" "$adv_backline" "advance.backline"
+
+# Logistics block
+if [ -n "$run" ]; then
+  trow "Run" "$run"
+elif [ -n "$one_off" ]; then
+  trow "One-off" "$one_off"
+fi
+
+trow "Tour" "$tour"
 
 # ── Tour Production ──────────────────────────────────────────────
 TOURS_DIR="${REPO_ROOT}/$(cfg '.entities.tours.dir')"
