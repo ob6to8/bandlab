@@ -411,7 +411,7 @@ if [ -n "$sets" ]; then trow "Sets" "$sets"; fi
 hline
 
 # ── Advance checklist ────────────────────────────────────────────
-QUESTIONS="${REPO_ROOT}/$(cfg '.advancing.questions_path')"
+QUESTIONS="${REPO_ROOT}/$(cfg '.advancing.email_questions_path')"
 if [ -f "$QUESTIONS" ]; then
   echo ""
   hline
@@ -421,7 +421,7 @@ if [ -f "$QUESTIONS" ]; then
     # Check if any mapped field has data
     answered="no"
     IFS=',' read -ra flds <<< "$fields"
-    for f in "${flds[@]}"; do
+    for f in ${flds[@]+"${flds[@]}"}; do
       val=$(echo "$show_json" | jq -r --arg f "$f" 'getpath($f | split(".")) // empty')
       if [ -n "$val" ] && [ "$val" != "{}" ] && [ "$val" != "[]" ] && [ "$val" != "null" ]; then
         answered="yes"
