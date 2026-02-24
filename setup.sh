@@ -58,12 +58,11 @@ if [ ! -f "${REPO_ROOT}/bandlab.config.json" ]; then
       "dir": "org/touring/shows",
       "glob": "org/touring/shows/s-*/show.json",
       "id_field": "id",
-      "index_path": "org/touring/.state/shows.json",
-      "schema_fields": ["id", "date", "venue", "run", "one_off", "status", "guarantee", "door_split", "promoter", "ages", "ticket_link", "sell_cap", "ticket_scaling", "wp", "support", "tour", "band", "advance", "_provenance"],
+      "schema_fields": ["id", "date", "status", "tour", "run", "one_off", "deal", "venue", "band", "_provenance", "_verified"],
       "file_checklist": ["show.json", "source/summary.md", "tech-pack.md", "advancing/thread.md", "advancing/confirmed.md"],
       "references": {
-        "venue": { "registry": "venues", "nullable": true },
-        "promoter": { "registry": "people", "nullable": true, "null_severity": "warn" }
+        "venue.id": { "registry": "venues", "nullable": true },
+        "deal.promoter": { "registry": "people", "nullable": true, "null_severity": "warn" }
       }
     },
     "runs": {
@@ -166,7 +165,6 @@ echo '[]' > "${ORG}/todos.json"
 
 # ── Derived/generated state ─────────────────────────────────────────
 mkdir -p "${ORG}/touring/.state"
-echo '{}' > "${ORG}/touring/.state/shows.json"
 cat > "${ORG}/touring/.state/last-sync.json" << 'EOF'
 {
   "slack": null,
@@ -358,4 +356,4 @@ echo ""
 echo "Next steps:"
 echo "  1. Delete the example show directory when you're ready"
 echo "  2. Add your venues, people, and shows"
-echo "  3. Run ./bandlab-cli build-index to generate the shows index"
+echo "  3. Run ./bandlab-cli shows to verify your setup"
