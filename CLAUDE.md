@@ -334,6 +334,7 @@ Three semantic namespaces — `deal` (contract terms), `venue` (advancing/venue 
     "parking": "",
     "showers": "",
     "load": "",
+    "loaders": "",
     "guest_comps": null,
     "wifi": {},
     "labor": "",
@@ -407,6 +408,7 @@ Three semantic namespaces — `deal` (contract terms), `venue` (advancing/venue 
   - `parking`: Parking instructions for van/bus/trailer. Empty string if unknown.
   - `showers`: Shower availability. Empty string if unknown.
   - `load`: Loading notes (load-in/out help, dock info, elevator, stairs, etc.).
+  - `loaders`: Loader availability/confirmation for load-in and load-out. Empty string if unknown.
   - `guest_comps`: Number of complimentary guest list spots (integer). Null if unknown.
   - `wifi`: Object with network name/password pairs, keyed by area (e.g. `{"backstage": "Net / pass123"}`). Empty object if unknown.
   - `labor`: House tech/labor details (e.g. `"3 house techs: FOH, MON, LD"`).
