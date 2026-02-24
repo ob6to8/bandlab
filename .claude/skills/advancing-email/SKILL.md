@@ -14,27 +14,27 @@ Compose or reply to an advancing email for a show.
    - If `$ARGUMENTS` is a quoted email subject: search Gmail for the thread, extract the city/venue from the subject line, match to a show ID.
    - Otherwise: match `$ARGUMENTS` as a show ID or partial.
 
-3. **Find the Gmail thread** for this show. Search by the `email_thread_1` field in show.json, or by the subject passed in `$ARGUMENTS`.
+3. **Find the Gmail thread** for this show. Search by the `email_thread_1` field in show.json, or by the subject passed in `$ARGUMENTS`. Read all messages in the thread to understand what the venue asked and what info they provided. Note the `threadId` and latest message ID for `inReplyTo`.
 
-4. **Verify a draft exists in Gmail.** Search `in:draft` for the thread subject.
-   - If NO draft is found: **STOP.** Ask the user to create a draft in Gmail first (Reply All on the thread), then re-run the skill. Do NOT create a draft via API.
-   - If a draft is found: continue.
-
-5. **Read the thread.** Read all messages in the thread to understand what the venue asked and what info they provided.
-
-6. **Load data sources:**
+4. **Load data sources:**
    - `show.json` for the target show
    - `tour.json` for the show's tour
    - `advancing-email-questions-club.json` for question text
    - `advancing-email-template-club.json` for email structure and touring party
    - Find current rider PDF in `org/touring/assets/`
 
-7. **Determine email type:**
+5. **Determine email type:**
    - **Reply**: If the venue has already sent an advance, cross-reference their info against the questions file. Answer their questions, confirm what they provided, ask only unanswered questions.
    - **Initial outreach**: If we're initiating, use the full template structure.
 
-8. **Compose the email** following the guide's formatting rules (ALL CAPS headings, numbered touring party, plain text, DRY — refer to rider for hospo/backline/tech)
+6. **Compose the email** following the guide's formatting rules (ALL CAPS headings, numbered touring party, plain text, DRY — refer to rider for hospo/backline/tech)
 
-9. **Write draft** to `org/touring/shows/<show-id>/advancing/reply-draft.txt` (plain text, no markdown)
+7. **Write draft** to `org/touring/shows/<show-id>/advancing/reply-draft.txt` (plain text, no markdown) as a backup for copy-paste.
 
-10. **Present the draft** to the user for review. Remind them to attach the rider PDF when sending.
+8. **Present the draft** to the user for review before creating the Gmail draft.
+
+9. **After user approval**, create the Gmail draft via `draft_email`:
+   - Set `threadId` and `inReplyTo` from step 3
+   - Set `to` from the venue contact's email (from the thread)
+   - Attach the rider PDF via `attachments`
+   - Note: API-created drafts may not appear inline in the Gmail thread view. The user can find the draft in their Drafts folder, or use the `.txt` backup to copy-paste into a manually composed reply.
