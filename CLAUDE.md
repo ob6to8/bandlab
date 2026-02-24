@@ -305,7 +305,7 @@ Three semantic namespaces — `deal` (contract terms), `venue` (advancing/venue 
 {
   "id": "s-YYYY-MMDD-city",
   "date": "YYYY-MM-DD",
-  "status": "potential|offered|confirmed|advanced|settled|cancelled",
+  "status": "potential|offered|confirmed|advance-started|advance-concluded|settled|cancelled",
   "tour": "tour-key or null",
   "run": "run-key or null",
   "one_off": "one-off-key or null",

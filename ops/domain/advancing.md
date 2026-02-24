@@ -45,7 +45,7 @@ Advancing contacts have `role: "advancing"` in `people.json`. Confirmation state
 
 ### In show.json (status field)
 
-Show status progresses: `confirmed` → `advanced` (once advancing is complete).
+Show status progresses: `confirmed` → `advance-started` (initial outreach sent) → `advance-concluded` (all info confirmed).
 
 ## Crew Assignments
 
