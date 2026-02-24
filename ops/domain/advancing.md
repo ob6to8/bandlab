@@ -11,8 +11,8 @@ Each venue has one or more potential advancing contacts in `people.json`, ranked
 | Priority | Role | Rationale |
 |---|---|---|
 | 1 | Show Advance | Explicitly designated for advancing |
-| 2 | Production | Handles technical and staging logistics |
-| 3 | Venue Contact | Knows the physical space and logistics |
+| 2 | Venue Contact | Knows the physical space and logistics |
+| 3 | Production | Handles technical and staging logistics |
 | 4 | Promoter | Fallback when no dedicated production/venue contact exists |
 
 Start outreach with priority 1 (if available), wait 2-3 days, then move to the next priority level if no response.
