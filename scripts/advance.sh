@@ -11,7 +11,6 @@ if [ "$(cfg '.advancing // empty')" = "" ]; then
   exit 0
 fi
 
-INDEX="${REPO_ROOT}/$(cfg '.entities.shows.index_path')"
 PEOPLE="${REPO_ROOT}/$(cfg '.registries.people.path')"
 SHOWS_DIR="${REPO_ROOT}/$(cfg '.entities.shows.dir')"
 THREAD_FILE=$(cfg '.advancing.thread_file')
@@ -20,10 +19,7 @@ CONTACT_ROLE=$(cfg '.advancing.contact_role')
 ORG_PREFIX=$(cfg '.advancing.contact_org_prefix')
 PRIORITY_FIELD=$(cfg '.advancing.priority_field')
 
-if [ ! -f "$INDEX" ]; then
-  echo "Index not found. Run: ./bandlab-cli build-index" >&2
-  exit 1
-fi
+load_shows
 
 # ── Classify each show by advancing state ─────────────────────────
 needs_outreach=""
@@ -73,7 +69,7 @@ while IFS=$'\t' read -r show_id date venue; do
     needs_outreach="${needs_outreach}${short_date}\t${venue}\t${name:-NONE}\t${email:--}\n"
     needs_count=$((needs_count + 1))
   fi
-done < <(jq -r 'to_entries | sort_by(.value.date) | .[] | [.key, .value.date, .value.venue.id] | @tsv' "$INDEX")
+done < <(jq -r 'to_entries | sort_by(.value.date) | .[] | [.key, .value.date, .value.venue.id] | @tsv' "$SHOWS_DATA")
 
 # ── Print grouped output ──────────────────────────────────────────
 if [ "$needs_count" -gt 0 ]; then

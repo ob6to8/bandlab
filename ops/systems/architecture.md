@@ -104,16 +104,13 @@ The CLI tools in `scripts/` are written in bash + jq. The reasons:
 4. **Transparent.** Anyone can read a 30-line bash script and understand exactly what it does.
 5. **Matches the data model.** The state files are JSON. jq is the native query language for JSON. This is a natural fit.
 
-### The Show Index
+### Show Data Loading
 
-Show metadata lives in individual `show.json` files (one per show directory). Scripts can query any show directly with jq. For cross-show queries (e.g. "all shows with guarantee > 10000"), the index aggregates all show data into one file:
+Show metadata lives in individual `show.json` files (one per show directory). Scripts can query any show directly with jq. For cross-show queries (e.g. "all shows with guarantee > 10000"), the `load_shows` function in `lib/config.sh` merges all show.json files into a temporary keyed object at runtime:
 
-- `scripts/build-index.sh` merges all `show.json` files into `org/.state/shows.json`
-- The merge is a trivial `jq` operation — no parsing, no transformation
-- The index is regenerated when show data changes (run `./bandlab-cli build-index`)
+- Scripts call `load_shows` after `load_config`, then use `"$SHOWS_DATA"` for aggregate queries
+- The merge is a trivial `jq` operation — no parsing, no transformation, no persistent cache
 - Individual `show.json` files are the source of truth
-
-Since both the source files and the index are JSON, there is no format translation and no drift risk. Scripts can read individual show files or the aggregate index depending on the use case.
 
 ## When to Move to Python
 

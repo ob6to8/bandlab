@@ -48,3 +48,15 @@ warn() {
   warnings=$((warnings + 1))
   checks=$((checks + 1))
 }
+
+# ── Show data loader ───────────────────────────────────────────────
+# Merge all show.json files into a keyed object, set SHOWS_DATA to the temp file path.
+# Call after load_config. Use "$SHOWS_DATA" wherever "$INDEX" was used before.
+
+load_shows() {
+  local glob
+  glob="${REPO_ROOT}/$(cfg '.entities.shows.glob')"
+  SHOWS_DATA=$(mktemp)
+  # shellcheck disable=SC2086
+  jq -n '[inputs | {(.id): .}] | add // {}' $glob > "$SHOWS_DATA"
+}

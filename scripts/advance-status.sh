@@ -11,7 +11,6 @@ if [ "$(cfg '.advancing // empty')" = "" ]; then
   exit 0
 fi
 
-INDEX="${REPO_ROOT}/$(cfg '.entities.shows.index_path')"
 PEOPLE="${REPO_ROOT}/$(cfg '.registries.people.path')"
 SHOWS_DIR="${REPO_ROOT}/$(cfg '.entities.shows.dir')"
 THREAD_FILE=$(cfg '.advancing.thread_file')
@@ -20,15 +19,12 @@ CONTACT_ROLE=$(cfg '.advancing.contact_role')
 ORG_PREFIX=$(cfg '.advancing.contact_org_prefix')
 PRIORITY_FIELD=$(cfg '.advancing.priority_field')
 
-if [ ! -f "$INDEX" ]; then
-  echo "Index not found. Run: ./bandlab-cli build-index" >&2
-  exit 1
-fi
+load_shows
 
 printf "%-12s %-30s %-10s %-30s %s\n" "DATE" "VENUE" "ADVANCING" "TOP CONTACT" "EMAIL"
 printf "%-12s %-30s %-10s %-30s %s\n" "----" "-----" "---------" "-----------" "-----"
 
-jq -r 'to_entries | sort_by(.value.date) | .[] | [.key, .value.date, .value.venue.id] | @tsv' "$INDEX" |
+jq -r 'to_entries | sort_by(.value.date) | .[] | [.key, .value.date, .value.venue.id] | @tsv' "$SHOWS_DATA" |
 while IFS=$'\t' read -r show_id date venue; do
 
   # Check advancing status
@@ -64,8 +60,8 @@ while IFS=$'\t' read -r show_id date venue; do
 done
 
 echo ""
-not_started=$(jq -r 'keys[]' "$INDEX" | while read -r sid; do
+not_started=$(jq -r 'keys[]' "$SHOWS_DATA" | while read -r sid; do
   [ ! -f "${SHOWS_DIR}/${sid}/${THREAD_FILE}" ] && echo "$sid"
 done | wc -l | tr -d ' ')
-total=$(jq 'length' "$INDEX")
+total=$(jq 'length' "$SHOWS_DATA")
 echo "Advancing: ${not_started}/${total} shows not yet started"

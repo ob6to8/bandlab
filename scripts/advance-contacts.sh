@@ -13,7 +13,6 @@ if [ "$(cfg '.advancing // empty')" = "" ]; then
   exit 0
 fi
 
-INDEX="${REPO_ROOT}/$(cfg '.entities.shows.index_path')"
 PEOPLE="${REPO_ROOT}/$(cfg '.registries.people.path')"
 SHOWS_DIR="${REPO_ROOT}/$(cfg '.entities.shows.dir')"
 THREAD_FILE=$(cfg '.advancing.thread_file')
@@ -21,10 +20,7 @@ CONTACT_ROLE=$(cfg '.advancing.contact_role')
 ORG_PREFIX=$(cfg '.advancing.contact_org_prefix')
 PRIORITY_FIELD=$(cfg '.advancing.priority_field')
 
-if [ ! -f "$INDEX" ]; then
-  echo "Index not found. Run: ./bandlab-cli build-index" >&2
-  exit 1
-fi
+load_shows
 
 if [ $# -lt 1 ]; then
   echo "Usage: advance-contacts.sh <show-id-or-partial>" >&2
@@ -35,7 +31,7 @@ fi
 query="$1"
 
 # Find matching show
-show_id=$(jq -r "keys[] | select(contains(\"${query}\"))" "$INDEX" | head -1)
+show_id=$(jq -r "keys[] | select(contains(\"${query}\"))" "$SHOWS_DATA" | head -1)
 
 if [ -z "$show_id" ]; then
   echo "No show found matching: ${query}" >&2
@@ -43,8 +39,8 @@ if [ -z "$show_id" ]; then
 fi
 
 # Get venue for this show
-venue=$(jq -r ".[\"${show_id}\"].venue.id" "$INDEX")
-date=$(jq -r ".[\"${show_id}\"].date" "$INDEX")
+venue=$(jq -r ".[\"${show_id}\"].venue.id" "$SHOWS_DATA")
+date=$(jq -r ".[\"${show_id}\"].date" "$SHOWS_DATA")
 
 echo "=== ${show_id} | ${date} | ${venue} ==="
 echo ""

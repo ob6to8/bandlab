@@ -5,15 +5,10 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "${SCRIPT_DIR}/lib/config.sh" && load_config
+load_shows
 
-INDEX="${REPO_ROOT}/$(cfg '.entities.shows.index_path')"
 VENUES="${REPO_ROOT}/$(cfg '.registries.venues.path')"
 SHOWS_DIR="${REPO_ROOT}/$(cfg '.entities.shows.dir')"
-
-if [ ! -f "$INDEX" ]; then
-  echo "Index not found. Run: ./bandlab-cli build-index" >&2
-  exit 1
-fi
 
 if [ $# -lt 1 ]; then
   echo "Usage: show.sh <show-id-or-partial>" >&2
@@ -21,7 +16,7 @@ if [ $# -lt 1 ]; then
 fi
 
 query="$1"
-show_id=$(jq -r "keys[] | select(contains(\"${query}\"))" "$INDEX" | head -1)
+show_id=$(jq -r "keys[] | select(contains(\"${query}\"))" "$SHOWS_DATA" | head -1)
 
 if [ -z "$show_id" ]; then
   echo "No show found matching: ${query}" >&2
@@ -80,7 +75,7 @@ kv()  { local v="$2"; if [ -z "$v" ]; then v="--"; fi; printf "  %-18s%s\n" "$1"
 n() { local v="$1"; if [ "$v" = "null" ] || [ -z "$v" ]; then echo ""; else echo "$v"; fi; }
 
 # ── Extract show data ──────────────────────────────────────────────
-show_json=$(jq --arg id "$show_id" '.[$id]' "$INDEX")
+show_json=$(jq --arg id "$show_id" '.[$id]' "$SHOWS_DATA")
 get()  { n "$(echo "$show_json" | jq -r "$1")"; }
 getr() { echo "$show_json" | jq -r "$1"; }
 

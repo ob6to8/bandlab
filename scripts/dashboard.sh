@@ -8,13 +8,12 @@ source "${SCRIPT_DIR}/lib/config.sh" && load_config
 SHOWS_DIR="${REPO_ROOT}/$(cfg '.entities.shows.dir')"
 RUNS_DIR="${REPO_ROOT}/$(cfg '.entities.runs.dir')"
 ONEOFFS_DIR="${REPO_ROOT}/$(cfg '.entities.one_offs.dir')"
-INDEX="${REPO_ROOT}/$(cfg '.entities.shows.index_path')"
 PEOPLE="${REPO_ROOT}/$(cfg '.registries.people.path')"
 VENUES="${REPO_ROOT}/$(cfg '.registries.venues.path')"
 TODOS="${REPO_ROOT}/$(cfg '.registries.todos.path')"
 CAL_DIR="${REPO_ROOT}/$(cfg '.calendar.path')"
-# Meta lives alongside the shows index
-META_OUT="$(dirname "$INDEX")/dashboard-meta.json"
+STATE_DIR="${REPO_ROOT}/org/touring/.state"
+META_OUT="${STATE_DIR}/dashboard-meta.json"
 PORT=8026
 
 # ── Preflight checks ───────────────────────────────────────────────
@@ -24,10 +23,8 @@ for f in "$PEOPLE" "$VENUES" "$TODOS"; do
     exit 1
   fi
 done
-if [ ! -f "$INDEX" ]; then
-  echo "Missing ${INDEX} — run ./bandlab-cli build-index first" >&2
-  exit 1
-fi
+
+load_shows
 
 echo "Building dashboard metadata..."
 
@@ -85,7 +82,7 @@ while IFS= read -r show_id; do
     --argjson csum "$has_contract_summary" \
     --argjson tech "$has_tech_pack" \
     '. + {($id): {"thread_md": $thread, "confirmed_md": $confirmed, "contract_pdf": $cpdf, "contract_summary": $csum, "tech_pack": $tech}}')
-done < <(jq -r 'keys[]' "$INDEX")
+done < <(jq -r 'keys[]' "$SHOWS_DATA")
 
 # ── Extract schedules from calendar files ─────────────────────────────
 # Reads YAML frontmatter from calendar .md files, extracts non-empty schedule arrays.

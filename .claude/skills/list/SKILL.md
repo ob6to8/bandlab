@@ -7,7 +7,7 @@ Unified data browser and viewer. No query = list all, with query = show detail.
 ## Config discovery
 
 Read `bandlab.config.json` to discover entity paths and registries. Key references:
-- Shows index: `.entities.shows.index_path`
+- Shows glob: `.entities.shows.glob`
 - Shows directory: `.entities.shows.dir`
 - Tours: `.entities.tours.dir`
 - Runs: `.entities.runs.dir`
@@ -46,7 +46,7 @@ Read `bandlab.config.json` to discover entity paths and registries. Key referenc
 1. Parse `$ARGUMENTS` to determine the entity type and optional query
 2. If no arguments, show the list of supported subcommands above and exit
 3. Read `bandlab.config.json` and resolve the path for the requested entity type:
-   - **shows**: read the shows index at `entities.shows.index_path`
+   - **shows**: merge all show.json files via `entities.shows.glob`
    - **tours**: read `entities.tours.dir/*/tour.json`
    - **runs**: read `entities.runs.dir/*/run.json` and `entities.one_offs.dir/*/one-off.json`
    - **venues**: read `registries.venues.path`

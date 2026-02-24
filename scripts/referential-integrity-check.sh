@@ -7,7 +7,6 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "${SCRIPT_DIR}/lib/config.sh" && load_config
 
 SHOWS_DIR="${REPO_ROOT}/$(cfg '.entities.shows.dir')"
-INDEX="${REPO_ROOT}/$(cfg '.entities.shows.index_path')"
 PEOPLE="${REPO_ROOT}/$(cfg '.registries.people.path')"
 VENUES="${REPO_ROOT}/$(cfg '.registries.venues.path')"
 CALENDAR_REL=$(cfg_default '.calendar.path' '')
@@ -21,7 +20,9 @@ checks=0
 
 echo "=== Required Files ==="
 
-for f in "$INDEX" "$PEOPLE" "$VENUES"; do
+load_shows
+
+for f in "$PEOPLE" "$VENUES"; do
   if [ -f "$f" ]; then
     pass "$(basename "$f") exists"
   else
@@ -30,11 +31,11 @@ for f in "$INDEX" "$PEOPLE" "$VENUES"; do
 done
 echo ""
 
-# ── Show directories ↔ Index ─────────────────────────────────────────
+# ── Show directories ↔ Data ──────────────────────────────────────────
 
-echo "=== Show Directories ↔ Index ==="
+echo "=== Show Directories ↔ Data ==="
 
-# Every show dir should have show.json and be in the index
+# Every show dir should have show.json and be in the loaded data
 for show_dir in "${SHOWS_DIR}"/s-*/; do
   show_id="$(basename "$show_dir")"
 
@@ -43,22 +44,13 @@ for show_dir in "${SHOWS_DIR}"/s-*/; do
     continue
   fi
 
-  # Check show is in the index
-  in_index=$(jq -r --arg id "$show_id" 'has($id)' "$INDEX")
-  if [ "$in_index" = "true" ]; then
-    pass "${show_id}: dir + show.json + in index"
+  in_data=$(jq -r --arg id "$show_id" 'has($id)' "$SHOWS_DATA")
+  if [ "$in_data" = "true" ]; then
+    pass "${show_id}: dir + show.json + loaded"
   else
-    fail "${show_id}: has show.json but NOT in index (run build-index)"
+    fail "${show_id}: has show.json but NOT loaded"
   fi
 done
-
-# Every index entry should have a directory
-# Uses process substitution to keep counters in current shell
-while read -r show_id; do
-  if [ ! -d "${SHOWS_DIR}/${show_id}" ]; then
-    fail "${show_id}: in index but directory MISSING"
-  fi
-done < <(jq -r 'keys[]' "$INDEX")
 echo ""
 
 # ── Show → Registry references (config-driven) ───────────────────────
@@ -88,7 +80,7 @@ while IFS=$'\t' read -r ref_field ref_registry ref_nullable ref_null_severity; d
     else
       fail "${show_id} → ${value} NOT FOUND in $(basename "$registry_path")"
     fi
-  done < <(jq -r "to_entries[] | [.key, .value.${ref_field}] | @tsv" "$INDEX")
+  done < <(jq -r "to_entries[] | [.key, .value.${ref_field}] | @tsv" "$SHOWS_DATA")
   echo ""
 done < <(jq -r '.entities.shows.references | to_entries[] | [.key, .value.registry, (.value.nullable // false | tostring), (.value.null_severity // "skip")] | @tsv' "$CONFIG")
 
@@ -135,7 +127,7 @@ if [ -n "$CALENDAR_REL" ] && [ -d "$CALENDAR" ]; then
     else
       fail "${show_id} (${date}): calendar file exists but does NOT reference show"
     fi
-  done < <(jq -r 'to_entries[] | [.key, .value.date] | @tsv' "$INDEX")
+  done < <(jq -r 'to_entries[] | [.key, .value.date] | @tsv' "$SHOWS_DATA")
   echo ""
 fi
 
@@ -311,7 +303,7 @@ if [ "$prov_enabled" = "true" ]; then
       shows_without_prov=$((shows_without_prov + 1))
       warn "${show_id}: missing ${prov_field}"
     fi
-  done < <(jq -r 'keys[]' "$INDEX")
+  done < <(jq -r 'keys[]' "$SHOWS_DATA")
 
   total_shows=$((shows_with_prov + shows_without_prov))
   if [ "$total_shows" -gt 0 ]; then

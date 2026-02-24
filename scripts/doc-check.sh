@@ -10,7 +10,6 @@ CLAUDE_MD="${REPO_ROOT}/$(cfg '.documentation.claude_md')"
 SKILLS_DIR="${REPO_ROOT}/$(cfg '.documentation.skills_dir')"
 SCRIPTS_DIR="${REPO_ROOT}/$(cfg '.documentation.scripts_dir')"
 SHOWS_DIR="${REPO_ROOT}/$(cfg '.entities.shows.dir')"
-INDEX="${REPO_ROOT}/$(cfg '.entities.shows.index_path')"
 OPS_DIR="${REPO_ROOT}/$(cfg '.documentation.ops_dir')"
 
 errors=0
@@ -120,24 +119,6 @@ for f in "${actual_ops[@]}"; do
     warn "ops/${f}: NOT mentioned in CLAUDE.md ops tree"
   fi
 done
-echo ""
-
-# ── Shows index freshness ───────────────────────────────────────────
-
-echo "=== Shows Index Freshness ==="
-
-if [ -f "$INDEX" ]; then
-  index_count=$(jq 'length' "$INDEX")
-  dir_count=$(find "$SHOWS_DIR" -maxdepth 1 -name 's-*' -type d | wc -l | tr -d ' ')
-
-  if [ "$index_count" -eq "$dir_count" ]; then
-    pass "shows index count (${index_count}) matches directory count (${dir_count})"
-  else
-    fail "shows index (${index_count}) ≠ show directories (${dir_count}) — run build-index"
-  fi
-else
-  fail "shows.json index missing"
-fi
 echo ""
 
 # ── Submodule status ────────────────────────────────────────────────

@@ -3,7 +3,7 @@ Scan the `intake/` directory and process every file found there.
 ## Config discovery
 
 Read `bandlab.config.json` to discover paths. Key references:
-- Shows index: `.entities.shows.index_path`
+- Shows glob: `.entities.shows.glob`
 - Shows directory: `.entities.shows.dir`
 - People registry: `.registries.people.path`
 - Venues registry: `.registries.venues.path`
@@ -28,7 +28,7 @@ Read the file (PDFs, CSVs, text files) and classify it:
 ### 2. Process by type
 
 #### Contract PDF
-1. Match to an existing show by date/venue/city (search the shows index at `entities.shows.index_path`)
+1. Match to an existing show by date/venue/city (merge show.json files via `entities.shows.glob`)
 2. If no match found, ask the user which show this belongs to (or whether to create a new one)
 3. Copy the PDF to the show's `source/` directory (under `entities.shows.dir`)
 4. Extract key terms into `source/summary.md` with `status: pending-review`
@@ -67,7 +67,7 @@ Read the file (PDFs, CSVs, text files) and classify it:
 
 - Move the processed file to its permanent location (show directory, `org/comms/email/`, or `assets/`)
 - If you can't determine where a file belongs, leave it in `intake/` and flag it in the report
-- Rebuild the shows index: run `./${cli_name} build-index` (CLI name from `.project.cli_name`)
+- No index rebuild needed — show data is loaded on-the-fly from individual show.json files
 
 ### 4. Final report
 

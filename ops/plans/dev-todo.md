@@ -8,11 +8,6 @@ Development tasks for the tooling and infrastructure. These are NOT band operati
 - [ ] **fzf** — Fuzzy finder. Alternative to gum for interactive selection. More widely installed. Could pipe command list into fzf.
 - [ ] **justfile** — Modern command runner. `just --list` auto-documents all commands. Could replace the `bandlab` entry script entirely. Evaluate syntax and whether it fits the workflow model.
 
-## Index Generation
-
-- [ ] Auto-rebuild `org/.state/shows.json` when show.json files change. Options: git hook, fswatch, or just document "run build-index after edits".
-- [ ] Consider whether `org/.state/shows.json` should be git-tracked or .gitignored (generated artifact vs portable state).
-
 ## Future Scripts
 
 - [ ] `contract-status.sh` — Which shows have contract PDFs, which have contract-summary.md, which are approved.

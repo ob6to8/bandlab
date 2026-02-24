@@ -5,14 +5,9 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck source=lib/config.sh
 source "${SCRIPT_DIR}/lib/config.sh" && load_config
+load_shows
 
-INDEX="${REPO_ROOT}/$(cfg '.entities.shows.index_path')"
 STRIP_PREFIX=$(cfg_default '.display.show_id_strip_prefix' 's-')
-
-if [ ! -f "$INDEX" ]; then
-  echo "Index not found. Run: ./bandlab-cli build-index" >&2
-  exit 1
-fi
 
 {
   printf "%s\t%s\t%s\t%s\t%s\n" "SHOW ID" "DATE" "VENUE" "GUARANTEE" "STATUS"
@@ -30,16 +25,16 @@ fi
         .value.status
       ]
     | @tsv
-  ' "$INDEX" | while IFS=$'\t' read -r id date venue guarantee status; do
+  ' "$SHOWS_DATA" | while IFS=$'\t' read -r id date venue guarantee status; do
     printf "%s\t%s\t%s\t%s\t%s\n" \
       "${id#"$STRIP_PREFIX"}" "$date" "$venue" "$guarantee" "$status"
   done
 } | column -t -s $'\t'
 
 echo ""
-total=$(jq '[.[] | select(.deal.guarantee) | .deal.guarantee] | add' "$INDEX")
-count=$(jq 'length' "$INDEX")
-guaranteed=$(jq '[.[] | select(.deal.guarantee)] | length' "$INDEX")
-pct_deals=$(jq '[.[] | select(.deal.guarantee == null)] | length' "$INDEX")
+total=$(jq '[.[] | select(.deal.guarantee) | .deal.guarantee] | add' "$SHOWS_DATA")
+count=$(jq 'length' "$SHOWS_DATA")
+guaranteed=$(jq '[.[] | select(.deal.guarantee)] | length' "$SHOWS_DATA")
+pct_deals=$(jq '[.[] | select(.deal.guarantee == null)] | length' "$SHOWS_DATA")
 printf "Total: %d shows | Guaranteed: \$%s across %d shows | Pure %%: %d shows\n" \
   "$count" "$total" "$guaranteed" "$pct_deals"

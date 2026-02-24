@@ -4,7 +4,7 @@
 
 1. Read the relevant `ops/` doc for your task — `advancing.md`, `conventions.md`, `architecture.md`
 2. CLI tools: run `./bandlab-cli` for an interactive menu, or `./bandlab-cli shows` directly
-3. The `touring/.state/shows.json` index aggregates all show.json data — rebuild with `./bandlab-cli build-index`. Canonical registries (people, venues, vendors, todos) live in `org/`.
+3. Canonical registries (people, venues, vendors, todos) live in `org/`. Show data is loaded on-the-fly from individual show.json files via `load_shows` in `lib/config.sh`.
 
 ## What This Is
 
@@ -62,7 +62,6 @@ org/
 │   │   └── ... (through YYYY-12/)
 │   ├── contacts.md              # Quick reference for touring contacts
 │   └── .state/                  # Derived/generated state
-│       ├── shows.json           # Generated index — run ./bandlab-cli build-index
 │       └── last-sync.json
 │
 ├── merch/

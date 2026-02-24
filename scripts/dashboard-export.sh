@@ -7,7 +7,6 @@ source "${SCRIPT_DIR}/lib/config.sh" && load_config
 
 SHOWS_DIR="${REPO_ROOT}/$(cfg '.entities.shows.dir')"
 RUNS_DIR="${REPO_ROOT}/$(cfg '.entities.runs.dir')"
-INDEX="${REPO_ROOT}/$(cfg '.entities.shows.index_path')"
 PEOPLE="${REPO_ROOT}/$(cfg '.registries.people.path')"
 VENUES="${REPO_ROOT}/$(cfg '.registries.venues.path')"
 TODOS="${REPO_ROOT}/$(cfg '.registries.todos.path')"
@@ -20,10 +19,8 @@ for f in "$PEOPLE" "$VENUES" "$TODOS"; do
     exit 1
   fi
 done
-if [ ! -f "$INDEX" ]; then
-  echo "Missing ${INDEX} — run ./bandlab-cli build-index first" >&2
-  exit 1
-fi
+
+load_shows
 
 echo "Building dashboard data..."
 
@@ -75,12 +72,12 @@ while IFS= read -r show_id; do
     --argjson csum "$has_contract_summary" \
     --argjson tech "$has_tech_pack" \
     '. + {($id): {"thread_md": $thread, "confirmed_md": $confirmed, "contract_pdf": $cpdf, "contract_summary": $csum, "tech_pack": $tech}}')
-done < <(jq -r 'keys[]' "$INDEX")
+done < <(jq -r 'keys[]' "$SHOWS_DATA")
 
 # ── Build the combined data blob ────────────────────────────────────
 # This JSON object gets embedded in the HTML as `const DATA = ...`
 DATA=$(jq -n \
-  --slurpfile shows "$INDEX" \
+  --slurpfile shows "$SHOWS_DATA" \
   --slurpfile people "$PEOPLE" \
   --slurpfile venues "$VENUES" \
   --slurpfile todos "$TODOS" \

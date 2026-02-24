@@ -6,8 +6,6 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck source=lib/config.sh
 source "${SCRIPT_DIR}/lib/config.sh" && load_config
 
-SHOWS_DIR="${REPO_ROOT}/$(cfg '.entities.shows.dir')"
-INDEX="${REPO_ROOT}/$(cfg '.entities.shows.index_path')"
 SKILLS_DIR="${REPO_ROOT}/$(cfg '.documentation.skills_dir')"
 CLAUDE_MD="${REPO_ROOT}/$(cfg '.documentation.claude_md')"
 OPS_DIR="${REPO_ROOT}/$(cfg '.documentation.ops_dir')"
@@ -64,42 +62,6 @@ while read -r ops_path; do
     fail "${ops_path}: in CLAUDE.md ops table but file MISSING"
   fi
 done < <(sed -n 's/.*| `\(ops\/[^`]*\.md\)`.*/\1/p' "$CLAUDE_MD" | sort)
-echo ""
-
-# ── Shows index freshness ───────────────────────────────────────────
-
-echo "=== Shows Index Freshness ==="
-
-# Count show dirs vs index entries
-dir_count=0
-for d in "${SHOWS_DIR}"/s-*/; do
-  [ -d "$d" ] && dir_count=$((dir_count + 1))
-done
-
-index_count=$(jq 'keys | length' "$INDEX")
-
-if [ "$dir_count" -eq "$index_count" ]; then
-  pass "show dirs (${dir_count}) match index entries (${index_count})"
-else
-  fail "show dirs (${dir_count}) != index entries (${index_count}) — run build-index"
-fi
-
-# Compare newest show.json mtime vs index mtime
-newest_show=0
-while read -r show_file; do
-  mtime=$(stat -f '%m' "$show_file" 2>/dev/null || stat -c '%Y' "$show_file" 2>/dev/null)
-  if [ "$mtime" -gt "$newest_show" ]; then
-    newest_show=$mtime
-  fi
-done < <(find "$SHOWS_DIR" -name 'show.json' -type f)
-
-index_mtime=$(stat -f '%m' "$INDEX" 2>/dev/null || stat -c '%Y' "$INDEX" 2>/dev/null)
-
-if [ "$newest_show" -le "$index_mtime" ]; then
-  pass "index is up to date (no show.json newer than shows.json)"
-else
-  fail "index is STALE — a show.json was modified after shows.json (run build-index)"
-fi
 echo ""
 
 # ── Submodule status ────────────────────────────────────────────────
