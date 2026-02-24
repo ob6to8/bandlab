@@ -109,6 +109,7 @@ support=$(get '.deal.support')
 tour=$(get '.tour')
 run=$(get '.run')
 one_off=$(get '.one_off')
+email_thread_1=$(get '.email_thread_1')
 sets=$(echo "$show_json" | jq -r 'if .deal.sets then [.deal.sets[] | "\(.date) \(.time) — \(.stage)"] | join(", ") else "" end')
 # Band block fields
 band_member_1=$(get '.band.band_member_1')
@@ -188,6 +189,7 @@ if [ -n "$run" ]; then
 elif [ -n "$one_off" ]; then
   trow "One-off" "$one_off"
 fi
+if [ -n "$email_thread_1" ]; then trow "Thread" "$email_thread_1"; fi
 
 # ── Print VENUE block ────────────────────────────────────────────
 echo ""
