@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # desc: List todos with optional filters
 # usage: todos.sh [filter...]
+# filters: Status=open|in-progress|blocked|done|all Priority=priority Category=advancing|licensing|releases|merch|production|socials|finances|org|set Owner=mark|evan|david Show=s-YYYY-MMDD-city Time=overdue|upcoming
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
