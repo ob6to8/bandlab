@@ -50,7 +50,8 @@ show_summary() {
   printf "  %-4s %-20s %-16s %s\n" "---" "--------" "------" "----"
 
   jq -r '
-    .advance | to_entries | sort_by(.key) | .[] |
+    {"need_to_ask":0,"needs_response":1,"asked":2,"confirmed":3} as $order |
+    .advance | to_entries | sort_by($order[.value.status], .key) | .[] |
     (.value.priority // "-") as $pri |
     (.value.notes // [] | if length > 0 then last.date else "-" end) as $last |
     [$pri, .key, .value.status, $last] | @tsv
