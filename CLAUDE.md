@@ -375,6 +375,7 @@ Four semantic namespaces — `deal` (contract terms), `venue` (advancing/venue c
   "advance": {
     "question_id": {
       "status": "need_to_ask|asked|needs_response|confirmed",
+      "priority": "x or null",
       "notes": [
         {"date": "YYYY-MM-DD", "action": "asked|received|confirmed|flagged", "source": "email:thread subject", "text": "description"}
       ]
