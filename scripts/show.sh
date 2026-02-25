@@ -81,19 +81,25 @@ show_json=$(jq --arg id "$show_id" '.[$id]' "$SHOWS_DATA")
 get()  { n "$(echo "$show_json" | jq -r "$1")"; }
 getr() { echo "$show_json" | jq -r "$1"; }
 
-# ── Field-level query: output raw value and exit ──────────────────
+# ── Field-level query: formatted output and exit ──────────────────
 if [ -n "$filter_ns" ] && [ -n "$filter_field" ]; then
   raw=$(echo "$show_json" | jq --arg ns "$filter_ns" --arg f "$filter_field" '.[$ns][$f]')
   if [ "$raw" = "null" ]; then
     echo "No field '${filter_field}' in '${filter_ns}' for ${show_id}" >&2
     exit 1
   fi
-  # Pretty-print objects/arrays, plain string for scalars
+  # Heading
+  heading="${filter_ns}.${filter_field}"
+  echo ""
+  echo "$heading"
+  printf '%*s\n' "${#heading}" '' | tr ' ' '─'
+  # Pretty-print objects/arrays; split comma-separated scalars onto separate lines
   if echo "$raw" | jq -e 'type == "object" or type == "array"' > /dev/null 2>&1; then
     echo "$raw" | jq .
   else
-    echo "$raw" | jq -r .
+    echo "$raw" | jq -r . | sed 's/, */\n/g'
   fi
+  echo ""
   exit 0
 fi
 
