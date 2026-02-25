@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # desc: Show usage and available filters for commands
-# usage: list.sh [command]
+# usage: scripts.sh [command]
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -50,7 +50,7 @@ if [ $# -gt 0 ]; then
 
   if [ ! -f "$script_path" ]; then
     echo "Unknown command: ${cmd}" >&2
-    echo "Run: ./bandlab-cli list" >&2
+    echo "Run: ./bandlab-cli scripts" >&2
     exit 1
   fi
 
@@ -66,7 +66,7 @@ echo "  ────────────────────────
 for script in "${SCRIPT_DIR}"/*.sh; do
   [ -f "$script" ] || continue
   name=$(basename "$script" .sh)
-  [ "$name" = "list" ] && continue
+  [ "$name" = "scripts" ] && continue
 
   desc=$(safe_grep '^# desc:' "$script" | head -1 | sed 's/^# desc: *//')
   usage=$(safe_grep '^# usage:' "$script" | head -1 | sed 's/^# usage: *//')
@@ -75,7 +75,7 @@ for script in "${SCRIPT_DIR}"/*.sh; do
   printf "\n  %-24s %s\n" "$name" "$desc"
 
   if [ -n "$filters" ]; then
-    echo "                           run: ./bandlab-cli list ${name}"
+    echo "                           run: ./bandlab-cli scripts ${name}"
   elif [ -n "$usage" ]; then
     local_usage="${usage/${name}.sh/bandlab-cli ${name}}"
     echo "                           ./${local_usage}"
