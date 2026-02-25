@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # desc: List todos with optional filters
 # usage: todos.sh [filter...]
-# filters: Status=open|in-progress|blocked|done|all Priority=priority Category=advancing|licensing|releases|merch|production|socials|finances|org|set Owner=mark|evan|david Show=s-YYYY-MMDD-city Time=overdue|upcoming
+# filters: ID=tNNN Status=open|in-progress|blocked|done|all Priority=priority Category=advancing|licensing|releases|merch|production|socials|finances|org|set Owner=mark|evan|david Show=s-YYYY-MMDD-city Time=overdue|upcoming
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -36,6 +36,12 @@ jq_filters=()
 status_filter='select(.status != "done")'
 
 for arg in "$@"; do
+  # Single todo lookup by ID (e.g. t013)
+  if [[ "$arg" =~ ^t[0-9]+$ ]]; then
+    jq --arg id "$arg" '.[] | select(.id == $id)' "$TODOS"
+    exit $?
+  fi
+
   # Check status filters
   case "$arg" in
     open|in-progress|blocked|done)
