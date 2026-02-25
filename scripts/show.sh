@@ -421,7 +421,7 @@ if [ -f "$QUESTIONS" ]; then
   tsection "ADVANCE"
   hline
   if [ "$has_advance" = "true" ]; then
-    # State machine display: read advance object per question
+    # State machine display: read advance object per question, sorted by status priority
     while IFS= read -r qid; do
       adv_status=$(echo "$show_json" | jq -r --arg q "$qid" '.advance[$q].status // empty')
       if [ -z "$adv_status" ]; then
@@ -438,7 +438,20 @@ if [ -f "$QUESTIONS" ]; then
         "$(trunc "$qid" "$W1")" \
         "$(trunc "$adv_status" "$W2")" \
         "$(trunc "$adv_detail" "$W3")"
-    done < <(jq -r '.[].id' "$QUESTIONS")
+    done < <(
+      # Merge question IDs from file with advance statuses, sort by status priority
+      jq -r --slurpfile qs "$QUESTIONS" '
+        def status_order:
+          if . == "need_to_ask" then 0
+          elif . == "asked" then 1
+          elif . == "needs_response" then 2
+          elif . == "confirmed" then 3
+          else 4 end;
+        [ $qs[0][].id as $qid |
+          { id: $qid, status: (.advance[$qid].status // "--") }
+        ] | sort_by(.status | status_order) | .[].id
+      ' <<< "$show_json"
+    )
   else
     # Legacy fallback: check if mapped fields have data
     while IFS=$'\t' read -r qid fields; do
