@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # desc: Display details for a specific show
-# usage: show.sh <show-id-or-partial>
+# usage: show.sh <show-id-or-partial> [namespace] [field]
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -16,6 +16,8 @@ if [ $# -lt 1 ]; then
 fi
 
 query="$1"
+filter_ns="${2:-}"
+filter_field="${3:-}"
 show_id=$(jq -r "keys[] | select(contains(\"${query}\"))" "$SHOWS_DATA" | head -1)
 
 if [ -z "$show_id" ]; then
@@ -78,6 +80,22 @@ n() { local v="$1"; if [ "$v" = "null" ] || [ -z "$v" ]; then echo ""; else echo
 show_json=$(jq --arg id "$show_id" '.[$id]' "$SHOWS_DATA")
 get()  { n "$(echo "$show_json" | jq -r "$1")"; }
 getr() { echo "$show_json" | jq -r "$1"; }
+
+# ── Field-level query: output raw value and exit ──────────────────
+if [ -n "$filter_ns" ] && [ -n "$filter_field" ]; then
+  raw=$(echo "$show_json" | jq --arg ns "$filter_ns" --arg f "$filter_field" '.[$ns][$f]')
+  if [ "$raw" = "null" ]; then
+    echo "No field '${filter_field}' in '${filter_ns}' for ${show_id}" >&2
+    exit 1
+  fi
+  # Pretty-print objects/arrays, plain string for scalars
+  if echo "$raw" | jq -e 'type == "object" or type == "array"' > /dev/null 2>&1; then
+    echo "$raw" | jq .
+  else
+    echo "$raw" | jq -r .
+  fi
+  exit 0
+fi
 
 # ── Provenance + verification lookups ────────────────────────────
 # Invert _provenance (source→fields) to field→source JSON object
@@ -172,7 +190,14 @@ v_capacity=$(n "$(echo "$venue_json" | jq -r '.capacity')")
 v_notes=$(n "$(echo "$venue_json" | jq -r '.notes')")
 v_contacts=$(echo "$venue_json" | jq -r '.contacts // {} | to_entries[] | "\(.key)\t\(.value)"' 2>/dev/null)
 
+# ── Namespace filter helper ────────────────────────────────────────
+# show_section "name" returns true if this section should display
+show_section() {
+  [ -z "$filter_ns" ] || [ "$filter_ns" = "$1" ]
+}
+
 # ── Print SHOW block ─────────────────────────────────────────────
+if show_section "show"; then
 echo ""
 hline
 tsection "${show_id} — ${date}"
@@ -188,8 +213,10 @@ if [ -n "$run" ]; then
 elif [ -n "$one_off" ]; then
   trow "One-off" "$one_off"
 fi
+fi # end show section
 
 # ── Print VENUE block ────────────────────────────────────────────
+if show_section "venue"; then
 echo ""
 hline
 tsection "VENUE"
@@ -278,7 +305,10 @@ if [ -n "$hotel_lines" ]; then
   done <<< "$hotel_lines"
 fi
 
+fi # end venue section
+
 # ── Print BAND block ────────────────────────────────────────────
+if show_section "band"; then
 echo ""
 hline
 tsection "BAND: Show"
@@ -375,7 +405,10 @@ if [ -n "$tour" ]; then
   fi
 fi
 
+fi # end band section
+
 # ── Print DEAL block ────────────────────────────────────────────
+if show_section "deal"; then
 echo ""
 hline
 tsection "DEAL"
@@ -404,6 +437,7 @@ trow "Support" "$support" "deal.support"
 if [ -n "$sets" ]; then trow "Sets" "$sets"; fi
 
 hline
+fi # end deal section
 
 # ── Advance checklist ────────────────────────────────────────────
 CLUB_QUESTIONS="${REPO_ROOT}/$(cfg '.advancing.email_questions_club_path')"
@@ -415,7 +449,7 @@ if [ "$advance_count" -le 10 ]; then
 else
   QUESTIONS="$CLUB_QUESTIONS"
 fi
-if [ -f "$QUESTIONS" ]; then
+if show_section "advance" && [ -f "$QUESTIONS" ]; then
   echo ""
   hline
   tsection "ADVANCE"
@@ -471,6 +505,7 @@ if [ -f "$QUESTIONS" ]; then
 fi
 
 # ── Files section ─────────────────────────────────────────────────
+if show_section "files"; then
 echo ""
 echo "=== Files ==="
 show_dir="${SHOWS_DIR}/${show_id}"
@@ -491,3 +526,4 @@ if [ -d "${show_dir}/source" ]; then
 else
   echo "  [ ] source/"
 fi
+fi # end files section
