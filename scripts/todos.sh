@@ -49,6 +49,10 @@ for arg in "$@"; do
       jq_filters+=("select(.show == \"${arg}\")")
       continue
       ;;
+    priority)
+      jq_filters+=("select(.priority == \"x\")")
+      continue
+      ;;
     overdue)
       jq_filters+=("select(.due != null and .due < \"${TODAY}\")")
       continue
@@ -80,7 +84,7 @@ for arg in "$@"; do
   fi
 
   echo "Unknown filter: ${arg}" >&2
-  echo "Filters: open|in-progress|blocked|done|all|${alias_names}|${domain_names}|${category_names}|s-YYYY-MMDD-city|overdue|upcoming" >&2
+  echo "Filters: open|in-progress|blocked|done|all|priority|${alias_names}|${domain_names}|${category_names}|s-YYYY-MMDD-city|overdue|upcoming" >&2
   exit 1
 done
 
@@ -96,7 +100,7 @@ done
 # ── Run query and format ──────────────────────────────────────────
 total=$(jq 'length' "$TODOS")
 
-results=$(jq -r "[${jq_expr}] | sort_by(.due // \"9999-99-99\") | .[] | [.id, .task, .status, (.owners | join(\", \")), (.due // \"-\"), (.show // \"-\")] | @tsv" "$TODOS")
+results=$(jq -r "[${jq_expr}] | sort_by(.due // \"9999-99-99\") | .[] | [.id, (.priority // \"-\"), .task, .status, .category, (.owners | join(\", \")), (.due // \"-\"), (.show // \"-\")] | @tsv" "$TODOS")
 
 if [ -z "$results" ]; then
   echo "No matching todos."
@@ -105,16 +109,16 @@ if [ -z "$results" ]; then
   exit 0
 fi
 
-printf "%-6s %-40s %-13s %-20s %-12s %s\n" "ID" "TASK" "STATUS" "OWNERS" "DUE" "SHOW"
-printf "%-6s %-40s %-13s %-20s %-12s %s\n" "----" "----" "------" "------" "---" "----"
+printf "%-6s %-4s %-40s %-13s %-12s %-20s %-12s %s\n" "ID" "PRI" "TASK" "STATUS" "CATEGORY" "OWNERS" "DUE" "SHOW"
+printf "%-6s %-4s %-40s %-13s %-12s %-20s %-12s %s\n" "----" "---" "----" "------" "--------" "------" "---" "----"
 
 count=0
-while IFS=$'\t' read -r id task status owners due show; do
+while IFS=$'\t' read -r id pri task status category owners due show; do
   # Truncate long task names
   if [ ${#task} -gt 38 ]; then
     task="${task:0:35}..."
   fi
-  printf "%-6s %-40s %-13s %-20s %-12s %s\n" "$id" "$task" "$status" "$owners" "$due" "$show"
+  printf "%-6s %-4s %-40s %-13s %-12s %-20s %-12s %s\n" "$id" "$pri" "$task" "$status" "$category" "$owners" "$due" "$show"
   count=$((count + 1))
 done <<< "$results"
 

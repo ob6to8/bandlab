@@ -184,11 +184,12 @@ Canonical task list. The agent reads and writes this. Syncs to external surfaces
   {
     "id": "t001",
     "task": "Description of the task",
-    "domain": "touring|merch|socials|releases|licensing|distro|strategy|general",
-    "category": "freeform sub-classification or null",
+    "domain": "touring|releases|licensing|distro|strategy|general",
+    "category": "advancing|licensing|releases|merch|production|socials|finances|org|set",
     "show": "show-key or null",
     "owners": ["person-key"],
     "status": "open|in-progress|blocked|done",
+    "priority": "x or null",
     "due": "YYYY-MM-DD or null",
     "source": "Description of where this todo originated",
     "created": "YYYY-MM-DD",
@@ -202,7 +203,8 @@ Canonical task list. The agent reads and writes this. Syncs to external surfaces
 ]
 ```
 
-- `category`: Freeform string for sub-classification within a domain (e.g. `"show-documentation"`, `"advancing"`, `"settlement"`). Null when not needed.
+- `category`: One of: `advancing`, `licensing`, `releases`, `merch`, `production`, `socials`, `finances`, `org`, `set`. Null when not needed.
+- `priority`: `"x"` when flagged as priority, `null` otherwise.
 - `show`: Key into shows index when this todo relates to a specific show. Null otherwise.
 - `owners`: Array of person keys (supports multiple owners).
 - `blocked_by`: Array of todo IDs that must be completed before this todo can proceed. Null or omitted when not blocked. A todo with `blocked_by` entries where any referenced todo is not `"done"` is effectively blocked.
