@@ -5,50 +5,44 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "${SCRIPT_DIR}/lib/config.sh" && load_config
 
-# Check if advancing is configured
-if [ "$(cfg '.advancing // empty')" = "" ]; then
-  echo "Advancing not configured in bandlab.config.json" >&2
-  exit 0
-fi
-
 PEOPLE="${REPO_ROOT}/$(cfg '.registries.people.path')"
 SHOWS_DIR="${REPO_ROOT}/$(cfg '.entities.shows.dir')"
-THREAD_FILE=$(cfg '.advancing.thread_file')
-CONFIRMED_FILE=$(cfg '.advancing.confirmed_file')
 CONTACT_ROLE=$(cfg '.advancing.contact_role')
 ORG_PREFIX=$(cfg '.advancing.contact_org_prefix')
 PRIORITY_FIELD=$(cfg '.advancing.priority_field')
 
 load_shows
 
-# ── Classify each show by advancing state ─────────────────────────
+# ── Classify each show by advance object in show.json ─────────────
 needs_outreach=""
-awaiting_reply=""
+in_progress=""
 confirmed=""
 
 needs_count=0
-awaiting_count=0
+progress_count=0
 confirmed_count=0
 
 while IFS=$'\t' read -r show_id date venue; do
-  dir="${SHOWS_DIR}/${show_id}"
-
-  # Format short date (strip year)
   short_date="${date:5}"
 
-  # Determine state
-  if [ -f "${dir}/${CONFIRMED_FILE}" ]; then
-    # Get confirmed date from frontmatter
-    conf_date=$(grep '^confirmed_date:' "${dir}/${CONFIRMED_FILE}" 2>/dev/null | sed 's/^confirmed_date: *//' || echo "unknown")
-    confirmed="${confirmed}${short_date}\t${venue}\t(confirmed ${conf_date})\n"
-    confirmed_count=$((confirmed_count + 1))
-  elif [ -f "${dir}/${THREAD_FILE}" ]; then
-    # Get thread start date (first line after frontmatter, or file mod date)
-    thread_date=$(head -20 "${dir}/${THREAD_FILE}" 2>/dev/null | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}' | head -1 || echo "unknown")
-    awaiting_reply="${awaiting_reply}${short_date}\t${venue}\t(thread started ${thread_date})\n"
-    awaiting_count=$((awaiting_count + 1))
-  else
-    # Find top contact for this venue
+  # Read advance object stats from show.json
+  read -r total num_confirmed num_asked num_needs_response num_need_to_ask < <(
+    jq -r '
+      if .advance == null or (.advance | length) == 0 then
+        "0 0 0 0 0"
+      else
+        (.advance | length) as $total |
+        (.advance | [to_entries[] | select(.value.status == "confirmed")] | length) as $conf |
+        (.advance | [to_entries[] | select(.value.status == "asked")] | length) as $asked |
+        (.advance | [to_entries[] | select(.value.status == "needs_response")] | length) as $nr |
+        (.advance | [to_entries[] | select(.value.status == "need_to_ask")] | length) as $nta |
+        "\($total) \($conf) \($asked) \($nr) \($nta)"
+      end
+    ' "${SHOWS_DIR}/${show_id}/show.json"
+  )
+
+  if [ "$total" -eq 0 ]; then
+    # No advance object - needs outreach. Find top contact.
     contact_info=$(jq -r --arg venue "$venue" --arg role "$CONTACT_ROLE" --arg prefix "$ORG_PREFIX" --arg pfield "$PRIORITY_FIELD" '
       ($prefix + ":" + $venue) as $org_ref |
       to_entries
@@ -68,33 +62,57 @@ while IFS=$'\t' read -r show_id date venue; do
 
     needs_outreach="${needs_outreach}${short_date}\t${venue}\t${name:-NONE}\t${email:--}\n"
     needs_count=$((needs_count + 1))
+  elif [ "$num_confirmed" -eq "$total" ]; then
+    confirmed="${confirmed}${short_date}\t${venue}\t${num_confirmed}/${total}\n"
+    confirmed_count=$((confirmed_count + 1))
+  else
+    # Build status summary
+    parts=""
+    if [ "$num_confirmed" -gt 0 ]; then
+      parts="${num_confirmed} confirmed"
+    fi
+    if [ "$num_asked" -gt 0 ]; then
+      if [ -n "$parts" ]; then parts="${parts}, "; fi
+      parts="${parts}${num_asked} asked"
+    fi
+    if [ "$num_needs_response" -gt 0 ]; then
+      if [ -n "$parts" ]; then parts="${parts}, "; fi
+      parts="${parts}${num_needs_response} needs response"
+    fi
+    if [ "$num_need_to_ask" -gt 0 ]; then
+      if [ -n "$parts" ]; then parts="${parts}, "; fi
+      parts="${parts}${num_need_to_ask} need to ask"
+    fi
+
+    in_progress="${in_progress}${short_date}\t${venue}\t${num_confirmed}/${total}\t${parts}\n"
+    progress_count=$((progress_count + 1))
   fi
 done < <(jq -r 'to_entries | sort_by(.value.date) | .[] | [.key, .value.date, .value.venue.id] | @tsv' "$SHOWS_DATA")
 
 # ── Print grouped output ──────────────────────────────────────────
 if [ "$needs_count" -gt 0 ]; then
-  echo "=== NEEDS OUTREACH (${needs_count} shows) ==="
+  echo "=== NEEDS OUTREACH (${needs_count}) ==="
   printf '%b' "$needs_outreach" | while IFS=$'\t' read -r date venue name email; do
     printf "  %-7s %-24s %-26s %s\n" "$date" "$venue" "$name" "$email"
   done
   echo ""
 fi
 
-if [ "$awaiting_count" -gt 0 ]; then
-  echo "=== AWAITING REPLY (${awaiting_count} shows) ==="
-  printf '%b' "$awaiting_reply" | while IFS=$'\t' read -r date venue info; do
-    printf "  %-7s %-24s %s\n" "$date" "$venue" "$info"
+if [ "$progress_count" -gt 0 ]; then
+  echo "=== IN PROGRESS (${progress_count}) ==="
+  printf '%b' "$in_progress" | while IFS=$'\t' read -r date venue progress detail; do
+    printf "  %-7s %-24s %-7s %s\n" "$date" "$venue" "$progress" "$detail"
   done
   echo ""
 fi
 
 if [ "$confirmed_count" -gt 0 ]; then
-  echo "=== CONFIRMED (${confirmed_count} shows) ==="
-  printf '%b' "$confirmed" | while IFS=$'\t' read -r date venue info; do
-    printf "  %-7s %-24s %s\n" "$date" "$venue" "$info"
+  echo "=== CONFIRMED (${confirmed_count}) ==="
+  printf '%b' "$confirmed" | while IFS=$'\t' read -r date venue progress; do
+    printf "  %-7s %-24s %s\n" "$date" "$venue" "$progress"
   done
   echo ""
 fi
 
-total=$((needs_count + awaiting_count + confirmed_count))
-echo "Summary: ${needs_count} need outreach | ${awaiting_count} awaiting reply | ${confirmed_count} confirmed | ${total} total"
+total=$((needs_count + progress_count + confirmed_count))
+echo "Summary: ${needs_count} need outreach | ${progress_count} in progress | ${confirmed_count} confirmed | ${total} total"
