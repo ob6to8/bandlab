@@ -38,3 +38,10 @@ Compose or reply to an advancing email for a show.
    - Set `to` from the venue contact's email (from the thread)
    - Attach the rider PDF via `attachments`
    - Note: API-created drafts may not appear inline in the Gmail thread view. The user can find the draft in their Drafts folder, or use the `.txt` backup to copy-paste into a manually composed reply.
+
+10. **Update the advance object** in show.json after composing:
+    - For initial outreach: add an `advance` key to show.json with all questions from the template set to `"asked"`, each with a note recording the date, action `"asked"`, source `"email:<thread subject>"`, and a brief description.
+    - For replies: update existing advance entries - set questions we answered to `"asked"` (if new), leave confirmed items alone.
+    - Questions NOT included in the email should be set to `"need_to_ask"` with a flagged note.
+    - Set `email_thread_1` in show.json if not already set.
+    - Set show `status` to `"advance-started"` if not already at that stage or later.

@@ -409,24 +409,46 @@ hline
 
 # ── Advance checklist ────────────────────────────────────────────
 QUESTIONS="${REPO_ROOT}/$(cfg '.advancing.email_questions_path')"
+has_advance=$(echo "$show_json" | jq 'has("advance")')
 if [ -f "$QUESTIONS" ]; then
   echo ""
   hline
   tsection "ADVANCE"
   hline
-  while IFS=$'\t' read -r qid fields; do
-    # Check if any mapped field has data
-    answered="no"
-    IFS=',' read -ra flds <<< "$fields"
-    for f in ${flds[@]+"${flds[@]}"}; do
-      val=$(echo "$show_json" | jq -r --arg f "$f" 'getpath($f | split(".")) // empty')
-      if [ -n "$val" ] && [ "$val" != "{}" ] && [ "$val" != "[]" ] && [ "$val" != "null" ]; then
-        answered="yes"
-        break
+  if [ "$has_advance" = "true" ]; then
+    # State machine display: read advance object per question
+    while IFS= read -r qid; do
+      adv_status=$(echo "$show_json" | jq -r --arg q "$qid" '.advance[$q].status // empty')
+      if [ -z "$adv_status" ]; then
+        adv_status="--"
+        adv_detail=""
+      else
+        # Get last note date and text for source column
+        adv_detail=$(echo "$show_json" | jq -r --arg q "$qid" '
+          .advance[$q].notes // [] | last //empty |
+          "\(.date) \(.text)"' 2>/dev/null)
+        if [ "$adv_detail" = "null" ]; then adv_detail=""; fi
       fi
-    done
-    trow "$qid" "$answered"
-  done < <(jq -r '.[] | [.id, (.fields | join(","))] | @tsv' "$QUESTIONS")
+      printf "| %-${W1}s | %-${W2}s | %-${W3}s |\n" \
+        "$(trunc "$qid" "$W1")" \
+        "$(trunc "$adv_status" "$W2")" \
+        "$(trunc "$adv_detail" "$W3")"
+    done < <(jq -r '.[].id' "$QUESTIONS")
+  else
+    # Legacy fallback: check if mapped fields have data
+    while IFS=$'\t' read -r qid fields; do
+      answered="no"
+      IFS=',' read -ra flds <<< "$fields"
+      for f in ${flds[@]+"${flds[@]}"}; do
+        val=$(echo "$show_json" | jq -r --arg f "$f" 'getpath($f | split(".")) // empty')
+        if [ -n "$val" ] && [ "$val" != "{}" ] && [ "$val" != "[]" ] && [ "$val" != "null" ]; then
+          answered="yes"
+          break
+        fi
+      done
+      trow "$qid" "$answered"
+    done < <(jq -r '.[] | [.id, (.fields | join(","))] | @tsv' "$QUESTIONS")
+  fi
   hline
 fi
 

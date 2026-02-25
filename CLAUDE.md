@@ -299,7 +299,7 @@ s-YYYY-MMDD-city/
 
 **show.json:**
 
-Three semantic namespaces — `deal` (contract terms), `venue` (advancing/venue capabilities), `band` (crew assignments) — plus top-level show identity and metadata.
+Four semantic namespaces — `deal` (contract terms), `venue` (advancing/venue capabilities), `band` (crew assignments), `advance` (per-question advancing state machine) — plus top-level show identity and metadata.
 
 ```json
 {
@@ -309,6 +309,7 @@ Three semantic namespaces — `deal` (contract terms), `venue` (advancing/venue 
   "tour": "tour-key or null",
   "run": "run-key or null",
   "one_off": "one-off-key or null",
+  "email_thread_1": "Gmail thread subject or null",
   "deal": {
     "guarantee": null,
     "canada_amount": "$CAD amount or null",
@@ -353,7 +354,11 @@ Three semantic namespaces — `deal` (contract terms), `venue` (advancing/venue 
     "dos_contacts": {},
     "hotels": [],
     "settlement": "",
-    "ticket_count": null
+    "ticket_count": null,
+    "ethernet_hdmi": "",
+    "food_deals": "",
+    "backdrop_ok": "",
+    "house_ld": ""
   },
   "band": {
     "band_member_1": "person-key or null",
@@ -364,6 +369,14 @@ Three semantic namespaces — `deal` (contract terms), `venue` (advancing/venue 
     "lasers": "person-key or null",
     "merch": "person-key or null",
     "driver": "person-key or null"
+  },
+  "advance": {
+    "question_id": {
+      "status": "need_to_ask|asked|needs_response|confirmed",
+      "notes": [
+        {"date": "YYYY-MM-DD", "action": "asked|received|confirmed|flagged", "source": "email:thread subject", "text": "description"}
+      ]
+    }
   },
   "_provenance": {
     "source/FILENAME.pdf": {
@@ -417,6 +430,10 @@ Three semantic namespaces — `deal` (contract terms), `venue` (advancing/venue 
   - `hotels`: Array of hotel name strings with discount codes (e.g. `["Wiley Hotel (code: ZEROMI)"]`).
   - `settlement`: Settlement method (e.g. `"check or wire"`).
   - `ticket_count`: Current ticket count at time of advancing (integer). Null if unknown.
+  - `ethernet_hdmi`: Ethernet and/or HDMI/DVI drop availability to stage. Empty string if unknown.
+  - `food_deals`: Food deals at venue or nearby. Empty string if unknown.
+  - `backdrop_ok`: Whether venue can hang upstage backdrop. Empty string if unknown.
+  - `house_ld`: Whether house LD is available to operate venue lights. Empty string if unknown.
 - **band fields:** Structured block mapping roles to person-keys. Role fields are `"person-key"` or `null` (unfilled/not traveling).
   - `band_member_1`, `band_member_2`: Band members traveling to this show.
   - `foh`: Front of house engineer.
@@ -425,6 +442,10 @@ Three semantic namespaces — `deal` (contract terms), `venue` (advancing/venue 
   - `lasers`: Laser and floor lighting operator.
   - `merch`: DOS merch coordinator.
   - `driver`: Tour vehicle driver.
+- **advance fields:** Per-question advancing state machine. Keyed by question ID from the advancing email questions file. Only present on shows with `status: "advance-started"` or later. Absent key = show not yet advancing.
+  - `status`: One of `"need_to_ask"` (advancing started, not yet sent), `"asked"` (sent to venue, awaiting reply), `"needs_response"` (venue replied but inconclusive/creates follow-up), `"confirmed"` (conclusively resolved).
+  - `notes`: Immutable array of note objects tracking the conversation lifecycle. Each note has `date` (ISO), `action` (`"asked"` / `"received"` / `"confirmed"` / `"flagged"`), `source` (provenance-style string, typically `"email:thread subject"`), and `text` (description).
+- `email_thread_1`: Gmail thread subject for the primary advancing email. Null if not yet started. Used by `/advancing-email` skill to find/reply to the thread.
 - `_verified`: Flat object mapping field names to ISO dates (YYYY-MM-DD) indicating when a human confirmed the field value is correct. Uses dot-notation matching `_provenance` field names (e.g. `"venue.hospitality"`, `"deal.guarantee"`). Empty object `{}` by default. Underscore-prefixed so jq queries ignore it.
 - `_provenance`: Maps source documents to the fields they substantiate. Underscore-prefixed so jq queries and existing scripts ignore it. Keys are paths relative to the show directory, or special values: `"manual:<person>:<date>"` (agent entered data a person provided verbally/in-session), `"user:<person>:<date>"` (user directly provided the data), `"legacy"`, `"legacy:routing-csv"`. Each entry has `extracted` (ISO date) and `fields` (array of dot-notation field names, e.g. `"deal.guarantee"`, `"venue.parking"`, `"band.foh"`). Non-file key prefixes (`manual:`, `user:`, `legacy:`) must be registered in `bandlab.config.json` under `provenance.special_source_prefixes` so verification scripts skip file-existence checks. See `ops/provenance-plan.md` for the full design.
 
