@@ -38,8 +38,33 @@ status_filter='select(.status != "done")'
 for arg in "$@"; do
   # Single todo lookup by ID (e.g. t013)
   if [[ "$arg" =~ ^t[0-9]+$ ]]; then
-    jq --arg id "$arg" '.[] | select(.id == $id)' "$TODOS"
-    exit $?
+    result=$(jq --arg id "$arg" '.[] | select(.id == $id)' "$TODOS")
+    if [ -z "$result" ]; then
+      echo "No todo with id: ${arg}" >&2
+      exit 1
+    fi
+    echo "$result" | jq -r '
+      "ID:        \(.id)",
+      "Task:      \(.task)",
+      "Domain:    \(.domain // "-")",
+      "Category:  \(.category // "-")",
+      "Status:    \(.status)",
+      "Priority:  \(.priority // "-")",
+      "Owners:    \(.owners | join(", "))",
+      "Due:       \(.due // "-")",
+      "Show:      \(.show // "-")",
+      "Source:    \(.source // "-")",
+      "Created:   \(.created // "-")",
+      "Updated:   \(.updated // "-")",
+      "Notes:     \(.notes // "-")",
+      "",
+      if (.history | length) > 0 then
+        "History:",
+        (.history[] | "  \(.date)  \(.entry)")
+      else
+        "History:   (none)"
+      end'
+    exit 0
   fi
 
   # Check status filters
