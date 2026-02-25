@@ -76,11 +76,22 @@ Every data record tracks where it came from via a `sources` array.
 **The `sources` field** on `people.json` and `venues.json` entries is an array of provenance references:
 
 - **File paths** (relative to `org/`): `"touring/shows/s-2026-0304-charleston/source/DIRTWIRE_CharlestonPourHouse_DealMemo.pdf"`
+- **URLs**: `"https://sites.google.com/..."` — external web resources (advance packets, online tech packs)
 - **Special values**: `"manual"` (entered by hand), `"legacy"` (pre-provenance data), `"legacy:routing-csv"` (from routing spreadsheet import), `"legacy:contracts"` (from contract extraction, cross-venue)
 
-File-path sources must resolve to actual files on disk. The audit checks this.
+File-path sources must resolve to actual files on disk. URLs are accepted as valid external references. The audit checks both.
 
 Shows implicitly reference their own `source/` directory — no `sources` field needed on `show.json`.
+
+## Shell Scripting Pitfalls
+
+**Bash 3 (macOS default).** No `${var^}` uppercase expansion. Use `echo "$var" | cut -c1 | tr '[:lower:]' '[:upper:]'` or similar.
+
+**`set -e` with `&&`.** Under `set -e`, `[ -n "" ] && cmd` returns exit code 1 and kills the script. Use `if [ -n "$var" ]; then cmd; fi` instead.
+
+**Process substitution for while-read loops.** Use `while read ... ; done < <(cmd)` not `cmd | while read ...`. Pipes create subshells, so variables set inside the loop are lost.
+
+**jq `as $var` scope.** Variable bindings with `as $var` can cause unexpected scope issues in complex pipelines. Prefer `.field` access directly when possible.
 
 ## Contract Sources
 

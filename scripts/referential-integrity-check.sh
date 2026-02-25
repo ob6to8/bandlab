@@ -246,6 +246,11 @@ while IFS=$'\t' read -r _reg_name reg_path; do
     fi
     [ "$is_special" = true ] && continue
 
+    # URLs are valid external provenance sources
+    case "$source_path" in
+      http://*|https://*) good_paths=$((good_paths + 1)); continue ;;
+    esac
+
     source_base="${REPO_ROOT}/$(cfg '.provenance.source_base_dir')"
     if [ -f "${source_base}/${source_path}" ]; then
       good_paths=$((good_paths + 1))
@@ -292,6 +297,11 @@ if [ "$prov_enabled" = "true" ]; then
           [ "$prov_key" = "$sv" ] && is_special=true && break
         done
         [ "$is_special" = true ] && continue
+
+        # URLs are valid external provenance sources
+        case "$prov_key" in
+          http://*|https://*) pass "${show_id}: ${prov_key} (URL)"; continue ;;
+        esac
 
         if [ -f "${SHOWS_DIR}/${show_id}/${prov_key}" ]; then
           pass "${show_id}: ${prov_key} exists"

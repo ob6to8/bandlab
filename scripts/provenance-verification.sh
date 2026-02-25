@@ -109,6 +109,11 @@ for show_dir in "${SHOWS_DIR}"/s-*/; do
     fi
     [ "$is_special" = true ] && continue
 
+    # URLs are valid external provenance sources
+    case "$source_key" in
+      http://*|https://*) pass "${show_id}: ${source_key} (URL)"; continue ;;
+    esac
+
     source_file="${show_dir}/${source_key}"
     if [ -f "$source_file" ]; then
       pass "${show_id}: ${source_key} exists"
