@@ -96,7 +96,7 @@ while IFS=$'\t' read -r show_id _date _venue; do
   fi
 
   mismatch_count=$((mismatch_count + total_mismatches))
-done < <(jq -r 'to_entries | sort_by(.value.date) | .[] | [.key, .value.date, .value.venue.id] | @tsv' "$SHOWS_DATA")
+done < <(jq -r 'to_entries | sort_by(.value.show.date) | .[] | [.key, .value.show.date, .value.venue.id] | @tsv' "$SHOWS_DATA")
 
 echo ""
 
@@ -156,7 +156,7 @@ while IFS=$'\t' read -r show_id show_date _venue_id; do
   ' "$show_file"
 
   echo ""
-done < <(jq -r 'to_entries | sort_by(.value.date) | .[] | [.key, .value.date, .value.venue.id] | @tsv' "$SHOWS_DATA")
+done < <(jq -r 'to_entries | sort_by(.value.show.date) | .[] | [.key, .value.show.date, .value.venue.id] | @tsv' "$SHOWS_DATA")
 
 if [ "$found_upcoming" -eq 0 ]; then
   echo "  No shows in the next ${WINDOW_DAYS} days."

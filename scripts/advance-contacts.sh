@@ -40,7 +40,7 @@ fi
 
 # Get venue for this show
 venue=$(jq -r ".[\"${show_id}\"].venue.id" "$SHOWS_DATA")
-date=$(jq -r ".[\"${show_id}\"].date" "$SHOWS_DATA")
+date=$(jq -r ".[\"${show_id}\"].show.date" "$SHOWS_DATA")
 
 echo "=== ${show_id} | ${date} | ${venue} ==="
 echo ""

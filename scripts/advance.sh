@@ -29,7 +29,7 @@ show_summary() {
   local show_file="${SHOWS_DIR}/${match}/show.json"
   local venue date
   venue=$(jq -r '.venue.id' "$show_file")
-  date=$(jq -r '.date' "$show_file")
+  date=$(jq -r '.show.date' "$show_file")
 
   echo ""
   echo "  ${match} (${venue}) - ${date}"
@@ -74,7 +74,7 @@ show_question() {
   local show_file="${SHOWS_DIR}/${match}/show.json"
   local venue date
   venue=$(jq -r '.venue.id' "$show_file")
-  date=$(jq -r '.date' "$show_file")
+  date=$(jq -r '.show.date' "$show_file")
 
   local exists
   exists=$(jq -r --arg q "$question" '.advance[$q] // empty' "$show_file")
@@ -123,7 +123,7 @@ show_priority() {
     ' "$show_file" 2>/dev/null | while IFS=$'\t' read -r d v question status last_action; do
       printf "  %-7s %-24s %-20s %-16s %s\n" "$d" "$v" "$question" "$status" "$last_action"
     done
-  done < <(jq -r 'to_entries | sort_by(.value.date) | .[] | [.key, .value.date, .value.venue.id] | @tsv' "$SHOWS_DATA")
+  done < <(jq -r 'to_entries | sort_by(.value.show.date) | .[] | [.key, .value.show.date, .value.venue.id] | @tsv' "$SHOWS_DATA")
 
   echo ""
 }
@@ -222,7 +222,7 @@ while IFS=$'\t' read -r show_id date venue; do
     in_progress="${in_progress}${short_date}\t${venue}\t${num_confirmed}/${total}\t${parts}\n"
     progress_count=$((progress_count + 1))
   fi
-done < <(jq -r 'to_entries | sort_by(.value.date) | .[] | [.key, .value.date, .value.venue.id] | @tsv' "$SHOWS_DATA")
+done < <(jq -r 'to_entries | sort_by(.value.show.date) | .[] | [.key, .value.show.date, .value.venue.id] | @tsv' "$SHOWS_DATA")
 
 if [ "$needs_count" -gt 0 ]; then
   echo "=== NEEDS OUTREACH (${needs_count}) ==="

@@ -127,7 +127,7 @@ if [ -n "$CALENDAR_REL" ] && [ -d "$CALENDAR" ]; then
     else
       fail "${show_id} (${date}): calendar file exists but does NOT reference show"
     fi
-  done < <(jq -r 'to_entries[] | [.key, .value.date] | @tsv' "$SHOWS_DATA")
+  done < <(jq -r 'to_entries[] | [.key, .value.show.date] | @tsv' "$SHOWS_DATA")
   echo ""
 fi
 

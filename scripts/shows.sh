@@ -15,14 +15,14 @@ STRIP_PREFIX=$(cfg_default '.display.show_id_strip_prefix' 's-')
 
   jq -r '
     to_entries
-    | sort_by(.value.date)
+    | sort_by(.value.show.date)
     | .[]
     | [
         .key,
-        .value.date,
+        .value.show.date,
         .value.venue.id,
         (if .value.deal.guarantee then ("$" + (.value.deal.guarantee | tostring)) else "% deal" end),
-        .value.status
+        .value.show.status
       ]
     | @tsv
   ' "$SHOWS_DATA" | while IFS=$'\t' read -r id date venue guarantee status; do

@@ -94,9 +94,9 @@ veri_lookup=$(echo "$show_json" | jq '._verified // {}')
 prov_src()  { echo "$prov_lookup" | jq -r --arg f "$1" '.[$f] // empty'; }
 ver_date()  { echo "$veri_lookup" | jq -r --arg f "$1" '.[$f] // empty'; }
 
-date=$(get '.date')
+date=$(get '.show.date')
 venue_key=$(get '.venue.id')
-status=$(get '.status')
+status=$(get '.show.status')
 guarantee=$(get '.deal.guarantee')
 canada_amount=$(get '.deal.canada_amount')
 door_split=$(get '.deal.door_split')
@@ -106,11 +106,10 @@ sell_cap=$(get '.deal.sell_cap')
 ticket_scaling=$(get '.deal.ticket_scaling')
 wp=$(get '.deal.wp')
 support=$(get '.deal.support')
-tour=$(get '.tour')
-run=$(get '.run')
-one_off=$(get '.one_off')
-email_thread_1=$(get '.email_thread_1')
-sets=$(echo "$show_json" | jq -r 'if .deal.sets then [.deal.sets[] | "\(.date) \(.time) — \(.stage)"] | join(", ") else "" end')
+tour=$(get '.show.tour')
+run=$(get '.show.run')
+one_off=$(get '.show.one_off')
+sets=$(echo "$show_json" | jq -r 'if .deal.sets then [.deal.sets[] | "\(.date) \(.time) - \(.stage)"] | join(", ") else "" end')
 # Band block fields
 band_member_1=$(get '.band.band_member_1')
 band_member_2=$(get '.band.band_member_2')
@@ -180,7 +179,7 @@ tsection "${show_id} — ${date}"
 hline
 tsection "SHOW"
 hline
-trow "Date" "$date" "date"
+trow "Date" "$date" "show.date"
 trow "Venue" "$venue_label" "venue.id"
 trow "Status" "$status"
 if [ -n "$tour" ]; then trow "Tour" "$tour"; fi
@@ -189,7 +188,6 @@ if [ -n "$run" ]; then
 elif [ -n "$one_off" ]; then
   trow "One-off" "$one_off"
 fi
-if [ -n "$email_thread_1" ]; then trow "Thread" "$email_thread_1"; fi
 
 # ── Print VENUE block ────────────────────────────────────────────
 echo ""
@@ -408,8 +406,15 @@ if [ -n "$sets" ]; then trow "Sets" "$sets"; fi
 hline
 
 # ── Advance checklist ────────────────────────────────────────────
-QUESTIONS="${REPO_ROOT}/$(cfg '.advancing.email_questions_path')"
+CLUB_QUESTIONS="${REPO_ROOT}/$(cfg '.advancing.email_questions_club_path')"
+FESTIVAL_QUESTIONS="${REPO_ROOT}/$(cfg '.advancing.email_questions_festival_path')"
 has_advance=$(echo "$show_json" | jq 'has("advance")')
+advance_count=$(echo "$show_json" | jq '.advance | length')
+if [ "$advance_count" -le 10 ]; then
+  QUESTIONS="$FESTIVAL_QUESTIONS"
+else
+  QUESTIONS="$CLUB_QUESTIONS"
+fi
 if [ -f "$QUESTIONS" ]; then
   echo ""
   hline

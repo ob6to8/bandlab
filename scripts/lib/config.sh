@@ -58,5 +58,5 @@ load_shows() {
   glob="${REPO_ROOT}/$(cfg '.entities.shows.glob')"
   SHOWS_DATA=$(mktemp)
   # shellcheck disable=SC2086
-  jq -n '[inputs | {(.id): .}] | add // {}' $glob > "$SHOWS_DATA"
+  jq -n '[inputs | {(.show.id): .}] | add // {}' $glob > "$SHOWS_DATA"
 }

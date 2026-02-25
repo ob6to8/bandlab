@@ -504,14 +504,14 @@ function escHtml(s) {
 const showEntries = Object.entries(DATA.shows)
   .map(([id, s]) => ({
     id,
-    date: s.date,
-    day: dayOfWeek(s.date),
+    date: s.show?.date,
+    day: dayOfWeek(s.show?.date),
     city: venueCity(s.venue?.id),
     venue: venueName(s.venue?.id),
     venueKey: s.venue?.id,
-    run: s.run,
-    runDisplay: runName(s.run),
-    status: s.status,
+    run: s.show?.run,
+    runDisplay: runName(s.show?.run),
+    status: s.show?.status,
     guarantee: s.deal?.guarantee,
     wp: s.deal?.wp,
     sell_cap: s.deal?.sell_cap,
@@ -658,17 +658,17 @@ function openDetail(showId) {
   html += `<div class="detail-section">
     <h3>Show Info</h3>
     <dl class="detail-grid">
-      <dt>Date</dt><dd>${s.date} (${dayOfWeek(s.date)})</dd>
+      <dt>Date</dt><dd>${s.show?.date} (${dayOfWeek(s.show?.date)})</dd>
       <dt>Venue</dt><dd>${venueName(s.venue?.id)}</dd>
       <dt>City</dt><dd>${venueCity(s.venue?.id)}${v.state ? ', ' + v.state : ''}</dd>
-      <dt>Status</dt><dd><span class="badge ${statusBadgeClass(s.status)}">${s.status}</span></dd>
+      <dt>Status</dt><dd><span class="badge ${statusBadgeClass(s.show?.status)}">${s.show?.status}</span></dd>
       <dt>Guarantee</dt><dd>${s.deal?.guarantee ? fmtMoney(s.deal.guarantee) : '% deal'}</dd>
       <dt>WP</dt><dd>${fmtMoney(s.deal?.wp)}</dd>
       <dt>Sell Cap</dt><dd>${s.deal?.sell_cap || '—'}</dd>
       <dt>Scaling</dt><dd>${s.deal?.ticket_scaling || '—'}</dd>
       <dt>Ages</dt><dd>${s.deal?.ages || '—'}</dd>
       <dt>Support</dt><dd>${s.deal?.support || '—'}</dd>
-      <dt>Run</dt><dd>${runName(s.run)}</dd>
+      <dt>Run</dt><dd>${runName(s.show?.run)}</dd>
       <dt>Promoter</dt><dd>${personName(s.deal?.promoter)}</dd>
       <dt>Merch Cut</dt><dd>${s.venue?.merch_cut != null ? s.venue.merch_cut + '%' : '—'}</dd>
     </dl>

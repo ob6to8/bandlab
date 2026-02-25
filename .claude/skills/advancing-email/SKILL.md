@@ -14,7 +14,7 @@ Compose or reply to an advancing email for a show.
    - If `$ARGUMENTS` is a quoted email subject: search Gmail for the thread, extract the city/venue from the subject line, match to a show ID.
    - Otherwise: match `$ARGUMENTS` as a show ID or partial.
 
-3. **Find the Gmail thread** for this show. Search by the `email_thread_1` field in show.json, or by the subject passed in `$ARGUMENTS`. Read all messages in the thread to understand what the venue asked and what info they provided. Note the `threadId` and latest message ID for `inReplyTo`.
+3. **Find the Gmail thread** for this show. Search Gmail for the advancing thread by venue name and date, or by the subject passed in `$ARGUMENTS`. Read all messages in the thread to understand what the venue asked and what info they provided. Note the `threadId` and latest message ID for `inReplyTo`.
 
 4. **Load data sources:**
    - `show.json` for the target show
@@ -43,5 +43,4 @@ Compose or reply to an advancing email for a show.
     - For initial outreach: add an `advance` key to show.json with all questions from the template set to `"asked"`, each with a note recording the date, action `"asked"`, source `"email:<thread subject>"`, and a brief description.
     - For replies: update existing advance entries - set questions we answered to `"asked"` (if new), leave confirmed items alone.
     - Questions NOT included in the email should be set to `"need_to_ask"` with a flagged note.
-    - Set `email_thread_1` in show.json if not already set.
-    - Set show `status` to `"advance-started"` if not already at that stage or later.
+    - Set show `show.status` to `"advance-started"` if not already at that stage or later.

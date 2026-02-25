@@ -301,17 +301,18 @@ s-YYYY-MMDD-city/
 
 **show.json:**
 
-Four semantic namespaces — `deal` (contract terms), `venue` (advancing/venue capabilities), `band` (crew assignments), `advance` (per-question advancing state machine) — plus top-level show identity and metadata.
+Four semantic namespaces — `show` (identity/lifecycle), `deal` (contract terms), `venue` (advancing/venue capabilities), `band` (crew assignments), `advance` (per-question advancing state machine) — plus provenance and verification metadata.
 
 ```json
 {
-  "id": "s-YYYY-MMDD-city",
-  "date": "YYYY-MM-DD",
-  "status": "potential|offered|confirmed|advance-started|advance-concluded|settled|cancelled",
-  "tour": "tour-key or null",
-  "run": "run-key or null",
-  "one_off": "one-off-key or null",
-  "email_thread_1": "Gmail thread subject or null",
+  "show": {
+    "id": "s-YYYY-MMDD-city",
+    "date": "YYYY-MM-DD",
+    "status": "potential|offered|confirmed|advance-started|advance-concluded|settled|cancelled",
+    "tour": "tour-key or null",
+    "run": "run-key or null",
+    "one_off": "one-off-key or null"
+  },
   "deal": {
     "guarantee": null,
     "canada_amount": "$CAD amount or null",
@@ -448,7 +449,13 @@ Four semantic namespaces — `deal` (contract terms), `venue` (advancing/venue c
 - **advance fields:** Per-question advancing state machine. Keyed by question ID from the advancing email questions file. Only present on shows with `status: "advance-started"` or later. Absent key = show not yet advancing.
   - `status`: One of `"need_to_ask"` (advancing started, not yet sent), `"asked"` (sent to venue, awaiting reply), `"needs_response"` (venue replied but inconclusive/creates follow-up), `"confirmed"` (conclusively resolved).
   - `notes`: Immutable array of note objects tracking the conversation lifecycle. Each note has `date` (ISO), `action` (`"asked"` / `"received"` / `"confirmed"` / `"flagged"`), `source` (provenance-style string, typically `"email:thread subject"`), and `text` (description).
-- `email_thread_1`: Gmail thread subject for the primary advancing email. Null if not yet started. Used by `/advancing-email` skill to find/reply to the thread.
+- **show fields:** Show identity and lifecycle metadata, wrapped in the `show` namespace.
+  - `id`: Show directory key (e.g. `"s-2026-0305-atlanta"`).
+  - `date`: ISO date string (YYYY-MM-DD).
+  - `status`: Show lifecycle status.
+  - `tour`: Tour key or null.
+  - `run`: Run key or null. Exactly one of `run` or `one_off` is non-null.
+  - `one_off`: One-off key or null.
 - `_verified`: Flat object mapping field names to ISO dates (YYYY-MM-DD) indicating when a human confirmed the field value is correct. Uses dot-notation matching `_provenance` field names (e.g. `"venue.hospitality"`, `"deal.guarantee"`). Empty object `{}` by default. Underscore-prefixed so jq queries ignore it.
 - `_provenance`: Maps source documents to the fields they substantiate. Underscore-prefixed so jq queries and existing scripts ignore it. Keys are paths relative to the show directory, or special values: `"manual:<person>:<date>"` (agent entered data a person provided verbally/in-session), `"user:<person>:<date>"` (user directly provided the data), `"legacy"`, `"legacy:routing-csv"`. Each entry has `extracted` (ISO date) and `fields` (array of dot-notation field names, e.g. `"deal.guarantee"`, `"venue.parking"`, `"band.foh"`). Non-file key prefixes (`manual:`, `user:`, `legacy:`) must be registered in `bandlab.config.json` under `provenance.special_source_prefixes` so verification scripts skip file-existence checks. See `ops/provenance-plan.md` for the full design.
 
