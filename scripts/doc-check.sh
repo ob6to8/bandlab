@@ -82,14 +82,14 @@ while IFS= read -r line; do
   # Extract backing script column (second | ... | segment)
   script_col=$(echo "$line" | awk -F'|' '{print $3}' | xargs)
 
-  # Skip agent-only or empty
-  case "$script_col" in
-    *agent-only*|"") continue ;;
-  esac
-
   # Extract script filename (strip backticks)
   script_name=$(echo "$script_col" | sed 's/`//g' | xargs)
+
+  # Skip if empty, marked agent-only, or clearly a description (contains spaces)
   [ -n "$script_name" ] || continue
+  case "$script_name" in
+    *agent-only*|*\ *) continue ;;
+  esac
 
   if [ -f "${SCRIPTS_DIR}/${script_name}" ]; then
     pass "/${skill} → ${script_name} exists"
