@@ -45,6 +45,7 @@ org/
 ├── people.json                  # Canonical person registry
 ├── vendors.json                 # Canonical vendor registry
 ├── todos.json                   # Canonical task list
+├── email/                       # Email thread summaries (org/email/<thread-slug>.md)
 │
 ├── touring/
 │   ├── shows/                   # One directory per show (s-YYYY-MMDD-city/)
@@ -584,6 +585,60 @@ Tours are directories that hold `tour.json` plus tour-scoped todos (e.g. crew tr
 - `production`: Object containing production/backline details (stands, mics, console, monitors, etc.).
 - `policies`: Object containing tour-level policies (e.g. `photo_video`).
 - `_provenance`: Same format as show.json provenance — maps sources to field arrays.
+
+---
+
+### Email Thread Summaries
+
+Path: `org/email/<thread-slug>.md`
+
+Markdown files with YAML frontmatter summarizing email threads that contain actionable information, generate todos, or involve org operations. Each file captures the thread's participants, typed associations to org entities, and a human-readable timeline.
+
+```yaml
+---
+thread: "Thread Subject"
+thread_id: "gmail-thread-id"
+status: open|resolved
+first: YYYY-MM-DD
+last: YYYY-MM-DD
+participants:
+  - person-key
+associations:
+  people:
+    - person-key
+  vendors:
+    - vendor-key
+  venues:
+    - venue-key
+  shows:
+    - show-key
+  tours:
+    - tour-key
+categories:
+  - category-name
+todos:
+  - todo-id
+---
+
+## Summary
+[Concise description of the thread's purpose and current state]
+
+## Open Items
+[Bulleted list of unresolved items with todo references]
+
+## Timeline
+[Chronological log of messages with dates, senders, and key content]
+```
+
+- `thread`: Exact Gmail subject line (without "Re: " prefix).
+- `thread_id`: Gmail thread ID for the originating message. Used for MCP lookups.
+- `status`: `"open"` while items remain unresolved, `"resolved"` when all items are handled.
+- `first`: ISO date of the first message in the thread.
+- `last`: ISO date of the most recent message. Updated when new messages arrive.
+- `participants`: Array of person-keys for people who sent messages in the thread. All must resolve to `people.json`.
+- `associations`: Typed references to org entities. Each key is an association type (defined in `bandlab.config.json` under `association_types`). Values are arrays of keys that must resolve to the corresponding registry or entity directory. Not all types need to be present - include only those relevant to the thread.
+- `categories`: Freeform array of category tags (e.g. `"insurance"`, `"travel"`, `"advancing"`). Not validated against a fixed list.
+- `todos`: Array of todo IDs that were created from or relate to this thread. All must resolve to `todos.json`. Bidirectional with todo `source` field (todo uses `"email:Thread Subject"`, email file lists the todo ID).
 
 ---
 

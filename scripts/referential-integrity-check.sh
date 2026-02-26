@@ -324,6 +324,94 @@ if [ "$prov_enabled" = "true" ]; then
   echo ""
 fi
 
+# ── Email Thread Associations ─────────────────────────────────────────
+
+email_glob="${REPO_ROOT}/$(cfg_default '.entities.email.glob' '')"
+# Only run if email entity is configured and files exist
+# shellcheck disable=SC2086
+if [ -n "$email_glob" ] && ls $email_glob &>/dev/null 2>&1; then
+  echo "=== Email Thread Associations ==="
+
+  TODOS="${REPO_ROOT}/$(cfg '.registries.todos.path')"
+
+  # shellcheck disable=SC2086
+  for email_file in $email_glob; do
+    slug="$(basename "$email_file" .md)"
+
+    # Extract YAML frontmatter (between --- markers)
+    frontmatter=$(sed -n '/^---$/,/^---$/p' "$email_file" | sed '1d;$d')
+
+    # Validate participants -> people.json
+    while read -r person; do
+      [ -z "$person" ] && continue
+      exists=$(jq -r --arg p "$person" 'has($p)' "$PEOPLE")
+      if [ "$exists" = "true" ]; then
+        pass "${slug}: participant ${person}"
+      else
+        fail "${slug}: participant ${person} NOT FOUND in people.json"
+      fi
+    done <<< "$(echo "$frontmatter" | sed -n '/^participants:/,/^[^ ]/p' | grep '^ *- ' | sed 's/^ *- //')"
+
+    # Validate typed associations using association_types from config
+    assoc_types=$(jq -r '.association_types // {} | keys[]' "$CONFIG" 2>/dev/null)
+    for atype in $assoc_types; do
+      # Extract association values for this type from frontmatter
+      # Use awk to properly handle YAML nesting: find "  <atype>:" then collect
+      # "    - value" lines until we hit a line with different/less indentation
+      values=$(echo "$frontmatter" | awk -v key="  ${atype}:" '
+        $0 == key { found=1; next }
+        found && /^    - / { sub(/^    - /, ""); print; next }
+        found { exit }
+      ')
+      [ -z "$values" ] && continue
+
+      # Determine where this type resolves
+      resolve_registry=$(jq -r --arg t "$atype" '.association_types[$t].registry // empty' "$CONFIG")
+      resolve_entity=$(jq -r --arg t "$atype" '.association_types[$t].entity // empty' "$CONFIG")
+
+      while read -r ref; do
+        [ -z "$ref" ] && continue
+
+        if [ -n "$resolve_registry" ]; then
+          reg_path="${REPO_ROOT}/$(cfg ".registries.${resolve_registry}.path")"
+          if [ -f "$reg_path" ]; then
+            exists=$(jq -r --arg v "$ref" 'has($v)' "$reg_path")
+            if [ "$exists" = "true" ]; then
+              pass "${slug}: ${atype} ${ref}"
+            else
+              fail "${slug}: ${atype} ${ref} NOT FOUND in $(basename "$reg_path")"
+            fi
+          else
+            warn "${slug}: registry file not found for ${atype}"
+          fi
+        elif [ -n "$resolve_entity" ]; then
+          entity_dir="${REPO_ROOT}/$(cfg ".entities.${resolve_entity}.dir")"
+          if [ -d "${entity_dir}/${ref}" ]; then
+            pass "${slug}: ${atype} ${ref}"
+          else
+            fail "${slug}: ${atype} ${ref} NOT FOUND in ${resolve_entity}"
+          fi
+        fi
+      done <<< "$values"
+    done
+
+    # Validate todos -> todos.json
+    todo_refs=$(echo "$frontmatter" | sed -n '/^todos:/,/^[^ ]/p' | grep '^ *- ' | sed 's/^ *- //')
+    if [ -n "$todo_refs" ] && [ -f "$TODOS" ]; then
+      while read -r tid; do
+        [ -z "$tid" ] && continue
+        exists=$(jq -r --arg id "$tid" '[.[] | select(.id == $id)] | length > 0' "$TODOS")
+        if [ "$exists" = "true" ]; then
+          pass "${slug}: todo ${tid}"
+        else
+          fail "${slug}: todo ${tid} NOT FOUND in todos.json"
+        fi
+      done <<< "$todo_refs"
+    fi
+  done
+  echo ""
+fi
+
 # ── Summary ───────────────────────────────────────────────────────────
 
 echo "=== Summary ==="
