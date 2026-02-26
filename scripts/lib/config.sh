@@ -49,16 +49,16 @@ warn() {
   checks=$((checks + 1))
 }
 
-# ── Show data loader ───────────────────────────────────────────────
-# Merge all day.json files into a keyed object, set SHOWS_DATA to the temp file path.
-# Call after load_config. Use "$SHOWS_DATA" wherever "$INDEX" was used before.
+# ── Date data loader ───────────────────────────────────────────────
+# Merge all date JSON files into a keyed object, set DATES_DATA to the temp file path.
+# Call after load_config. Use "$DATES_DATA" wherever "$INDEX" was used before.
 
 load_days() {
   local glob
-  glob="${REPO_ROOT}/$(cfg '.entities.shows.glob')"
-  SHOWS_DATA=$(mktemp)
+  glob="${REPO_ROOT}/$(cfg '.entities.dates.glob')"
+  DATES_DATA=$(mktemp)
   # shellcheck disable=SC2086
-  jq -n '[inputs | {(.day.id): .}] | add // {}' $glob > "$SHOWS_DATA"
+  jq -n '[inputs | {(.day.id): .}] | add // {}' $glob > "$DATES_DATA"
 }
 
 # Backward compat alias

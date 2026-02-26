@@ -3,8 +3,8 @@ Scan the `intake/` directory and process every file found there.
 ## Config discovery
 
 Read `bandlab.config.json` to discover paths. Key references:
-- Shows glob: `.entities.shows.glob`
-- Shows directory: `.entities.shows.dir`
+- Dates glob: `.entities.dates.glob`
+- Dates directory: `.entities.dates.dir`
 - People registry: `.registries.people.path`
 - Venues registry: `.registries.venues.path`
 - Todos registry: `.registries.todos.path`
@@ -28,7 +28,7 @@ Read the file (PDFs, CSVs, text files) and classify it:
 ### 2. Process by type
 
 #### Contract PDF
-1. Match to an existing show by date/venue/city (merge day.json files via `entities.shows.glob`)
+1. Match to an existing show by date/venue/city (merge date JSON files via `entities.dates.glob`)
 2. If no match found, ask the user which show this belongs to (or whether to create a new one)
 3. Copy the PDF to the show's sources directory at `org/touring/sources/<date-id>/` (date-id uses `MM-DD-YY-suffix` format, e.g. `03-05-26-atlanta`)
 4. Extract key terms into `sources/<date-id>/summary.md` with `status: pending-review`

@@ -9,7 +9,7 @@ source "${SCRIPT_DIR}/lib/config.sh" && load_config
 CLAUDE_MD="${REPO_ROOT}/$(cfg '.documentation.claude_md')"
 SKILLS_DIR="${REPO_ROOT}/$(cfg '.documentation.skills_dir')"
 SCRIPTS_DIR="${REPO_ROOT}/$(cfg '.documentation.scripts_dir')"
-SHOWS_DIR="${REPO_ROOT}/$(cfg '.entities.shows.dir')"
+DATES_DIR="${REPO_ROOT}/$(cfg '.entities.dates.dir')"
 OPS_DIR="${REPO_ROOT}/$(cfg '.documentation.ops_dir')"
 
 errors=0
@@ -142,11 +142,11 @@ echo ""
 
 echo "=== Schema vs Reality ==="
 
-# Get the union of all fields across all day.json files
-actual_fields=$(find "$SHOWS_DIR" -name 'day.json' -exec jq -r 'keys[]' {} + | sort -u)
+# Get the union of all fields across all date JSON files
+actual_fields=$(jq -r 'keys[]' "${DATES_DIR}"/*.json | sort -u)
 
 # Read schema fields from config
-schema_fields=$(cfg '.entities.shows.schema_fields | .[]')
+schema_fields=$(cfg '.entities.dates.schema_fields | .[]')
 
 for field in $actual_fields; do
   found=false

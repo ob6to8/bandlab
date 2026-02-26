@@ -6,7 +6,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck source=lib/config.sh
 source "${SCRIPT_DIR}/lib/config.sh" && load_config
-load_shows
+load_days
 
 TODOS="${REPO_ROOT}/$(cfg '.registries.todos.path')"
 TODAY=$(date +%Y-%m-%d)
@@ -56,7 +56,7 @@ print_advances() {
     local display_id="${show_id#"$STRIP_PREFIX"}"
     # Check advance is present AND an object (many shows have "advance": null)
     local advance_type
-    advance_type=$(jq -r --arg id "$show_id" '.[$id].advance | type' "$SHOWS_DATA")
+    advance_type=$(jq -r --arg id "$show_id" '.[$id].advance | type' "$DATES_DATA")
 
     if [ "$advance_type" != "object" ]; then
       # No real advance block = not started
@@ -72,13 +72,13 @@ print_advances() {
       .[$id].advance | to_entries
       | map(select(.value.status? == "needs_response"))
       | map(.key) | join(", ")
-    ' "$SHOWS_DATA")
+    ' "$DATES_DATA")
 
     needs_ask=$(jq -r --arg id "$show_id" '
       .[$id].advance | to_entries
       | map(select(.value.status? == "need_to_ask"))
       | map(.key) | join(", ")
-    ' "$SHOWS_DATA")
+    ' "$DATES_DATA")
 
     if [ -n "$needs_response" ]; then
       lines+=("$(printf "  %-24s %-20s %s" "$display_id" "need to respond" "$needs_response")")
@@ -89,7 +89,7 @@ print_advances() {
   done < <(jq -r '
     to_entries | sort_by(.value.day.date) | .[]
     | [.key, .value.day.date, .value.day.status] | @tsv
-  ' "$SHOWS_DATA")
+  ' "$DATES_DATA")
 
   if [ "$FILTER" = "all" ]; then
     section_header "ADVANCES" "${#lines[@]}"
@@ -124,7 +124,7 @@ print_hotels() {
     to_entries | sort_by(.value.day.date) | .[]
     | select(.value.travel != null and .value.travel.lodging != null)
     | [.key, .value.day.date, .value.travel.lodging.status, (.value.travel.lodging.name // "")] | @tsv
-  ' "$SHOWS_DATA")
+  ' "$DATES_DATA")
 
   if [ "$FILTER" = "all" ]; then
     section_header "HOTELS" "${#lines[@]}"
@@ -158,7 +158,7 @@ print_flights() {
     | .key as $id | .value.day.date as $date
     | .value.travel.flights[]
     | [$id, $date, .status, (.passenger // ""), (.direction // "")] | @tsv
-  ' "$SHOWS_DATA")
+  ' "$DATES_DATA")
 
   if [ "$FILTER" = "all" ]; then
     section_header "FLIGHTS" "${#lines[@]}"

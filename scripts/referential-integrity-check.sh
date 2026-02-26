@@ -6,7 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck source=lib/config.sh
 source "${SCRIPT_DIR}/lib/config.sh" && load_config
 
-SHOWS_DIR="${REPO_ROOT}/$(cfg '.entities.shows.dir')"
+DATES_DIR="${REPO_ROOT}/$(cfg '.entities.dates.dir')"
 PEOPLE="${REPO_ROOT}/$(cfg '.registries.people.path')"
 VENUES="${REPO_ROOT}/$(cfg '.registries.venues.path')"
 CALENDAR_REL=$(cfg_default '.calendar.path' '')
@@ -20,7 +20,7 @@ checks=0
 
 echo "=== Required Files ==="
 
-load_shows
+load_days
 
 for f in "$PEOPLE" "$VENUES"; do
   if [ -f "$f" ]; then
@@ -31,25 +31,21 @@ for f in "$PEOPLE" "$VENUES"; do
 done
 echo ""
 
-# ── Show directories ↔ Data ──────────────────────────────────────────
+# ── Date files ↔ Data ────────────────────────────────────────────────
 
-echo "=== Show Directories ↔ Data ==="
+echo "=== Date Files ↔ Data ==="
 
-# Every show dir should have day.json and its day.id should be in the loaded data
-for show_dir in "${SHOWS_DIR}"/s-*/; do
-  dir_name="$(basename "$show_dir")"
+# Every date JSON file's day.id should be in the loaded data
+for date_file in "${DATES_DIR}"/*.json; do
+  [ -f "$date_file" ] || continue
+  file_name="$(basename "$date_file")"
 
-  if [ ! -f "${show_dir}/day.json" ]; then
-    fail "${dir_name}: missing day.json"
-    continue
-  fi
-
-  show_id=$(jq -r '.day.id' "${show_dir}/day.json")
-  in_data=$(jq -r --arg id "$show_id" 'has($id)' "$SHOWS_DATA")
+  show_id=$(jq -r '.day.id' "$date_file")
+  in_data=$(jq -r --arg id "$show_id" 'has($id)' "$DATES_DATA")
   if [ "$in_data" = "true" ]; then
-    pass "${show_id}: dir + day.json + loaded"
+    pass "${show_id}: ${file_name} loaded"
   else
-    fail "${show_id}: has day.json but NOT loaded"
+    fail "${show_id}: ${file_name} NOT loaded"
   fi
 done
 echo ""
@@ -81,9 +77,9 @@ while IFS=$'\t' read -r ref_field ref_registry ref_nullable ref_null_severity; d
     else
       fail "${show_id} → ${value} NOT FOUND in $(basename "$registry_path")"
     fi
-  done < <(jq -r "to_entries[] | [.key, .value.${ref_field}] | @tsv" "$SHOWS_DATA")
+  done < <(jq -r "to_entries[] | [.key, .value.${ref_field}] | @tsv" "$DATES_DATA")
   echo ""
-done < <(jq -r '.entities.shows.references | to_entries[] | [.key, .value.registry, (.value.nullable // false | tostring), (.value.null_severity // "skip")] | @tsv' "$CONFIG")
+done < <(jq -r '.entities.dates.references | to_entries[] | [.key, .value.registry, (.value.nullable // false | tostring), (.value.null_severity // "skip")] | @tsv' "$CONFIG")
 
 # ── Venue contact references ─────────────────────────────────────────
 
@@ -128,7 +124,7 @@ if [ -n "$CALENDAR_REL" ] && [ -d "$CALENDAR" ]; then
     else
       fail "${show_id} (${date}): calendar file exists but does NOT reference show"
     fi
-  done < <(jq -r 'to_entries[] | [.key, .value.day.date] | @tsv' "$SHOWS_DATA")
+  done < <(jq -r 'to_entries[] | [.key, .value.day.date] | @tsv' "$DATES_DATA")
   echo ""
 fi
 
@@ -278,7 +274,7 @@ if [ "$prov_enabled" = "true" ]; then
   shows_with_prov=0
   shows_without_prov=0
   while read -r show_id; do
-    has_prov=$(jq -r --arg id "$show_id" --arg f "$prov_field" '.[$id] | has($f)' "$SHOWS_DATA")
+    has_prov=$(jq -r --arg id "$show_id" --arg f "$prov_field" '.[$id] | has($f)' "$DATES_DATA")
     if [ "$has_prov" = "true" ]; then
       shows_with_prov=$((shows_with_prov + 1))
 
@@ -307,12 +303,12 @@ if [ "$prov_enabled" = "true" ]; then
         else
           fail "${show_id}: provenance file not found: ${prov_key}"
         fi
-      done < <(jq -r --arg id "$show_id" --arg f "$prov_field" '.[$id][$f] | keys[]' "$SHOWS_DATA")
+      done < <(jq -r --arg id "$show_id" --arg f "$prov_field" '.[$id][$f] | keys[]' "$DATES_DATA")
     else
       shows_without_prov=$((shows_without_prov + 1))
       warn "${show_id}: missing ${prov_field}"
     fi
-  done < <(jq -r 'keys[]' "$SHOWS_DATA")
+  done < <(jq -r 'keys[]' "$DATES_DATA")
 
   total_shows=$((shows_with_prov + shows_without_prov))
   if [ "$total_shows" -gt 0 ]; then
@@ -384,9 +380,9 @@ if [ -n "$email_glob" ] && ls $email_glob &>/dev/null 2>&1; then
             warn "${slug}: registry file not found for ${atype}"
           fi
         elif [ -n "$resolve_entity" ]; then
-          # For shows, check against loaded data keys (day.id) since IDs may differ from dir names
-          if [ "$resolve_entity" = "shows" ] && [ -f "$SHOWS_DATA" ]; then
-            exists=$(jq -r --arg v "$ref" 'has($v)' "$SHOWS_DATA")
+          # For dates, check against loaded data keys (day.id)
+          if [ "$resolve_entity" = "dates" ] && [ -f "$DATES_DATA" ]; then
+            exists=$(jq -r --arg v "$ref" 'has($v)' "$DATES_DATA")
             if [ "$exists" = "true" ]; then
               pass "${slug}: ${atype} ${ref}"
             else

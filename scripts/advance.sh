@@ -8,25 +8,25 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "${SCRIPT_DIR}/lib/config.sh" && load_config
 
 PEOPLE="${REPO_ROOT}/$(cfg '.registries.people.path')"
-SHOWS_DIR="${REPO_ROOT}/$(cfg '.entities.shows.dir')"
+DATES_DIR="${REPO_ROOT}/$(cfg '.entities.dates.dir')"
 CONTACT_ROLE=$(cfg '.advancing.contact_role')
 ORG_PREFIX=$(cfg '.advancing.contact_org_prefix')
 PRIORITY_FIELD=$(cfg '.advancing.priority_field')
 
-load_shows
+load_days
 
 # ── Resolve show from partial ID ──────────────────────────────────
 resolve_show() {
   local partial="$1"
   jq -r --arg p "$partial" '
     to_entries | map(select(.key | contains($p))) | .[0].key // empty
-  ' "$SHOWS_DATA"
+  ' "$DATES_DATA"
 }
 
 # ── Show summary: advance <show> ─────────────────────────────────
 show_summary() {
   local match="$1"
-  local show_file="${SHOWS_DIR}/${match}/day.json"
+  local show_file="${DATES_DIR}/${match}.json"
   local venue date
   venue=$(jq -r '.venue.id' "$show_file")
   date=$(jq -r '.day.date' "$show_file")
@@ -71,7 +71,7 @@ show_summary() {
 show_question() {
   local match="$1"
   local question="$2"
-  local show_file="${SHOWS_DIR}/${match}/day.json"
+  local show_file="${DATES_DIR}/${match}.json"
   local venue date
   venue=$(jq -r '.venue.id' "$show_file")
   date=$(jq -r '.day.date' "$show_file")
@@ -113,7 +113,7 @@ show_priority() {
   printf "  %-7s %-24s %-20s %-16s %s\n" "----" "-----" "--------" "------" "-----------"
 
   while IFS=$'\t' read -r show_id date venue; do
-    local show_file="${SHOWS_DIR}/${show_id}/day.json"
+    local show_file="${DATES_DIR}/${show_id}.json"
     local short_date="${date:5}"
 
     jq -r --arg venue "$venue" --arg date "$short_date" '
@@ -123,7 +123,7 @@ show_priority() {
     ' "$show_file" 2>/dev/null | while IFS=$'\t' read -r d v question status last_action; do
       printf "  %-7s %-24s %-20s %-16s %s\n" "$d" "$v" "$question" "$status" "$last_action"
     done
-  done < <(jq -r 'to_entries | sort_by(.value.day.date) | .[] | [.key, .value.day.date, .value.venue.id] | @tsv' "$SHOWS_DATA")
+  done < <(jq -r 'to_entries | sort_by(.value.day.date) | .[] | [.key, .value.day.date, .value.venue.id] | @tsv' "$DATES_DATA")
 
   echo ""
 }
@@ -175,7 +175,7 @@ while IFS=$'\t' read -r show_id date venue; do
         (.advance | [to_entries[] | select(.value.status == "need_to_ask")] | length) as $nta |
         "\($total) \($conf) \($asked) \($nr) \($nta)"
       end
-    ' "${SHOWS_DIR}/${show_id}/day.json"
+    ' "${DATES_DIR}/${show_id}.json"
   )
 
   if [ "$total" -eq 0 ]; then
@@ -222,7 +222,7 @@ while IFS=$'\t' read -r show_id date venue; do
     in_progress="${in_progress}${short_date}\t${venue}\t${num_confirmed}/${total}\t${parts}\n"
     progress_count=$((progress_count + 1))
   fi
-done < <(jq -r 'to_entries | sort_by(.value.day.date) | .[] | [.key, .value.day.date, .value.venue.id] | @tsv' "$SHOWS_DATA")
+done < <(jq -r 'to_entries | sort_by(.value.day.date) | .[] | [.key, .value.day.date, .value.venue.id] | @tsv' "$DATES_DATA")
 
 if [ "$needs_count" -gt 0 ]; then
   echo "=== NEEDS OUTREACH (${needs_count}) ==="

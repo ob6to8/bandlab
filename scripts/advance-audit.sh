@@ -8,11 +8,11 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck source=lib/config.sh
 source "${SCRIPT_DIR}/lib/config.sh" && load_config
 
-SHOWS_DIR="${REPO_ROOT}/$(cfg '.entities.shows.dir')"
+DATES_DIR="${REPO_ROOT}/$(cfg '.entities.dates.dir')"
 CLUB_QUESTIONS="${REPO_ROOT}/$(cfg '.advancing.email_questions_club_path')"
 FESTIVAL_QUESTIONS="${REPO_ROOT}/$(cfg '.advancing.email_questions_festival_path')"
 
-load_shows
+load_days
 
 WINDOW_DAYS="${1:-14}"
 
@@ -41,7 +41,7 @@ echo ""
 echo "--- State vs Field Consistency ---"
 
 while IFS=$'\t' read -r show_id _date _venue; do
-  show_file="${SHOWS_DIR}/${show_id}/day.json"
+  show_file="${DATES_DIR}/${show_id}.json"
 
   has_advance=$(jq -r 'if .advance and (.advance | length) > 0 then "yes" else "no" end' "$show_file")
   if [ "$has_advance" = "no" ]; then
@@ -96,7 +96,7 @@ while IFS=$'\t' read -r show_id _date _venue; do
   fi
 
   mismatch_count=$((mismatch_count + total_mismatches))
-done < <(jq -r 'to_entries | sort_by(.value.day.date) | .[] | [.key, .value.day.date, .value.venue.id] | @tsv' "$SHOWS_DATA")
+done < <(jq -r 'to_entries | sort_by(.value.day.date) | .[] | [.key, .value.day.date, .value.venue.id] | @tsv' "$DATES_DATA")
 
 echo ""
 
@@ -117,7 +117,7 @@ while IFS=$'\t' read -r show_id show_date _venue_id; do
   # Format date for display (Mon DD)
   display_date=$(date -j -f "%Y-%m-%d" "$show_date" "+%b %-d" 2>/dev/null || echo "$show_date")
 
-  show_file="${SHOWS_DIR}/${show_id}/day.json"
+  show_file="${DATES_DIR}/${show_id}.json"
   has_advance=$(jq -r 'if .advance and (.advance | length) > 0 then "yes" else "no" end' "$show_file")
 
   if [ "$has_advance" = "no" ]; then
@@ -156,7 +156,7 @@ while IFS=$'\t' read -r show_id show_date _venue_id; do
   ' "$show_file"
 
   echo ""
-done < <(jq -r 'to_entries | sort_by(.value.day.date) | .[] | [.key, .value.day.date, .value.venue.id] | @tsv' "$SHOWS_DATA")
+done < <(jq -r 'to_entries | sort_by(.value.day.date) | .[] | [.key, .value.day.date, .value.venue.id] | @tsv' "$DATES_DATA")
 
 if [ "$found_upcoming" -eq 0 ]; then
   echo "  No shows in the next ${WINDOW_DAYS} days."

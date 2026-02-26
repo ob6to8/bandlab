@@ -1,24 +1,24 @@
 #!/usr/bin/env bash
-# desc: Display details for a specific show
-# usage: show.sh <show-id-or-partial> [namespace] [field]
+# desc: Display details for a specific date
+# usage: date.sh <show-id-or-partial> [namespace] [field]
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "${SCRIPT_DIR}/lib/config.sh" && load_config
-load_shows
+load_days
 
 VENUES="${REPO_ROOT}/$(cfg '.registries.venues.path')"
-SHOWS_DIR="${REPO_ROOT}/$(cfg '.entities.shows.dir')"
+DATES_DIR="${REPO_ROOT}/$(cfg '.entities.dates.dir')"
 
 if [ $# -lt 1 ]; then
-  echo "Usage: show.sh <show-id-or-partial>" >&2
+  echo "Usage: date.sh <show-id-or-partial>" >&2
   exit 1
 fi
 
 query="$1"
 filter_ns="${2:-}"
 filter_field="${3:-}"
-show_id=$(jq -r "keys[] | select(contains(\"${query}\"))" "$SHOWS_DATA" | head -1)
+show_id=$(jq -r "keys[] | select(contains(\"${query}\"))" "$DATES_DATA" | head -1)
 
 if [ -z "$show_id" ]; then
   echo "No show found matching: ${query}" >&2
@@ -77,7 +77,7 @@ kv()  { local v="$2"; if [ -z "$v" ]; then v="--"; fi; printf "  %-18s%s\n" "$1"
 n() { local v="$1"; if [ "$v" = "null" ] || [ -z "$v" ]; then echo ""; else echo "$v"; fi; }
 
 # ── Extract show data ──────────────────────────────────────────────
-show_json=$(jq --arg id "$show_id" '.[$id]' "$SHOWS_DATA")
+show_json=$(jq --arg id "$show_id" '.[$id]' "$DATES_DATA")
 get()  { n "$(echo "$show_json" | jq -r "$1")"; }
 getr() { echo "$show_json" | jq -r "$1"; }
 
@@ -592,22 +592,21 @@ fi
 if show_section "files"; then
 echo ""
 echo "=== Files ==="
-show_dir="${SHOWS_DIR}/${show_id}"
+SOURCES_DIR="${REPO_ROOT}/$(cfg '.entities.sources.dir')"
+src_dir="${SOURCES_DIR}/${show_id}"
 
-# Read file checklist from config
-while IFS= read -r f; do
-  if [ -f "${show_dir}/${f}" ]; then
-    echo "  [x] ${f}"
-  else
-    echo "  [ ] ${f}"
-  fi
-done < <(cfg '.entities.shows.file_checklist[]')
+# Date file
+if [ -f "${DATES_DIR}/${show_id}.json" ]; then
+  echo "  [x] ${show_id}.json"
+else
+  echo "  [ ] ${show_id}.json"
+fi
 
 # Source documents
-if [ -d "${show_dir}/source" ]; then
-  source_count=$(find "${show_dir}/source" -type f 2>/dev/null | wc -l | tr -d ' ')
-  echo "  [x] source/ (${source_count} files)"
+if [ -d "$src_dir" ]; then
+  source_count=$(find "$src_dir" -type f 2>/dev/null | wc -l | tr -d ' ')
+  echo "  [x] sources/${show_id}/ (${source_count} files)"
 else
-  echo "  [ ] source/"
+  echo "  [ ] sources/${show_id}/"
 fi
 fi # end files section

@@ -6,7 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck source=lib/config.sh
 source "${SCRIPT_DIR}/lib/config.sh" && load_config
 
-SHOWS_DIR="${REPO_ROOT}/$(cfg '.entities.shows.dir')"
+DATES_DIR="${REPO_ROOT}/$(cfg '.entities.dates.dir')"
 
 errors=0
 warnings=0
@@ -42,13 +42,13 @@ source_base="${REPO_ROOT}/$(cfg '.provenance.source_base_dir')"
 
 echo "=== Show Provenance Blocks ==="
 
-for show_dir in "${SHOWS_DIR}"/s-*/; do
-  [ -f "${show_dir}/day.json" ] || continue
-  show_id="$(basename "$show_dir")"
+for date_file in "${DATES_DIR}"/*.json; do
+  [ -f "$date_file" ] || continue
+  show_id="$(basename "$date_file" .json)"
   shows_total=$((shows_total + 1))
 
   # Check provenance block exists
-  has_prov=$(jq --arg f "$prov_field" 'has($f)' "${show_dir}/day.json")
+  has_prov=$(jq --arg f "$prov_field" 'has($f)' "$date_file")
   if [ "$has_prov" != "true" ]; then
     fail "${show_id}: missing ${prov_field} block"
     continue
@@ -56,7 +56,7 @@ for show_dir in "${SHOWS_DIR}"/s-*/; do
   shows_with_provenance=$((shows_with_provenance + 1))
 
   # Collect all provenance-covered fields across all sources
-  all_covered=$(jq -r --arg f "$prov_field" '.[$f] | [.[].fields[]] | unique | .[]' "${show_dir}/day.json")
+  all_covered=$(jq -r --arg f "$prov_field" '.[$f] | [.[].fields[]] | unique | .[]' "$date_file")
 
   # Check non-null data fields for coverage
   while read -r field; do
@@ -85,10 +85,10 @@ for show_dir in "${SHOWS_DIR}"/s-*/; do
         select(.value | has_content) | .key
       end
     )
-  ' "${show_dir}/day.json")
+  ' "$date_file")
 
   # Check for manual provenance entries
-  manual_count=$(jq -r --arg f "$prov_field" '.[$f] | keys[] | select(startswith("manual:"))' "${show_dir}/day.json" 2>/dev/null | wc -l | tr -d ' ')
+  manual_count=$(jq -r --arg f "$prov_field" '.[$f] | keys[] | select(startswith("manual:"))' "$date_file" 2>/dev/null | wc -l | tr -d ' ')
   if [ "$manual_count" -gt 0 ]; then
     manual_fields=$((manual_fields + manual_count))
   fi
@@ -120,10 +120,10 @@ for show_dir in "${SHOWS_DIR}"/s-*/; do
     else
       fail "${show_id}: provenance source file missing: ${source_key}"
     fi
-  done < <(jq -r --arg f "$prov_field" '.[$f] | keys[]' "${show_dir}/day.json")
+  done < <(jq -r --arg f "$prov_field" '.[$f] | keys[]' "$date_file")
 
   # Count human-verified fields
-  show_verified=$(jq '._verified // {} | length' "${show_dir}/day.json")
+  show_verified=$(jq '._verified // {} | length' "$date_file")
   if [ "$show_verified" -gt 0 ]; then
     shows_with_verified=$((shows_with_verified + 1))
     verified_fields=$((verified_fields + show_verified))

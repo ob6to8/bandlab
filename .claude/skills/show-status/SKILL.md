@@ -2,13 +2,13 @@ Show advancing status and outstanding info for a single show.
 
 ## Input
 
-`$ARGUMENTS` is a city name or show ID (e.g. `atlanta`, `s-2026-0305-atlanta`).
+`$ARGUMENTS` is a city name or show ID (e.g. `atlanta`, `03-05-26-atlanta`).
 
 ## Steps
 
 1. **Resolve the show** from `$ARGUMENTS`. Match against show IDs (partial match on city name).
 
-2. **Read day.json** for the show.
+2. **Read the date JSON file** for the show (from `entities.dates.dir`).
 
 3. **Read advancing questions** from `advancing-email-questions-club.json` (path from `bandlab.config.json`).
 

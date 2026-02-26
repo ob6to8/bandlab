@@ -7,8 +7,8 @@ Unified data browser and viewer. No query = list all, with query = show detail.
 ## Config discovery
 
 Read `bandlab.config.json` to discover entity paths and registries. Key references:
-- Shows glob: `.entities.shows.glob`
-- Shows directory: `.entities.shows.dir`
+- Dates glob: `.entities.dates.glob`
+- Dates directory: `.entities.dates.dir`
 - Tours: `.entities.tours.dir`
 - Runs: `.entities.runs.dir`
 - One-offs: `.entities.one_offs.dir`
@@ -18,9 +18,9 @@ Read `bandlab.config.json` to discover entity paths and registries. Key referenc
 
 ## Supported entities
 
-### shows
-- `/list shows` — table of all shows (date, city, venue, status, guarantee)
-- `/list shows atlanta` — detailed view of matching show(s) (all day.json fields formatted)
+### dates
+- `/list dates` — table of all dates (date, city, venue, status, guarantee)
+- `/list dates atlanta` — detailed view of matching date(s) (all fields formatted)
 
 ### tours
 - `/list tours` — list tours with their runs and date ranges
@@ -46,7 +46,7 @@ Read `bandlab.config.json` to discover entity paths and registries. Key referenc
 1. Parse `$ARGUMENTS` to determine the entity type and optional query
 2. If no arguments, show the list of supported subcommands above and exit
 3. Read `bandlab.config.json` and resolve the path for the requested entity type:
-   - **shows**: merge all day.json files via `entities.shows.glob`
+   - **dates**: merge all date JSON files via `entities.dates.glob`
    - **tours**: read `entities.tours.dir/*/tour.json`
    - **runs**: read `entities.runs.dir/*/run.json` and `entities.one_offs.dir/*/one-off.json`
    - **venues**: read `registries.venues.path`
@@ -60,7 +60,7 @@ Read `bandlab.config.json` to discover entity paths and registries. Key referenc
 
 ## Important
 
-- For show detail, read the individual `day.json` from the show directory (not the index) to get the freshest data
+- For date detail, read the individual JSON file from the dates directory to get the freshest data
 - For todo list, always use `del(.history)` equivalent — only show history in detail view
-- Match queries flexibly: `/list shows atlanta` should match `s-2026-0305-atlanta` by substring
+- Match queries flexibly: `/list dates atlanta` should match `03-05-26-atlanta` by substring
 - If no match found, say so clearly

@@ -12,31 +12,26 @@ if [ "$(cfg '.advancing // empty')" = "" ]; then
 fi
 
 PEOPLE="${REPO_ROOT}/$(cfg '.registries.people.path')"
-SHOWS_DIR="${REPO_ROOT}/$(cfg '.entities.shows.dir')"
-THREAD_FILE=$(cfg '.advancing.thread_file')
-CONFIRMED_FILE=$(cfg '.advancing.confirmed_file')
 CONTACT_ROLE=$(cfg '.advancing.contact_role')
 ORG_PREFIX=$(cfg '.advancing.contact_org_prefix')
 PRIORITY_FIELD=$(cfg '.advancing.priority_field')
 
-load_shows
+load_days
 
 printf "%-12s %-30s %-10s %-30s %s\n" "DATE" "VENUE" "ADVANCING" "TOP CONTACT" "EMAIL"
 printf "%-12s %-30s %-10s %-30s %s\n" "----" "-----" "---------" "-----------" "-----"
 
-jq -r 'to_entries | sort_by(.value.day.date) | .[] | [.key, .value.day.date, .value.venue.id] | @tsv' "$SHOWS_DATA" |
+jq -r 'to_entries | sort_by(.value.day.date) | .[] | [.key, .value.day.date, .value.venue.id] | @tsv' "$DATES_DATA" |
 while IFS=$'\t' read -r show_id date venue; do
 
-  # Check advancing status
-  thread="${SHOWS_DIR}/${show_id}/${THREAD_FILE}"
-  confirmed="${SHOWS_DIR}/${show_id}/${CONFIRMED_FILE}"
-  if [ -f "$confirmed" ]; then
-    adv_status="CONFIRMED"
-  elif [ -f "$thread" ]; then
-    adv_status="STARTED"
-  else
-    adv_status="NOT YET"
-  fi
+  # Check advancing status via advance object
+  adv_status=$(jq -r --arg id "$show_id" '
+    .[$id] |
+    if .advance == null or (.advance | length) == 0 then "NOT YET"
+    elif (.advance | to_entries | all(.value.status == "confirmed")) then "CONFIRMED"
+    else "STARTED"
+    end
+  ' "$DATES_DATA")
 
   # Get top-priority contact for this venue
   top_contact=$(jq -r --arg venue "$venue" --arg role "$CONTACT_ROLE" --arg prefix "$ORG_PREFIX" --arg pfield "$PRIORITY_FIELD" '
@@ -60,8 +55,6 @@ while IFS=$'\t' read -r show_id date venue; do
 done
 
 echo ""
-not_started=$(jq -r 'keys[]' "$SHOWS_DATA" | while read -r sid; do
-  [ ! -f "${SHOWS_DIR}/${sid}/${THREAD_FILE}" ] && echo "$sid"
-done | wc -l | tr -d ' ')
-total=$(jq 'length' "$SHOWS_DATA")
+not_started=$(jq -r '[to_entries[] | select(.value.advance == null or (.value.advance | length) == 0)] | length' "$DATES_DATA")
+total=$(jq 'length' "$DATES_DATA")
 echo "Advancing: ${not_started}/${total} shows not yet started"

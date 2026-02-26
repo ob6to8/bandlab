@@ -4,7 +4,7 @@ Patterns established across the codebase. Follow these when adding new data.
 
 ## Key Naming
 
-**Show IDs:** `MM-DD-YY-city` — lowercase, hyphenated city name. Directory names still use the legacy `s-YYYY-MMDD-city` format until the directory migration (plan 2c).
+**Show IDs:** `MM-DD-YY-city` — lowercase, hyphenated city name. Date files live at `org/touring/dates/MM-DD-YY-city.json` (flat files, no subdirectories).
 - `03-04-26-charleston`, `06-14-26-morrison`
 - Two shows in the same city get different dates, so no suffix needed.
 - Two shows at the same venue on different dates (e.g., a venue hosts multiple festivals) are distinguished by date.
@@ -24,12 +24,10 @@ A todo that accumulates artifacts (emails, documents, confirmations) becomes a f
 
 **Directories are workflow cycles, not file-type buckets.** Don't group by type (all contracts in one folder, all tech packs in another). Group by the work being done — the show directory contains everything about that show, organized by workflow.
 
-Within a show directory:
-- **Single-asset items** are files: `tech-pack.md`, `show.json`
-- **Multi-asset workflows** are directories: `source/` (primary source documents — contracts, email exports, etc. + summary), `advancing/` (thread log + confirmed details), `settlement/` (settlement sheet + receipts)
+Date files are flat JSON files in `org/touring/dates/`. Source documents and other show-specific assets live in `org/touring/sources/<date-id>/`.
 
 **Scoped todos live in their scope's directory:**
-- **Show-level**: `touring/shows/s-YYYY-MMDD-city/` — show-specific workflows and assets
+- **Show-level**: `touring/sources/<date-id>/` — show-specific source documents
 - **Run-level**: `touring/runs/run-key/` — todos spanning a week of consecutive shows (e.g. vehicle rental, lodging block)
 - **Tour-level**: `touring/tours/tour-key/` — todos spanning the full tour (e.g. crew travel arrangements, tour budgeting)
 - **Domain-level**: the relevant domain directory (`merch/`, `socials/`, `releases/`, etc.)
@@ -71,11 +69,11 @@ If it's just status tracking with no accumulated content, it stays in `todos.jso
 
 Every data record tracks where it came from via a `sources` array.
 
-**Where source files live:** Each show directory has a `source/` subdirectory holding primary source documents — contract PDFs, email exports, and any other original artifacts. Derived files (thread summaries, confirmed details) stay in their workflow directories (`advancing/`, `settlement/`).
+**Where source files live:** Source documents live in `org/touring/sources/<date-id>/` - contract PDFs, email exports, and any other original artifacts.
 
 **The `sources` field** on `people.json` and `venues.json` entries is an array of provenance references:
 
-- **File paths** (relative to `org/`): `"touring/shows/s-2026-0304-charleston/source/DIRTWIRE_CharlestonPourHouse_DealMemo.pdf"`
+- **File paths** (relative to `org/`): `"touring/sources/03-04-26-charleston/DIRTWIRE_CharlestonPourHouse_DealMemo.pdf"`
 - **URLs**: `"https://sites.google.com/..."` — external web resources (advance packets, online tech packs)
 - **Special values**: `"manual"` (entered by hand), `"legacy"` (pre-provenance data), `"legacy:routing-csv"` (from routing spreadsheet import), `"legacy:contracts"` (from contract extraction, cross-venue)
 

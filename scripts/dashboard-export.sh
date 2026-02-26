@@ -5,7 +5,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 source "${SCRIPT_DIR}/lib/config.sh" && load_config
 
-SHOWS_DIR="${REPO_ROOT}/$(cfg '.entities.shows.dir')"
+DATES_DIR="${REPO_ROOT}/$(cfg '.entities.dates.dir')"
 RUNS_DIR="${REPO_ROOT}/$(cfg '.entities.runs.dir')"
 PEOPLE="${REPO_ROOT}/$(cfg '.registries.people.path')"
 VENUES="${REPO_ROOT}/$(cfg '.registries.venues.path')"
@@ -20,7 +20,7 @@ for f in "$PEOPLE" "$VENUES" "$TODOS"; do
   fi
 done
 
-load_shows
+load_days
 
 echo "Building dashboard data..."
 
@@ -40,44 +40,46 @@ done
 adv_status="{}"
 file_status="{}"
 
+SOURCES_DIR="${REPO_ROOT}/$(cfg '.entities.sources.dir')"
+
 while IFS= read -r show_id; do
-  dir="${SHOWS_DIR}/${show_id}"
-  has_thread=false
-  has_confirmed=false
+  src_dir="${SOURCES_DIR}/${show_id}"
   has_contract_pdf=false
   has_contract_summary=false
-  has_tech_pack=false
 
-  [ -f "${dir}/advancing/thread.md" ] && has_thread=true
-  [ -f "${dir}/advancing/confirmed.md" ] && has_confirmed=true
-  [ -f "${dir}/tech-pack.md" ] && has_tech_pack=true
-  [ -f "${dir}/source/summary.md" ] && has_contract_summary=true
-
-  # Check for any PDF in source/
-  if compgen -G "${dir}/source/"*.pdf > /dev/null 2>&1; then
+  [ -f "${src_dir}/summary.md" ] && has_contract_summary=true
+  if compgen -G "${src_dir}/"*.pdf > /dev/null 2>&1; then
     has_contract_pdf=true
   fi
 
+  # Advancing status from advance object in day.json
+  has_advance=$(jq -r --arg id "$show_id" '
+    .[$id] | if .advance and (.advance | length) > 0 then "true" else "false" end
+  ' "$DATES_DATA")
+  all_confirmed=$(jq -r --arg id "$show_id" '
+    .[$id] | if .advance and (.advance | length) > 0 and (.advance | to_entries | all(.value.status == "confirmed")) then "true" else "false" end
+  ' "$DATES_DATA")
+
   adv_status=$(echo "$adv_status" | jq \
     --arg id "$show_id" \
-    --argjson thread "$has_thread" \
-    --argjson confirmed "$has_confirmed" \
+    --argjson thread "$has_advance" \
+    --argjson confirmed "$all_confirmed" \
     '. + {($id): {"has_thread": $thread, "has_confirmed": $confirmed}}')
 
   file_status=$(echo "$file_status" | jq \
     --arg id "$show_id" \
-    --argjson thread "$has_thread" \
-    --argjson confirmed "$has_confirmed" \
+    --argjson thread "$has_advance" \
+    --argjson confirmed "$all_confirmed" \
     --argjson cpdf "$has_contract_pdf" \
     --argjson csum "$has_contract_summary" \
-    --argjson tech "$has_tech_pack" \
+    --argjson tech false \
     '. + {($id): {"thread_md": $thread, "confirmed_md": $confirmed, "contract_pdf": $cpdf, "contract_summary": $csum, "tech_pack": $tech}}')
-done < <(jq -r 'keys[]' "$SHOWS_DATA")
+done < <(jq -r 'keys[]' "$DATES_DATA")
 
 # ── Build the combined data blob ────────────────────────────────────
 # This JSON object gets embedded in the HTML as `const DATA = ...`
 DATA=$(jq -n \
-  --slurpfile shows "$SHOWS_DATA" \
+  --slurpfile shows "$DATES_DATA" \
   --slurpfile people "$PEOPLE" \
   --slurpfile venues "$VENUES" \
   --slurpfile todos "$TODOS" \

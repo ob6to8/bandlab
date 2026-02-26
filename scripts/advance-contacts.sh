@@ -14,13 +14,11 @@ if [ "$(cfg '.advancing // empty')" = "" ]; then
 fi
 
 PEOPLE="${REPO_ROOT}/$(cfg '.registries.people.path')"
-SHOWS_DIR="${REPO_ROOT}/$(cfg '.entities.shows.dir')"
-THREAD_FILE=$(cfg '.advancing.thread_file')
 CONTACT_ROLE=$(cfg '.advancing.contact_role')
 ORG_PREFIX=$(cfg '.advancing.contact_org_prefix')
 PRIORITY_FIELD=$(cfg '.advancing.priority_field')
 
-load_shows
+load_days
 
 if [ $# -lt 1 ]; then
   echo "Usage: advance-contacts.sh <show-id-or-partial>" >&2
@@ -31,7 +29,7 @@ fi
 query="$1"
 
 # Find matching show
-show_id=$(jq -r "keys[] | select(contains(\"${query}\"))" "$SHOWS_DATA" | head -1)
+show_id=$(jq -r "keys[] | select(contains(\"${query}\"))" "$DATES_DATA" | head -1)
 
 if [ -z "$show_id" ]; then
   echo "No show found matching: ${query}" >&2
@@ -39,8 +37,8 @@ if [ -z "$show_id" ]; then
 fi
 
 # Get venue for this show
-venue=$(jq -r ".[\"${show_id}\"].venue.id" "$SHOWS_DATA")
-date=$(jq -r ".[\"${show_id}\"].day.date" "$SHOWS_DATA")
+venue=$(jq -r ".[\"${show_id}\"].venue.id" "$DATES_DATA")
+date=$(jq -r ".[\"${show_id}\"].day.date" "$DATES_DATA")
 
 echo "=== ${show_id} | ${date} | ${venue} ==="
 echo ""
@@ -69,12 +67,11 @@ jq -r --arg venue "$venue" --arg role "$CONTACT_ROLE" --arg prefix "$ORG_PREFIX"
   printf "  %s. %-25s %-35s %s  %s\n" "$pri" "$name" "$role" "$email" "$phone"
 done
 
-# Check if advancing has started
-thread="${SHOWS_DIR}/${show_id}/${THREAD_FILE}"
-if [ -f "$thread" ]; then
-  echo ""
-  echo "  Advancing thread exists: ${thread}"
+# Check if advancing has started (via advance object in day.json)
+has_advance=$(jq -r --arg id "$show_id" 'if .[$id].advance and (.[$id].advance | length) > 0 then "yes" else "no" end' "$DATES_DATA")
+echo ""
+if [ "$has_advance" = "yes" ]; then
+  echo "  Advancing started (advance object present)."
 else
-  echo ""
   echo "  No advancing started yet."
 fi
