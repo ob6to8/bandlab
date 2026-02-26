@@ -134,7 +134,7 @@ done
 # ── Run query and format ──────────────────────────────────────────
 total=$(jq 'length' "$TODOS")
 
-results=$(jq -r "[${jq_expr}] | sort_by(.due // \"9999-99-99\") | .[] | [.id, (.priority // \"-\"), .task, .status, .category, (.owners | join(\", \")), (.due // \"-\"), (.show // \"-\")] | @tsv" "$TODOS")
+results=$(jq -r "[${jq_expr}] | sort_by((if .priority == \"x\" then \"0\" else \"1\" end) + (.due // \"9999-99-99\")) | .[] | [.id, (.priority // \"-\"), .task, .status, .category, (.show // \"-\")] | @tsv" "$TODOS")
 
 if [ -z "$results" ]; then
   echo "No matching todos."
@@ -143,16 +143,16 @@ if [ -z "$results" ]; then
   exit 0
 fi
 
-printf "%-6s %-4s %-40s %-13s %-12s %-20s %-12s %s\n" "ID" "PRI" "TASK" "STATUS" "CATEGORY" "OWNERS" "DUE" "SHOW"
-printf "%-6s %-4s %-40s %-13s %-12s %-20s %-12s %s\n" "----" "---" "----" "------" "--------" "------" "---" "----"
+printf "%-6s %-4s %-55s %-13s %-12s %s\n" "ID" "PRI" "TASK" "STATUS" "CATEGORY" "SHOW"
+printf "%-6s %-4s %-55s %-13s %-12s %s\n" "----" "---" "----" "------" "--------" "----"
 
 count=0
-while IFS=$'\t' read -r id pri task status category owners due show; do
+while IFS=$'\t' read -r id pri task status category show; do
   # Truncate long task names
-  if [ ${#task} -gt 38 ]; then
-    task="${task:0:35}..."
+  if [ ${#task} -gt 53 ]; then
+    task="${task:0:50}..."
   fi
-  printf "%-6s %-4s %-40s %-13s %-12s %-20s %-12s %s\n" "$id" "$pri" "$task" "$status" "$category" "$owners" "$due" "$show"
+  printf "%-6s %-4s %-55s %-13s %-12s %s\n" "$id" "$pri" "$task" "$status" "$category" "$show"
   count=$((count + 1))
 done <<< "$results"
 
