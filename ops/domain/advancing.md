@@ -55,7 +55,7 @@ The touring party varies by geography and show type. Define your crew configurat
 
 ```bash
 # Ranked contacts for a specific show
-./bandlab-cli advance-contacts s-2026-0315-denver
+./bandlab-cli advance-contacts 03-15-26-denver
 
 # Which shows still need advancing
 ./bandlab-cli advance-status

@@ -35,15 +35,16 @@ echo ""
 
 echo "=== Show Directories ↔ Data ==="
 
-# Every show dir should have day.json and be in the loaded data
+# Every show dir should have day.json and its day.id should be in the loaded data
 for show_dir in "${SHOWS_DIR}"/s-*/; do
-  show_id="$(basename "$show_dir")"
+  dir_name="$(basename "$show_dir")"
 
   if [ ! -f "${show_dir}/day.json" ]; then
-    fail "${show_id}: missing day.json"
+    fail "${dir_name}: missing day.json"
     continue
   fi
 
+  show_id=$(jq -r '.day.id' "${show_dir}/day.json")
   in_data=$(jq -r --arg id "$show_id" 'has($id)' "$SHOWS_DATA")
   if [ "$in_data" = "true" ]; then
     pass "${show_id}: dir + day.json + loaded"
@@ -277,10 +278,7 @@ if [ "$prov_enabled" = "true" ]; then
   shows_with_prov=0
   shows_without_prov=0
   while read -r show_id; do
-    show_file="${SHOWS_DIR}/${show_id}/day.json"
-    [ ! -f "$show_file" ] && continue
-
-    has_prov=$(jq --arg f "$prov_field" 'has($f)' "$show_file")
+    has_prov=$(jq -r --arg id "$show_id" --arg f "$prov_field" '.[$id] | has($f)' "$SHOWS_DATA")
     if [ "$has_prov" = "true" ]; then
       shows_with_prov=$((shows_with_prov + 1))
 
@@ -309,7 +307,7 @@ if [ "$prov_enabled" = "true" ]; then
         else
           fail "${show_id}: provenance file not found: ${prov_key}"
         fi
-      done < <(jq -r --arg f "$prov_field" '.[$f] | keys[]' "$show_file")
+      done < <(jq -r --arg id "$show_id" --arg f "$prov_field" '.[$id][$f] | keys[]' "$SHOWS_DATA")
     else
       shows_without_prov=$((shows_without_prov + 1))
       warn "${show_id}: missing ${prov_field}"
@@ -386,11 +384,21 @@ if [ -n "$email_glob" ] && ls $email_glob &>/dev/null 2>&1; then
             warn "${slug}: registry file not found for ${atype}"
           fi
         elif [ -n "$resolve_entity" ]; then
-          entity_dir="${REPO_ROOT}/$(cfg ".entities.${resolve_entity}.dir")"
-          if [ -d "${entity_dir}/${ref}" ]; then
-            pass "${slug}: ${atype} ${ref}"
+          # For shows, check against loaded data keys (day.id) since IDs may differ from dir names
+          if [ "$resolve_entity" = "shows" ] && [ -f "$SHOWS_DATA" ]; then
+            exists=$(jq -r --arg v "$ref" 'has($v)' "$SHOWS_DATA")
+            if [ "$exists" = "true" ]; then
+              pass "${slug}: ${atype} ${ref}"
+            else
+              fail "${slug}: ${atype} ${ref} NOT FOUND in ${resolve_entity}"
+            fi
           else
-            fail "${slug}: ${atype} ${ref} NOT FOUND in ${resolve_entity}"
+            entity_dir="${REPO_ROOT}/$(cfg ".entities.${resolve_entity}.dir")"
+            if [ -d "${entity_dir}/${ref}" ]; then
+              pass "${slug}: ${atype} ${ref}"
+            else
+              fail "${slug}: ${atype} ${ref} NOT FOUND in ${resolve_entity}"
+            fi
           fi
         fi
       done <<< "$values"

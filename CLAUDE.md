@@ -209,7 +209,7 @@ Canonical task list. The agent reads and writes this. Syncs to external surfaces
 - `show`: Key into shows index when this todo relates to a specific show. Null otherwise.
 - `owners`: Array of person keys (supports multiple owners).
 - `blocked_by`: Array of todo IDs that must be completed before this todo can proceed. Null or omitted when not blocked. A todo with `blocked_by` entries where any referenced todo is not `"done"` is effectively blocked.
-- `source`: Verbatim name of the originating thread/channel/context, prefixed by type. e.g. `"email:Festival Name // Topic"`, `"slack:2026-02-10"`, `"advancing:s-2026-0315-denver"`, `"manual"`.
+- `source`: Verbatim name of the originating thread/channel/context, prefixed by type. e.g. `"email:Festival Name // Topic"`, `"slack:2026-02-10"`, `"advancing:03-15-26-denver"`, `"manual"`.
 - `updated`: ISO date, updated whenever any field on this todo changes.
 - `notes`: Current-state summary. Overwritten as the situation evolves.
 - `history`: Timestamped log of events. Append-only — entries are never edited or removed. Grows over the life of the todo. Default jq queries should use `del(.history)` to avoid pulling this into output unless specifically needed.
@@ -259,7 +259,7 @@ When a show is linked to this date:
 ```yaml
 touring:
   type: show
-  show: s-YYYY-MMDD-city
+  show: MM-DD-YY-city
 schedule:
   - time: "HH:MM"
     item: "Load-in"
@@ -310,7 +310,7 @@ Five semantic namespaces — `day` (identity/lifecycle/type), `deal` (contract t
 {
   "day": {
     "type": "show",
-    "id": "s-YYYY-MMDD-city",
+    "id": "MM-DD-YY-city",
     "date": "YYYY-MM-DD",
     "status": "potential|offered|confirmed|advance-started|advance-concluded|settled|cancelled",
     "tour": "tour-key or null",
@@ -510,7 +510,7 @@ Five semantic namespaces — `day` (identity/lifecycle/type), `deal` (contract t
   - `ground.notes`: Freeform ground transport notes. Null if none.
 - **day fields:** Day identity, type, and lifecycle metadata, wrapped in the `day` namespace.
   - `type`: Day type - `"show"` for performance days. Future: `"travel"`, `"off"` for non-show days.
-  - `id`: Show directory key (e.g. `"s-2026-0305-atlanta"`).
+  - `id`: Show identifier (e.g. `"03-05-26-atlanta"`). Note: directory names still use the `s-YYYY-MMDD-city` format.
   - `date`: ISO date string (YYYY-MM-DD).
   - `status`: Show lifecycle status.
   - `tour`: Tour key or null.
@@ -716,7 +716,7 @@ assets: []
 [Post content body — ready to copy/paste or push through API]
 ```
 
-- `linked_to`: Optional reference to the entity this post is about (e.g. `s-2026-0315-denver`, `r-single-spring-2026`).
+- `linked_to`: Optional reference to the entity this post is about (e.g. `03-15-26-denver`, `r-single-spring-2026`).
 - `date` is null until scheduled. When scheduled, the corresponding calendar file should reference this post key in its `socials` array.
 
 ---
@@ -789,5 +789,5 @@ jq '[.[] | select(.domain == "touring" and .status != "done" and .status != "can
 jq '.[] | select(.id == "t001") | .history' org/todos.json
 
 # All todos for a specific show
-jq '[.[] | select(.show == "s-2026-0315-denver") | del(.history)]' org/todos.json
+jq '[.[] | select(.show == "03-15-26-denver") | del(.history)]' org/todos.json
 ```

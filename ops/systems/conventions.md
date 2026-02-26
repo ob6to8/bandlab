@@ -4,8 +4,8 @@ Patterns established across the codebase. Follow these when adding new data.
 
 ## Key Naming
 
-**Show IDs:** `s-YYYY-MMDD-city` — lowercase, hyphenated city name.
-- `s-2026-0304-charleston`, `s-2026-0614-morrison`
+**Show IDs:** `MM-DD-YY-city` — lowercase, hyphenated city name. Directory names still use the legacy `s-YYYY-MMDD-city` format until the directory migration (plan 2c).
+- `03-04-26-charleston`, `06-14-26-morrison`
 - Two shows in the same city get different dates, so no suffix needed.
 - Two shows at the same venue on different dates (e.g., a venue hosts multiple festivals) are distinguished by date.
 
