@@ -188,7 +188,7 @@ Canonical task list. The agent reads and writes this. Syncs to external surfaces
     "category": "advancing|licensing|releases|merch|production|socials|finances|org|set",
     "show": "show-key or null",
     "owners": ["person-key"],
-    "status": "open|in-progress|blocked|done",
+    "status": "open|in-progress|blocked|done|cancelled",
     "priority": "x or null",
     "due": "YYYY-MM-DD or null",
     "source": "Description of where this todo originated",
@@ -212,6 +212,8 @@ Canonical task list. The agent reads and writes this. Syncs to external surfaces
 - `updated`: ISO date, updated whenever any field on this todo changes.
 - `notes`: Current-state summary. Overwritten as the situation evolves.
 - `history`: Timestamped log of events. Append-only — entries are never edited or removed. Grows over the life of the todo. Default jq queries should use `del(.history)` to avoid pulling this into output unless specifically needed.
+
+**Immutability policy:** Todos are never removed from the array. Completed work gets `"done"`, abandoned work gets `"cancelled"`. Both are terminal states. The history array provides the full lifecycle audit trail. Default queries should filter to active statuses: `select(.status != "done" and .status != "cancelled")`.
 
 Initialize with an empty array `[]`.
 
@@ -669,7 +671,7 @@ jq '[.[] | select(.status == "open") | del(.history)]' org/todos.json
 jq '[.[] | select((.owners | index("alice")) and .status == "open") | del(.history)]' org/todos.json
 
 # Touring domain
-jq '[.[] | select(.domain == "touring" and .status != "done") | del(.history)]' org/todos.json
+jq '[.[] | select(.domain == "touring" and .status != "done" and .status != "cancelled") | del(.history)]' org/todos.json
 
 # Full history for a specific todo
 jq '.[] | select(.id == "t001") | .history' org/todos.json
