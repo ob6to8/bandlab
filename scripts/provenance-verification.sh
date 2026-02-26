@@ -114,7 +114,7 @@ for show_dir in "${SHOWS_DIR}"/s-*/; do
       http://*|https://*) pass "${show_id}: ${source_key} (URL)"; continue ;;
     esac
 
-    source_file="${show_dir}/${source_key}"
+    source_file="${source_base}/${source_key}"
     if [ -f "$source_file" ]; then
       pass "${show_id}: ${source_key} exists"
     else

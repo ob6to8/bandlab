@@ -29,7 +29,7 @@ Compose or reply to an advancing email for a show.
 
 6. **Compose the email** following the guide's formatting rules (ALL CAPS headings, numbered touring party, plain text, DRY — refer to rider for hospo/backline/tech)
 
-7. **Write draft** to `org/touring/shows/<show-id>/advancing/reply-draft.txt` (plain text, no markdown) as a backup for copy-paste.
+7. **Write draft** to `org/touring/sources/<date-id>/drafts/reply-draft.txt` (plain text, no markdown) as a backup for copy-paste. The date-id uses `MM-DD-YY-suffix` format (e.g. `03-05-26-atlanta`). Create the `drafts/` directory if it doesn't exist.
 
 8. **Present the draft** to the user for review before creating the Gmail draft.
 

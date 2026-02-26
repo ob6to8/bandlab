@@ -30,10 +30,10 @@ Read the file (PDFs, CSVs, text files) and classify it:
 #### Contract PDF
 1. Match to an existing show by date/venue/city (merge day.json files via `entities.shows.glob`)
 2. If no match found, ask the user which show this belongs to (or whether to create a new one)
-3. Copy the PDF to the show's `source/` directory (under `entities.shows.dir`)
-4. Extract key terms into `source/summary.md` with `status: pending-review`
+3. Copy the PDF to the show's sources directory at `org/touring/sources/<date-id>/` (date-id uses `MM-DD-YY-suffix` format, e.g. `03-05-26-atlanta`)
+4. Extract key terms into `sources/<date-id>/summary.md` with `status: pending-review`
 5. Extract advancing contacts → add to the people registry (`registries.people.path`) with `role: "advancing"` and `"Unconfirmed advancing contact."` in notes
-6. **Write provenance** on day.json using the field name from `provenance.field_name`, mapping the PDF to the fields extracted from it (see `ops/systems/provenance-plan.md` for the schema). The key is the relative path `source/FILENAME.pdf`, with `extracted` set to today's date and `fields` listing every day.json field substantiated by the contract.
+6. **Write provenance** on day.json using the field name from `provenance.field_name`, mapping the PDF to the fields extracted from it (see `ops/systems/provenance-plan.md` for the schema). The key is the path relative to `org/`: `touring/sources/<date-id>/FILENAME.pdf`, with `extracted` set to today's date and `fields` listing every day.json field substantiated by the contract.
 7. Add a todo to the todos registry (`registries.todos.path`) for human review of the contract summary
 8. Report: what was extracted, confidence level, any ambiguities
 
@@ -43,7 +43,7 @@ Read the file (PDFs, CSVs, text files) and classify it:
    - **Related show**: match by venue/date/city if applicable
    - **Key people**: extract names, emails, roles mentioned
 2. If it relates to a show:
-   - Copy PDF to `source/` (primary source documents go here); derived summaries go in their workflow directories (`advancing/`, `settlement/`)
+   - Copy PDF to `org/touring/sources/<date-id>/` (primary source documents go here); derived summaries go in their workflow directories (`advancing/`, `settlement/`)
    - Update `advancing/thread.md` with a summary of the conversation
    - Extract any confirmed details into the relevant fields
    - Create or update todos for any action items

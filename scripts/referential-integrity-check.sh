@@ -303,7 +303,8 @@ if [ "$prov_enabled" = "true" ]; then
           http://*|https://*) pass "${show_id}: ${prov_key} (URL)"; continue ;;
         esac
 
-        if [ -f "${SHOWS_DIR}/${show_id}/${prov_key}" ]; then
+        source_base="${REPO_ROOT}/$(cfg '.provenance.source_base_dir')"
+        if [ -f "${source_base}/${prov_key}" ]; then
           pass "${show_id}: ${prov_key} exists"
         else
           fail "${show_id}: provenance file not found: ${prov_key}"

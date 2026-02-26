@@ -23,7 +23,7 @@ Show advancing status and outstanding info for a single show.
    - For questions with `fields`: check if the corresponding day.json fields are populated (non-empty string, non-null, non-empty object/array).
    - For questions with empty `fields`: check the thread log at `advancing/thread.md` for evidence. If uncertain, mark as outstanding.
 
-5. **Check for source documents** in `org/touring/shows/<show-id>/source/` - tech pack, deal memo, etc.
+5. **Check for source documents** in `org/touring/sources/<date-id>/` (date-id uses `MM-DD-YY-suffix` format, e.g. `03-05-26-atlanta`) - tech pack, deal memo, etc.
 
 6. **Output a summary:**
 
