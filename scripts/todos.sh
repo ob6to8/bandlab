@@ -43,6 +43,7 @@ for arg in "$@"; do
       echo "No todo with id: ${arg}" >&2
       exit 1
     fi
+    echo ""
     echo "$result" | jq -r '
       "ID:        \(.id)",
       "Task:      \(.task)",
@@ -64,6 +65,7 @@ for arg in "$@"; do
       else
         "History:   (none)"
       end'
+    echo ""
     exit 0
   fi
 
