@@ -43,12 +43,12 @@ source_base="${REPO_ROOT}/$(cfg '.provenance.source_base_dir')"
 echo "=== Show Provenance Blocks ==="
 
 for show_dir in "${SHOWS_DIR}"/s-*/; do
-  [ -f "${show_dir}/show.json" ] || continue
+  [ -f "${show_dir}/day.json" ] || continue
   show_id="$(basename "$show_dir")"
   shows_total=$((shows_total + 1))
 
   # Check provenance block exists
-  has_prov=$(jq --arg f "$prov_field" 'has($f)' "${show_dir}/show.json")
+  has_prov=$(jq --arg f "$prov_field" 'has($f)' "${show_dir}/day.json")
   if [ "$has_prov" != "true" ]; then
     fail "${show_id}: missing ${prov_field} block"
     continue
@@ -56,7 +56,7 @@ for show_dir in "${SHOWS_DIR}"/s-*/; do
   shows_with_provenance=$((shows_with_provenance + 1))
 
   # Collect all provenance-covered fields across all sources
-  all_covered=$(jq -r --arg f "$prov_field" '.[$f] | [.[].fields[]] | unique | .[]' "${show_dir}/show.json")
+  all_covered=$(jq -r --arg f "$prov_field" '.[$f] | [.[].fields[]] | unique | .[]' "${show_dir}/day.json")
 
   # Check non-null data fields for coverage
   while read -r field; do
@@ -85,10 +85,10 @@ for show_dir in "${SHOWS_DIR}"/s-*/; do
         select(.value | has_content) | .key
       end
     )
-  ' "${show_dir}/show.json")
+  ' "${show_dir}/day.json")
 
   # Check for manual provenance entries
-  manual_count=$(jq -r --arg f "$prov_field" '.[$f] | keys[] | select(startswith("manual:"))' "${show_dir}/show.json" 2>/dev/null | wc -l | tr -d ' ')
+  manual_count=$(jq -r --arg f "$prov_field" '.[$f] | keys[] | select(startswith("manual:"))' "${show_dir}/day.json" 2>/dev/null | wc -l | tr -d ' ')
   if [ "$manual_count" -gt 0 ]; then
     manual_fields=$((manual_fields + manual_count))
   fi
@@ -120,10 +120,10 @@ for show_dir in "${SHOWS_DIR}"/s-*/; do
     else
       fail "${show_id}: provenance source file missing: ${source_key}"
     fi
-  done < <(jq -r --arg f "$prov_field" '.[$f] | keys[]' "${show_dir}/show.json")
+  done < <(jq -r --arg f "$prov_field" '.[$f] | keys[]' "${show_dir}/day.json")
 
   # Count human-verified fields
-  show_verified=$(jq '._verified // {} | length' "${show_dir}/show.json")
+  show_verified=$(jq '._verified // {} | length' "${show_dir}/day.json")
   if [ "$show_verified" -gt 0 ]; then
     shows_with_verified=$((shows_with_verified + 1))
     verified_fields=$((verified_fields + show_verified))

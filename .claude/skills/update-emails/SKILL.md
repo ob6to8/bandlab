@@ -86,7 +86,7 @@ For each NEW thread:
 
 1. **Read all messages.** `read_email` for every message in the thread. Note sender, date, content, and any attachments.
 
-2. **Match to a show.** Parse the thread subject for venue name, city, and/or date. Cross-reference against show.json files in `org/touring/shows/`. If ambiguous, ask the user to confirm the match. If no match found, ask the user whether to create the summary without a show association.
+2. **Match to a show.** Parse the thread subject for venue name, city, and/or date. Cross-reference against day.json files in `org/touring/shows/`. If ambiguous, ask the user to confirm the match. If no match found, ask the user whether to create the summary without a show association.
 
 3. **Register unknown participants.** Same process as STALE threads step 2.
 
@@ -99,8 +99,8 @@ For each NEW thread:
 
 5. **Build associations.** From the matched show, pull:
    - `shows`: the show ID
-   - `venues`: the venue key from show.json `venue.id`
-   - `tours`: the tour key from show.json `show.tour`
+   - `venues`: the venue key from day.json `venue.id`
+   - `tours`: the tour key from day.json `day.tour`
    - For advancing threads (`purpose: "advancing"`), add `categories: ["advancing"]`
 
 6. **Write the summary file** at `org/email/<slug>.md` with:

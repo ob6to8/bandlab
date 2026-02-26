@@ -24,7 +24,7 @@ load_shows
 printf "%-12s %-30s %-10s %-30s %s\n" "DATE" "VENUE" "ADVANCING" "TOP CONTACT" "EMAIL"
 printf "%-12s %-30s %-10s %-30s %s\n" "----" "-----" "---------" "-----------" "-----"
 
-jq -r 'to_entries | sort_by(.value.show.date) | .[] | [.key, .value.show.date, .value.venue.id] | @tsv' "$SHOWS_DATA" |
+jq -r 'to_entries | sort_by(.value.day.date) | .[] | [.key, .value.day.date, .value.venue.id] | @tsv' "$SHOWS_DATA" |
 while IFS=$'\t' read -r show_id date venue; do
 
   # Check advancing status

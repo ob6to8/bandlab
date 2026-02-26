@@ -4,7 +4,7 @@
 
 1. Read the relevant `ops/` doc for your task — `advancing.md`, `conventions.md`, `architecture.md`
 2. CLI tools: run `./bandlab-cli` for an interactive menu, or `./bandlab-cli shows` directly
-3. Canonical registries (people, venues, vendors, todos) live in `org/`. Show data is loaded on-the-fly from individual show.json files via `load_shows` in `lib/config.sh`.
+3. Canonical registries (people, venues, vendors, todos) live in `org/`. Show data is loaded on-the-fly from individual day.json files via `load_days` (or `load_shows` alias) in `lib/config.sh`.
 
 ## What This Is
 
@@ -289,7 +289,7 @@ Each show is a directory containing:
 
 ```
 s-YYYY-MMDD-city/
-├── show.json              # Working metadata — the agent's current understanding
+├── day.json              # Working metadata — the agent's current understanding
 ├── tech-pack.md           # Stage plot, input list, backline requirements
 ├── source/                # Primary source documents (contracts, emails, etc.)
 │   ├── *.pdf              # Original contract, email exports, etc.
@@ -302,13 +302,14 @@ s-YYYY-MMDD-city/
     └── receipts/
 ```
 
-**show.json:**
+**day.json:**
 
-Four semantic namespaces — `show` (identity/lifecycle), `deal` (contract terms), `venue` (advancing/venue capabilities), `band` (crew assignments), `advance` (per-question advancing state machine) — plus provenance and verification metadata.
+Five semantic namespaces — `day` (identity/lifecycle/type), `deal` (contract terms), `venue` (advancing/venue capabilities), `band` (crew assignments), `advance` (per-question advancing state machine) — plus optional `travel` (logistics) and provenance/verification metadata.
 
 ```json
 {
-  "show": {
+  "day": {
+    "type": "show",
     "id": "s-YYYY-MMDD-city",
     "date": "YYYY-MM-DD",
     "status": "potential|offered|confirmed|advance-started|advance-concluded|settled|cancelled",
@@ -385,6 +386,40 @@ Four semantic namespaces — `show` (identity/lifecycle), `deal` (contract terms
       ]
     }
   },
+  "travel": {
+    "lodging": {
+      "status": "not-needed|needed|booked|provided",
+      "type": "hotel|airbnb|host|venue-provided|bus",
+      "name": null,
+      "confirmation": null,
+      "check_in": null,
+      "check_out": null,
+      "clean_room": false,
+      "notes": null
+    },
+    "flights": [
+      {
+        "status": "not-needed|needed|booked",
+        "passenger": "person-key or null",
+        "carrier": null,
+        "flight_number": null,
+        "departure": null,
+        "arrival": null,
+        "confirmation": null,
+        "direction": "inbound|outbound"
+      }
+    ],
+    "ground": {
+      "status": "not-needed|needed|booked",
+      "type": "rental|bus|personal|shuttle",
+      "vehicle_type": null,
+      "vehicle_length": null,
+      "pickup": false,
+      "dropoff": false,
+      "confirmation": null,
+      "notes": null
+    }
+  },
   "_provenance": {
     "source/FILENAME.pdf": {
       "extracted": "YYYY-MM-DD",
@@ -452,7 +487,29 @@ Four semantic namespaces — `show` (identity/lifecycle), `deal` (contract terms
 - **advance fields:** Per-question advancing state machine. Keyed by question ID from the advancing email questions file. Only present on shows with `status: "advance-started"` or later. Absent key = show not yet advancing.
   - `status`: One of `"need_to_ask"` (advancing started, not yet sent), `"asked"` (sent to venue, awaiting reply), `"needs_response"` (venue replied but inconclusive/creates follow-up), `"confirmed"` (conclusively resolved).
   - `notes`: Immutable array of note objects tracking the conversation lifecycle. Each note has `date` (ISO), `action` (`"asked"` / `"received"` / `"confirmed"` / `"flagged"`), `source` (provenance-style string, typically `"email:thread subject"`), and `text` (description).
-- **show fields:** Show identity and lifecycle metadata, wrapped in the `show` namespace.
+- **travel fields:** Logistics data - lodging, flights, ground transport. Optional block, added per-show as data becomes available. Missing block = no travel data yet.
+  - `lodging.status`: `"not-needed"` (routing through), `"needed"` (must book), `"booked"` (confirmed), `"provided"` (venue/promoter covers it).
+  - `lodging.type`: `"hotel"`, `"airbnb"`, `"host"`, `"venue-provided"`, `"bus"`.
+  - `lodging.name`: Hotel/property name. Null if unknown.
+  - `lodging.confirmation`: Confirmation number. Null if not booked.
+  - `lodging.check_in`, `lodging.check_out`: ISO date strings. Null if unknown.
+  - `lodging.clean_room`: Boolean. Separate clean/quiet room for early risers.
+  - `lodging.notes`: Freeform lodging notes. Null if none.
+  - `flights`: Array of flight objects. Multiple passengers may fly different routes.
+  - `flights[].status`: `"not-needed"`, `"needed"`, `"booked"`.
+  - `flights[].passenger`: Person-key. Null if unassigned.
+  - `flights[].carrier`, `flights[].flight_number`: Airline and flight number. Null if not booked.
+  - `flights[].departure`, `flights[].arrival`: ISO datetime strings. Null if unknown.
+  - `flights[].confirmation`: Booking confirmation. Null if not booked.
+  - `flights[].direction`: `"inbound"` (to show city) or `"outbound"` (from show city).
+  - `ground.status`: `"not-needed"`, `"needed"`, `"booked"`.
+  - `ground.type`: `"rental"`, `"bus"`, `"personal"`, `"shuttle"`.
+  - `ground.vehicle_type`, `ground.vehicle_length`: Vehicle details. Null if unknown.
+  - `ground.pickup`, `ground.dropoff`: Boolean. Whether venue provides airport transport.
+  - `ground.confirmation`: Booking confirmation. Null if not booked.
+  - `ground.notes`: Freeform ground transport notes. Null if none.
+- **day fields:** Day identity, type, and lifecycle metadata, wrapped in the `day` namespace.
+  - `type`: Day type - `"show"` for performance days. Future: `"travel"`, `"off"` for non-show days.
   - `id`: Show directory key (e.g. `"s-2026-0305-atlanta"`).
   - `date`: ISO date string (YYYY-MM-DD).
   - `status`: Show lifecycle status.
@@ -507,7 +564,7 @@ wifi: ""
 **The audit trust hierarchy:**
 1. `source/summary.md` (approved) — highest trust, human-verified legal terms
 2. `confirmed.md` — high trust, reflects advancing agreements
-3. `show.json` — working copy, agent-maintained, mutable
+3. `day.json` — working copy, agent-maintained, mutable
 
 The audit compares all three and flags mismatches and missing approvals.
 
@@ -584,7 +641,7 @@ Tours are directories that hold `tour.json` plus tour-scoped todos (e.g. crew tr
 - `hospitality`: Tour-level hospitality rider text. Empty string if not set.
 - `production`: Object containing production/backline details (stands, mics, console, monitors, etc.).
 - `policies`: Object containing tour-level policies (e.g. `photo_video`).
-- `_provenance`: Same format as show.json provenance — maps sources to field arrays.
+- `_provenance`: Same format as day.json provenance — maps sources to field arrays.
 
 ---
 
@@ -699,7 +756,7 @@ When deliverable dates are set, the corresponding calendar dates should referenc
 ### Audit
 
 The audit scans all show directories and compares structured data across:
-- `show.json` (working data)
+- `day.json` (working data)
 - `source/summary.md` (legal terms, if approved)
 - `confirmed.md` (advancing confirmations)
 - Calendar file for that date

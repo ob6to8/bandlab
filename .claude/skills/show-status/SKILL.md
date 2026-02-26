@@ -8,19 +8,19 @@ Show advancing status and outstanding info for a single show.
 
 1. **Resolve the show** from `$ARGUMENTS`. Match against show IDs (partial match on city name).
 
-2. **Read show.json** for the show.
+2. **Read day.json** for the show.
 
 3. **Read advancing questions** from `advancing-email-questions-club.json` (path from `bandlab.config.json`).
 
 4. **Check advancing status using the advance object** (preferred) or legacy field checks (fallback):
 
-   **If show.json has an `advance` key** (state machine):
-   - Read each question's `status` and `notes` from `show.json.advance.<question_id>`
+   **If day.json has an `advance` key** (state machine):
+   - Read each question's `status` and `notes` from `day.json.advance.<question_id>`
    - Group questions by status: `confirmed`, `asked`, `needs_response`, `need_to_ask`, absent
    - For each question, show status + last note date + summary text
 
    **If no `advance` key** (legacy fallback):
-   - For questions with `fields`: check if the corresponding show.json fields are populated (non-empty string, non-null, non-empty object/array).
+   - For questions with `fields`: check if the corresponding day.json fields are populated (non-empty string, non-null, non-empty object/array).
    - For questions with empty `fields`: check the thread log at `advancing/thread.md` for evidence. If uncertain, mark as outstanding.
 
 5. **Check for source documents** in `org/touring/shows/<show-id>/source/` - tech pack, deal memo, etc.

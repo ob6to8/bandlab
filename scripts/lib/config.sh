@@ -50,13 +50,16 @@ warn() {
 }
 
 # ── Show data loader ───────────────────────────────────────────────
-# Merge all show.json files into a keyed object, set SHOWS_DATA to the temp file path.
+# Merge all day.json files into a keyed object, set SHOWS_DATA to the temp file path.
 # Call after load_config. Use "$SHOWS_DATA" wherever "$INDEX" was used before.
 
-load_shows() {
+load_days() {
   local glob
   glob="${REPO_ROOT}/$(cfg '.entities.shows.glob')"
   SHOWS_DATA=$(mktemp)
   # shellcheck disable=SC2086
-  jq -n '[inputs | {(.show.id): .}] | add // {}' $glob > "$SHOWS_DATA"
+  jq -n '[inputs | {(.day.id): .}] | add // {}' $glob > "$SHOWS_DATA"
 }
+
+# Backward compat alias
+load_shows() { load_days; }

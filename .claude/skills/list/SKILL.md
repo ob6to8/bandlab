@@ -20,7 +20,7 @@ Read `bandlab.config.json` to discover entity paths and registries. Key referenc
 
 ### shows
 - `/list shows` — table of all shows (date, city, venue, status, guarantee)
-- `/list shows atlanta` — detailed view of matching show(s) (all show.json fields formatted)
+- `/list shows atlanta` — detailed view of matching show(s) (all day.json fields formatted)
 
 ### tours
 - `/list tours` — list tours with their runs and date ranges
@@ -46,7 +46,7 @@ Read `bandlab.config.json` to discover entity paths and registries. Key referenc
 1. Parse `$ARGUMENTS` to determine the entity type and optional query
 2. If no arguments, show the list of supported subcommands above and exit
 3. Read `bandlab.config.json` and resolve the path for the requested entity type:
-   - **shows**: merge all show.json files via `entities.shows.glob`
+   - **shows**: merge all day.json files via `entities.shows.glob`
    - **tours**: read `entities.tours.dir/*/tour.json`
    - **runs**: read `entities.runs.dir/*/run.json` and `entities.one_offs.dir/*/one-off.json`
    - **venues**: read `registries.venues.path`
@@ -60,7 +60,7 @@ Read `bandlab.config.json` to discover entity paths and registries. Key referenc
 
 ## Important
 
-- For show detail, read the individual `show.json` from the show directory (not the index) to get the freshest data
+- For show detail, read the individual `day.json` from the show directory (not the index) to get the freshest data
 - For todo list, always use `del(.history)` equivalent — only show history in detail view
 - Match queries flexibly: `/list shows atlanta` should match `s-2026-0305-atlanta` by substring
 - If no match found, say so clearly

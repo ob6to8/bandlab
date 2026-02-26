@@ -35,20 +35,20 @@ echo ""
 
 echo "=== Show Directories ↔ Data ==="
 
-# Every show dir should have show.json and be in the loaded data
+# Every show dir should have day.json and be in the loaded data
 for show_dir in "${SHOWS_DIR}"/s-*/; do
   show_id="$(basename "$show_dir")"
 
-  if [ ! -f "${show_dir}/show.json" ]; then
-    fail "${show_id}: missing show.json"
+  if [ ! -f "${show_dir}/day.json" ]; then
+    fail "${show_id}: missing day.json"
     continue
   fi
 
   in_data=$(jq -r --arg id "$show_id" 'has($id)' "$SHOWS_DATA")
   if [ "$in_data" = "true" ]; then
-    pass "${show_id}: dir + show.json + loaded"
+    pass "${show_id}: dir + day.json + loaded"
   else
-    fail "${show_id}: has show.json but NOT loaded"
+    fail "${show_id}: has day.json but NOT loaded"
   fi
 done
 echo ""
@@ -127,7 +127,7 @@ if [ -n "$CALENDAR_REL" ] && [ -d "$CALENDAR" ]; then
     else
       fail "${show_id} (${date}): calendar file exists but does NOT reference show"
     fi
-  done < <(jq -r 'to_entries[] | [.key, .value.show.date] | @tsv' "$SHOWS_DATA")
+  done < <(jq -r 'to_entries[] | [.key, .value.day.date] | @tsv' "$SHOWS_DATA")
   echo ""
 fi
 
@@ -277,7 +277,7 @@ if [ "$prov_enabled" = "true" ]; then
   shows_with_prov=0
   shows_without_prov=0
   while read -r show_id; do
-    show_file="${SHOWS_DIR}/${show_id}/show.json"
+    show_file="${SHOWS_DIR}/${show_id}/day.json"
     [ ! -f "$show_file" ] && continue
 
     has_prov=$(jq --arg f "$prov_field" 'has($f)' "$show_file")
@@ -396,7 +396,7 @@ if [ -n "$email_glob" ] && ls $email_glob &>/dev/null 2>&1; then
     done
 
     # Validate todos -> todos.json
-    todo_refs=$(echo "$frontmatter" | sed -n '/^todos:/,/^[^ ]/p' | grep '^ *- ' | sed 's/^ *- //')
+    todo_refs=$(echo "$frontmatter" | sed -n '/^todos:/,/^[^ ]/p' | grep '^ *- ' | sed 's/^ *- //' || true)
     if [ -n "$todo_refs" ] && [ -f "$TODOS" ]; then
       while read -r tid; do
         [ -z "$tid" ] && continue

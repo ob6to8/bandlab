@@ -118,9 +118,9 @@ veri_lookup=$(echo "$show_json" | jq '._verified // {}')
 prov_src()  { echo "$prov_lookup" | jq -r --arg f "$1" '.[$f] // empty'; }
 ver_date()  { echo "$veri_lookup" | jq -r --arg f "$1" '.[$f] // empty'; }
 
-date=$(get '.show.date')
+date=$(get '.day.date')
 venue_key=$(get '.venue.id')
-status=$(get '.show.status')
+status=$(get '.day.status')
 guarantee=$(get '.deal.guarantee')
 canada_amount=$(get '.deal.canada_amount')
 door_split=$(get '.deal.door_split')
@@ -130,9 +130,9 @@ sell_cap=$(get '.deal.sell_cap')
 ticket_scaling=$(get '.deal.ticket_scaling')
 wp=$(get '.deal.wp')
 support=$(get '.deal.support')
-tour=$(get '.show.tour')
-run=$(get '.show.run')
-one_off=$(get '.show.one_off')
+tour=$(get '.day.tour')
+run=$(get '.day.run')
+one_off=$(get '.day.one_off')
 sets=$(echo "$show_json" | jq -r 'if .deal.sets then [.deal.sets[] | "\(.date) \(.time) - \(.stage)"] | join(", ") else "" end')
 # Band block fields
 band_member_1=$(get '.band.band_member_1')
@@ -412,6 +412,84 @@ if [ -n "$tour" ]; then
 fi
 
 fi # end band section
+
+# ── Print TRAVEL block ──────────────────────────────────────────
+has_travel=$(echo "$show_json" | jq 'has("travel")')
+if show_section "travel" && [ "$has_travel" = "true" ]; then
+echo ""
+hline
+tsection "TRAVEL"
+hline
+
+# Lodging
+lodging_status=$(get '.travel.lodging.status')
+if [ -n "$lodging_status" ]; then
+  lodging_name=$(get '.travel.lodging.name')
+  lodging_type=$(get '.travel.lodging.type')
+  lodging_conf=$(get '.travel.lodging.confirmation')
+  lodging_checkin=$(get '.travel.lodging.check_in')
+  lodging_checkout=$(get '.travel.lodging.check_out')
+  lodging_clean=$(get '.travel.lodging.clean_room')
+  lodging_notes=$(get '.travel.lodging.notes')
+
+  lodging_display="$lodging_status"
+  if [ -n "$lodging_name" ]; then lodging_display="${lodging_display} - ${lodging_name}"; fi
+  if [ -n "$lodging_type" ]; then lodging_display="${lodging_display} (${lodging_type})"; fi
+  if [ -n "$lodging_conf" ]; then lodging_display="${lodging_display} conf: ${lodging_conf}"; fi
+  trow "Lodging" "$lodging_display"
+  if [ -n "$lodging_checkin" ] || [ -n "$lodging_checkout" ]; then
+    trow "  Check-in/out" "${lodging_checkin:-?} / ${lodging_checkout:-?}"
+  fi
+  if [ "$lodging_clean" = "true" ]; then trow "  Clean Room" "yes"; fi
+  if [ -n "$lodging_notes" ]; then trow "  Notes" "$lodging_notes"; fi
+fi
+
+# Flights
+flight_count=$(echo "$show_json" | jq '.travel.flights // [] | length')
+if [ "$flight_count" -gt 0 ]; then
+  for i in $(seq 0 $((flight_count - 1))); do
+    fl_status=$(get ".travel.flights[$i].status")
+    fl_passenger=$(get ".travel.flights[$i].passenger")
+    fl_carrier=$(get ".travel.flights[$i].carrier")
+    fl_number=$(get ".travel.flights[$i].flight_number")
+    fl_direction=$(get ".travel.flights[$i].direction")
+    fl_departure=$(get ".travel.flights[$i].departure")
+    fl_conf=$(get ".travel.flights[$i].confirmation")
+
+    fl_display="$fl_status"
+    if [ -n "$fl_passenger" ]; then fl_display="${fl_display} - ${fl_passenger}"; fi
+    if [ -n "$fl_direction" ]; then fl_display="${fl_display} ${fl_direction}"; fi
+    if [ -n "$fl_carrier" ] && [ -n "$fl_number" ]; then fl_display="${fl_display} ${fl_carrier} ${fl_number}"; fi
+    if [ -n "$fl_departure" ]; then fl_display="${fl_display} ${fl_departure}"; fi
+    if [ -n "$fl_conf" ]; then fl_display="${fl_display} (conf: ${fl_conf})"; fi
+    trow "Flight" "$fl_display"
+  done
+fi
+
+# Ground
+ground_status=$(get '.travel.ground.status')
+if [ -n "$ground_status" ]; then
+  gr_type=$(get '.travel.ground.type')
+  gr_vtype=$(get '.travel.ground.vehicle_type')
+  gr_vlength=$(get '.travel.ground.vehicle_length')
+  gr_pickup=$(get '.travel.ground.pickup')
+  gr_dropoff=$(get '.travel.ground.dropoff')
+  gr_conf=$(get '.travel.ground.confirmation')
+  gr_notes=$(get '.travel.ground.notes')
+
+  gr_display="$ground_status"
+  if [ -n "$gr_type" ]; then gr_display="${gr_display} - ${gr_type}"; fi
+  if [ -n "$gr_vtype" ]; then gr_display="${gr_display} ${gr_vtype}"; fi
+  if [ -n "$gr_vlength" ]; then gr_display="${gr_display} (${gr_vlength})"; fi
+  if [ -n "$gr_conf" ]; then gr_display="${gr_display} conf: ${gr_conf}"; fi
+  trow "Ground" "$gr_display"
+  if [ "$gr_pickup" = "true" ]; then trow "  Pickup" "yes"; fi
+  if [ "$gr_dropoff" = "true" ]; then trow "  Dropoff" "yes"; fi
+  if [ -n "$gr_notes" ]; then trow "  Notes" "$gr_notes"; fi
+fi
+
+hline
+fi # end travel section
 
 # ── Print DEAL block ────────────────────────────────────────────
 if show_section "deal"; then

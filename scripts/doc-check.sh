@@ -142,8 +142,8 @@ echo ""
 
 echo "=== Schema vs Reality ==="
 
-# Get the union of all fields across all show.json files
-actual_fields=$(find "$SHOWS_DIR" -name 'show.json' -exec jq -r 'keys[]' {} + | sort -u)
+# Get the union of all fields across all day.json files
+actual_fields=$(find "$SHOWS_DIR" -name 'day.json' -exec jq -r 'keys[]' {} + | sort -u)
 
 # Read schema fields from config
 schema_fields=$(cfg '.entities.shows.schema_fields | .[]')
@@ -159,7 +159,7 @@ for field in $actual_fields; do
   if [ "$found" = true ]; then
     pass "field '${field}' is in schema"
   else
-    warn "field '${field}' found in show.json files but NOT in documented schema"
+    warn "field '${field}' found in day.json files but NOT in documented schema"
   fi
 done
 echo ""
