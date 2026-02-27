@@ -11,7 +11,6 @@ ONEOFFS_DIR="${REPO_ROOT}/$(cfg '.entities.one_offs.dir')"
 PEOPLE="${REPO_ROOT}/$(cfg '.registries.people.path')"
 VENUES="${REPO_ROOT}/$(cfg '.registries.venues.path')"
 TODOS="${REPO_ROOT}/$(cfg '.registries.todos.path')"
-CAL_DIR="${REPO_ROOT}/$(cfg '.calendar.path')"
 STATE_DIR="${REPO_ROOT}/org/touring/.state"
 META_OUT="${STATE_DIR}/dashboard-meta.json"
 PORT=8026
@@ -86,66 +85,20 @@ while IFS= read -r show_id; do
     '. + {($id): {"thread_md": $thread, "confirmed_md": $confirmed, "contract_pdf": $cpdf, "contract_summary": $csum, "tech_pack": $tech}}')
 done < <(jq -r 'keys[]' "$DATES_DATA")
 
-# ── Extract schedules from calendar files ─────────────────────────────
-# Reads YAML frontmatter from calendar .md files, extracts non-empty schedule arrays.
-# Uses Python (already required for the HTTP server) with a simple regex parser
-# since our YAML is controlled and simple — no PyYAML dependency needed.
-schedules=$(python3 -c "
-import os, re, json, sys
-
-cal_dir = sys.argv[1]
-schedules = {}
-
-for dirpath, _, filenames in os.walk(cal_dir):
-    for fn in filenames:
-        if not fn.endswith('.md'):
-            continue
-        path = os.path.join(dirpath, fn)
-        with open(path) as f:
-            text = f.read()
-
-        # Extract YAML frontmatter between --- delimiters
-        m = re.match(r'^---\n(.*?)\n---', text, re.DOTALL)
-        if not m:
-            continue
-        fm = m.group(1)
-
-        # Extract date
-        dm = re.search(r'^date:\s*(\S+)', fm, re.MULTILINE)
-        if not dm:
-            continue
-        date_str = dm.group(1)
-
-        # Extract touring type (show, travel, etc.)
-        tm = re.search(r'^\s+type:\s*(\S+)', fm, re.MULTILINE)
-        touring_type = tm.group(1) if tm and tm.group(1) != 'null' else None
-
-        # Check if schedule has entries (not just '[]')
-        sm = re.search(r'^schedule:\s*\[\]', fm, re.MULTILINE)
-        if sm:
-            continue
-        sm = re.search(r'^schedule:', fm, re.MULTILINE)
-        if not sm:
-            continue
-
-        # Parse schedule items: each starts with '  - time:'
-        items = []
-        for item_m in re.finditer(
-            r'  - time:\s*\"([^\"]+)\"\n\s+item:\s*\"([^\"]+)\"\n\s+who:\s*\[([^\]]*)\]',
-            fm
-        ):
-            time_val = item_m.group(1)
-            item_val = item_m.group(2)
-            who_raw = item_m.group(3)
-            who = [w.strip().strip('\"') for w in who_raw.split(',') if w.strip()]
-            items.append({'time': time_val, 'item': item_val, 'who': who})
-
-        if items:
-            day_type = touring_type or 'off'
-            schedules[date_str] = {'type': day_type, 'items': items}
-
-json.dump(schedules, sys.stdout, separators=(',', ':'))
-" "$CAL_DIR")
+# ── Extract schedules from date files ─────────────────────────────────
+# Reads day.schedule arrays from date JSON files.
+schedules=$(jq -r '
+  to_entries
+  | map(select(.value.day.schedule and (.value.day.schedule | length) > 0))
+  | map({
+      key: .value.day.date,
+      value: {
+        type: .value.day.type,
+        items: [.value.day.schedule[] | {time, item, who}]
+      }
+    })
+  | from_entries
+' "$DATES_DATA")
 
 # ── Write dashboard-meta.json ───────────────────────────────────────
 jq -n \

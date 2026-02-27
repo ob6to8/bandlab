@@ -9,9 +9,6 @@ source "${SCRIPT_DIR}/lib/config.sh" && load_config
 DATES_DIR="${REPO_ROOT}/$(cfg '.entities.dates.dir')"
 PEOPLE="${REPO_ROOT}/$(cfg '.registries.people.path')"
 VENUES="${REPO_ROOT}/$(cfg '.registries.venues.path')"
-CALENDAR_REL=$(cfg_default '.calendar.path' '')
-CALENDAR="${REPO_ROOT}/${CALENDAR_REL}"
-
 errors=0
 warnings=0
 checks=0
@@ -96,35 +93,6 @@ if [ "$has_contacts" = "true" ]; then
       fail "${venue} [${role}] → ${person_key} NOT FOUND in people.json"
     fi
   done < <(jq -r 'to_entries[] | .key as $venue | .value.contacts | to_entries[] | [$venue, .key, .value] | @tsv' "$VENUES")
-  echo ""
-fi
-
-# ── Calendar ↔ Show linkage ──────────────────────────────────────────
-
-# Only check if calendar section exists in config
-if [ -n "$CALENDAR_REL" ] && [ -d "$CALENDAR" ]; then
-  echo "=== Calendar ↔ Show Linkage ==="
-
-  show_link_field=$(cfg '.calendar.show_link_field')
-
-  # Check that every show's date has a calendar file linking back to it
-  while IFS=$'\t' read -r show_id date; do
-    month=$(echo "$date" | cut -d'-' -f1-2)
-    day=$(echo "$date" | cut -d'-' -f3 | sed 's/^0//')
-    cal_file="${CALENDAR}/${month}/$(printf '%02d' "$day").md"
-
-    if [ ! -f "$cal_file" ]; then
-      fail "${show_id} (${date}): calendar file MISSING"
-      continue
-    fi
-
-    # Check that the calendar file references this show
-    if grep -q "${show_link_field}: ${show_id}" "$cal_file"; then
-      pass "${show_id} ↔ ${date}"
-    else
-      fail "${show_id} (${date}): calendar file exists but does NOT reference show"
-    fi
-  done < <(jq -r 'to_entries[] | [.key, .value.day.date] | @tsv' "$DATES_DATA")
   echo ""
 fi
 
